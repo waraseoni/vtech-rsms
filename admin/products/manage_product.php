@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $stmt = $conn->prepare("SELECT * from `product_list` where id = ?");
     $stmt->bind_param("i", $_GET['id']);
@@ -101,6 +103,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 </style>
 <div class="container-fluid">
     <form action="" id="product-form">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
         <div class="form-group">
             <label for="name" class="control-label">Product Name</label>

@@ -1,4 +1,7 @@
 <?php 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id'])){
     $user = $conn->query("SELECT * FROM users where id ='{$_GET['id']}' ");
     foreach($user->fetch_array() as $k =>$v){
@@ -16,6 +19,7 @@ if(isset($_GET['id'])){
 		<div class="container-fluid">
 			<div id="msg"></div>
 			<form action="" id="manage-user">	
+				<?php echo CsrfProtection::getField(); ?>
 				<input type="hidden" name="id" value="<?= isset($meta['id']) ? $meta['id'] : '' ?>">
 				<div class="form-group">
 					<label for="name">First Name</label>

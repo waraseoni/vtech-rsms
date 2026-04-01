@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $qry = $conn->query("SELECT * from `expense_list` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -10,8 +12,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 }
 ?>
 <div class="container-fluid">
-	<form action="" id="expense-form">
-		<input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
+ 	<form action="" id="expense-form">
+ 		<?php echo CsrfProtection::getField(); ?>
+ 		<input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
 		<div class="form-group">
 			<label for="category" class="control-label">Expense Category</label>
 			<select name="category" id="category" class="form-control form-control-sm rounded-0" required>

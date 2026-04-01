@@ -1,5 +1,6 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
 
 // Client ID check karna
 if(isset($_GET['client_id']) && $_GET['client_id'] > 0){
@@ -11,6 +12,7 @@ if(isset($_GET['client_id']) && $_GET['client_id'] > 0){
 ?>
 <div class="container-fluid">
     <form action="" id="loan-form">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="client_id" value="<?php echo $client_id ?>">
         
         <div class="form-group">

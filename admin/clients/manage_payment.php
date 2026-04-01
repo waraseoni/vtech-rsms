@@ -1,5 +1,6 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
 
 // Client ID aur Existing Payment ID check karna
 if(isset($_GET['client_id'])){
@@ -17,6 +18,7 @@ if(isset($_GET['id'])){
 ?>
 <div class="container-fluid">
     <form action="" id="payment-form">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
         <input type="hidden" name="client_id" value="<?php echo isset($client_id) ? $client_id : (isset($client_id) ? $client_id : '') ?>">
 

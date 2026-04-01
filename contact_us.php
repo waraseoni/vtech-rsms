@@ -33,6 +33,7 @@
                         </script>
                     <?php endif; ?>
                     <form action="" id="message-form">
+                        <?php echo isset($conn) ? CsrfProtection::getField() : ''; ?>
                         <input type="hidden" name="id">
                         <div class="row">
                             <div class="col-md-6">

@@ -1,4 +1,8 @@
-<?php if($_settings->chk_flashdata('success')): ?>
+<?php 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
+if($_settings->chk_flashdata('success')): ?>
 <script>
 	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
 </script>
@@ -19,6 +23,7 @@ $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-t");          // Current mont
                 <legend class="w-auto px-3">Filter by Date Range</legend>
                 <div class="container-fluid">
                     <form action="" id="filter-form">
+                        <?php echo CsrfProtection::getField(); ?>
                         <div class="row align-items-end">
                             <div class="col-lg-3 col-md-6 col-sm-12">
                                 <div class="form-group">

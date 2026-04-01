@@ -1,4 +1,7 @@
 <?php 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id'])){
     $qry = $conn->query("SELECT * FROM `transaction_list` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -22,6 +25,7 @@ if(isset($_GET['id'])){
             <div class="card-body">
                 <div class="container-fluid">
                     <form action="" id="transaction-form">
+                        <?php echo CsrfProtection::getField(); ?>
                         <input type="hidden" name="id" value="<?= isset($id) ? $id : '' ?>">
                         <input type="hidden" name="amount" value="<?= isset($amount) ? $amount : '' ?>">
                         <div class="row">

@@ -1,6 +1,8 @@
 <?php
 
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $qry = $conn->query("SELECT * from `service_list` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -12,6 +14,7 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 ?>
 <div class="container-fluid">
 	<form action="" id="service-form">
+		<?php echo CsrfProtection::getField(); ?>
 		<input type="hidden" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
 		<div class="form-group">
 			<label for="name" class="control-label">Name</label>

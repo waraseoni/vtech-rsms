@@ -1,4 +1,8 @@
-<?php if($_settings->chk_flashdata('success')): ?>
+<?php 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
+if($_settings->chk_flashdata('success')): ?>
 <script>
 	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
 </script>
@@ -42,6 +46,7 @@
 <hr>
 		
 			<form action="" id="system-frm">
+				<?php echo CsrfProtection::getField(); ?>
 				<div id="msg" class="form-group"></div>
 				<div class="form-group">
 					<label for="name" class="control-label">System Name</label>

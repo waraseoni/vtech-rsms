@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $qry = $conn->query("SELECT * from `loan_payments` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -10,6 +12,7 @@ $lender_id = isset($_GET['lender_id']) ? $_GET['lender_id'] : (isset($lender_id)
 ?>
 <div class="container-fluid">
     <form action="" id="loan-payment-form">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
         <input type="hidden" name="lender_id" value="<?php echo $lender_id ?>">
         

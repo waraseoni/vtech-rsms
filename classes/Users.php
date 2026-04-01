@@ -1,5 +1,7 @@
 <?php
 require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
+
 Class Users extends DBConnection {
 	private $settings;
 	public function __construct(){
@@ -11,6 +13,11 @@ Class Users extends DBConnection {
 		parent::__destruct();
 	}
 	public function save_users(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
 		// 1. Password ko md5 mein badlen (yadi diya gaya hai)
 		if(empty($_POST['password']))
 			unset($_POST['password']);

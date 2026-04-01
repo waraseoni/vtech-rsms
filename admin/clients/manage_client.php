@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id'])){
     $qry = $conn->query("SELECT * FROM `client_list` where id = '{$_GET['id']}'");
     if($qry->num_rows > 0){
@@ -51,6 +53,7 @@ if(isset($_GET['id'])){
         <div class="bg-white rounded-3 shadow-lg p-4 p-md-5" style="max-width:950px; margin:0 auto; border:1px solid #e2e8f5;">
 
             <form id="client-form" class="needs-validation" novalidate>
+                <?php echo CsrfProtection::getField(); ?>
                 <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
 
                 <div class="row g-3 g-md-4">

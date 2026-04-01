@@ -2,6 +2,9 @@
 // NOTE: 'config.php' और $conn ऑब्जेक्ट पहले से ही main index.php द्वारा शामिल किए गए हैं।
 // पुराने insecure code को Prepared Statement से replace किया गया है।
 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 $meta = [];
 // 🛡️ SECURITY FIX: SQL Injection से बचने के लिए Prepared Statement का उपयोग
 $stmt = $conn->prepare("SELECT * FROM users where id = ?");
@@ -27,7 +30,8 @@ $stmt->close();
 	<div class="card-body">
 		<div class="container-fluid">
 			<div id="msg"></div>
-			<form action="" id="manage-user">	
+			<form action="" id="manage-user">
+				<?php echo CsrfProtection::getField(); ?>
 				<input type="hidden" name="id" value="<?php echo $_settings->userdata('id') ?>">
 				<div class="form-group">
 					<label for="name">First Name</label>

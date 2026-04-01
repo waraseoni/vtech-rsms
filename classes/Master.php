@@ -1,5 +1,7 @@
 <?php
 require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
+
 Class Master extends DBConnection {
 	private $settings;
 	public function __construct(){
@@ -86,6 +88,11 @@ Class Master extends DBConnection {
 		return json_encode($resp);
 	}
 	function save_service(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
@@ -140,6 +147,11 @@ Class Master extends DBConnection {
 
 	}
 	public function save_mechanic(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
     extract($_POST);
     $data = "";
     
@@ -349,6 +361,11 @@ public function get_mechanic_photo(){
 	// =========================================================================
 
 	function save_product(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
     extract($_POST);
     
     // 1. Duplicate Name Check (Unique Product Name के लिए)
@@ -440,6 +457,11 @@ public function get_mechanic_photo(){
 
 // ... (rest of the Master class continues) ...
 	function save_inventory(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
@@ -485,6 +507,11 @@ public function get_mechanic_photo(){
 
 	}	
 	function save_client(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
@@ -1379,6 +1406,11 @@ function get_status_by_contact(){
 }
 // Expense save karne ke liye
 function save_expense(){
+	// CSRF Validation
+	if (!CsrfProtection::validatePOST()) {
+		return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+	}
+	
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
@@ -1633,6 +1665,11 @@ function update_history_entry(){
      * Loan Lender ko save ya update karne ke liye
      */
     function save_lender(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
         extract($_POST);
         $data = "";
         foreach($_POST as $k =>$v){
@@ -1686,6 +1723,11 @@ function update_history_entry(){
      * Loan ki EMI/Payment save karne ke liye
      */
     function save_loan_payment(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
         extract($_POST);
         $data = "";
         foreach($_POST as $k =>$v){

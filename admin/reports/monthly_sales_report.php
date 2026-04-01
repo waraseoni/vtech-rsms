@@ -1,4 +1,8 @@
-<?php if($_settings->chk_flashdata('success')): ?>
+<?php 
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
+if($_settings->chk_flashdata('success')): ?>
 <script>
 	alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')
 </script>
@@ -18,6 +22,7 @@ $month = isset($_GET['month']) ? $_GET['month'] : date("Y-m");  // Format: YYYY-
                 <legend class="w-auto px-3">Filter</legend>
                 <div class="container-fluid">
                     <form action="" id="filter-form">
+                        <?php echo CsrfProtection::getField(); ?>
                         <div class="row align-items-end">
                             <div class="col-lg-4 col-md-6 col-sm-12 col-xs-12">
                                 <div class="form-group">

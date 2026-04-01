@@ -1,4 +1,7 @@
 <?php
+require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 // Variables initialize karein taaki error na aaye
 $from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
 $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-d");
@@ -25,6 +28,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'salary';
 
     <div class="card-body">
         <form action="" id="filter-form" method="GET">
+            <?php echo CsrfProtection::getField(); ?>
             <input type="hidden" name="page" value="expenses/finance_report">
             <input type="hidden" name="tab" id="current_tab" value="<?php echo htmlspecialchars($active_tab) ?>">
             

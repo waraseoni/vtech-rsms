@@ -1,4 +1,7 @@
 <?php 
+require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
+
 $from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
 $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-t");
 ?>
@@ -10,6 +13,7 @@ $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-t");
         <div class="row no-print mb-4 border-bottom pb-3">
             <div class="col-md-12">
                 <form action="" id="filter-report">
+                    <?php echo CsrfProtection::getField(); ?>
                     <input type="hidden" name="page" value="reports/financial_report">
                     <div class="row align-items-end">
                         <div class="col-md-3">

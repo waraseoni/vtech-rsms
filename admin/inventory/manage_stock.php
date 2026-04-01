@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $qry = $conn->query("SELECT * from `inventory_list` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -9,8 +11,9 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
 $p_id = $_GET['product_id'] ?? $product_id;
 ?>
 <div class="container-fluid">
-	<form action="" id="inventory-form">
-		<input type="hidden" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
+ 	<form action="" id="inventory-form">
+ 		<?php echo CsrfProtection::getField(); ?>
+ 		<input type="hidden" name ="id" value="<?php echo isset($id) ? $id : '' ?>">
 		<input type="hidden" name ="product_id" value="<?php echo $p_id ?>">
 		
 		<div class="form-group">

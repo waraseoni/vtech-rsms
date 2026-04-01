@@ -1,5 +1,7 @@
 <?php
 require_once('../../config.php');
+require_once('../../classes/CsrfProtection.php');
+
 if(isset($_GET['id']) && $_GET['id'] > 0){
     $qry = $conn->query("SELECT * from `mechanic_list` where id = '{$_GET['id']}' ");
     if($qry->num_rows > 0){
@@ -10,6 +12,7 @@ $current_avatar = isset($avatar) && !empty($avatar) ? $avatar : 'default-avatar.
 ?>
 <div class="container-fluid">
     <form action="" id="mechanic-form" enctype="multipart/form-data">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
         <input type="hidden" name="current_avatar" value="<?php echo $current_avatar ?>">
         

@@ -1,5 +1,7 @@
 <?php
 require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
+
 Class Master extends DBConnection {
 	private $settings;
 	public function __construct(){
@@ -393,6 +395,11 @@ if(isset($commission_percent)){
 		return json_encode($resp);
 	}
 	function save_transaction(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		}
+		
     // Form se id nikalna (Edit mode ke liye)
     $id = isset($_POST['id']) ? $_POST['id'] : '';
 

@@ -1,4 +1,7 @@
-<?php require_once('../config.php') ?>
+<?php 
+require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
+?>
 <!DOCTYPE html>
 <html lang="en" class="" style="height: auto;">
  <?php require_once('inc/header.php') ?>
@@ -244,6 +247,8 @@
                   <input type="text" class="form-control" name="username" placeholder="Username" required autofocus>
                 </div>
               </div>
+              
+              <?php echo CsrfProtection::getField(); ?>
               
               <div class="form-group">
                 <div class="input-group">

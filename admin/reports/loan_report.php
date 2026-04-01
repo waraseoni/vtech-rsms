@@ -1,5 +1,7 @@
 <?php 
 require_once('../config.php'); 
+require_once('../classes/CsrfProtection.php');
+
 $month = isset($_GET['month']) ? $_GET['month'] : date("Y-m");
 ?>
 
@@ -12,6 +14,7 @@ $month = isset($_GET['month']) ? $_GET['month'] : date("Y-m");
             <div class="row justify-content-center mb-4">
                 <div class="col-md-4">
                     <form action="" id="filter-report">
+                        <?php echo CsrfProtection::getField(); ?>
                         <input type="hidden" name="page" value="reports/loan_report">
                         <div class="input-group">
                             <div class="input-group-prepend"><span class="input-group-text">Select Month</span></div>

@@ -1,5 +1,7 @@
 <?php
 require_once '../config.php';
+require_once '../classes/CsrfProtection.php';
+
 class Login extends DBConnection {
 	private $settings;
 	public function __construct(){
@@ -18,6 +20,11 @@ class Login extends DBConnection {
 	public function login(){
 		$username = $_POST['username'] ?? '';
 		$password = $_POST['password'] ?? '';
+		
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(array('status'=>'failed', 'msg'=>'Invalid request'));
+		}
 		
 		// Validate input
 		if (empty($username) || empty($password)) {
@@ -77,6 +84,11 @@ class Login extends DBConnection {
 		}
 	}
 	function login_agent(){
+		// CSRF Validation
+		if (!CsrfProtection::validatePOST()) {
+			return json_encode(array('status'=>'failed', 'msg'=>'Invalid request'));
+		}
+		
 		$email = $_POST['email'] ?? '';
 		$password = $_POST['password'] ?? '';
 		
