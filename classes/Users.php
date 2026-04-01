@@ -29,41 +29,78 @@ Class Users extends DBConnection {
 		$id = isset($id) ? $id : ''; 
 
 
-		// Username Duplication Check
-		$chk = $this->conn->query("SELECT id FROM users where username = '{$username}' ".(empty($id) ? "" : " and id != '{$id}' " ))->num_rows;
+		// Username Duplication Check - Prepared Statement
+		if(empty($id)){
+			$chk_stmt = $this->conn->prepare("SELECT id FROM users WHERE username = ?");
+			$chk_stmt->bind_param("s", $username);
+		} else {
+			$chk_stmt = $this->conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+			$chk_stmt->bind_param("si", $username, $id);
+		}
+		$chk_stmt->execute();
+		$chk_result = $chk_stmt->get_result();
+		$chk = $chk_result->num_rows;
 
 		if($chk > 0){
-			
 			return 3; // Username already exist
 		}
-			// ⭐ END FIX 1 ⭐
 			
-		$data = '';
-		foreach($_POST as $k => $v){
-			if(!in_array($k,array('id'))){
-				if(!empty($data)) $data .=" , ";
-				// ⭐ FIX 2: Security Improvement - SQL Injection Prevention
-                $v = $this->conn->real_escape_string($v);
-				$data .= " {$k} = '{$v}' ";
-			}
-		}
-
-		// Agar user Administrator (1) hai, toh mechanic_id ko NULL set karein
-		if(isset($type) && $type == 1){
-			if(!empty($data)) $data .=" , ";
-			$data .= " `mechanic_id` = NULL ";
-		}
-
+		// Build INSERT/UPDATE with prepared statement
 		if(empty($id)){
-			$sql = "INSERT INTO users set {$data}";
-		}else{
-			$sql = "UPDATE users set {$data} where id = {$id}";
+			// INSERT - build columns and placeholders
+			$columns = [];
+			$placeholders = [];
+			$values = [];
+			$types = '';
+			foreach($_POST as $k => $v){
+				if(!in_array($k, array('id'))){
+					$columns[] = "`$k`";
+					$placeholders[] = '?';
+					$values[] = $v;
+					$types .= 's';
+				}
+			}
+			
+			// If admin, set mechanic_id to NULL
+			if(isset($type) && $type == 1){
+				// Skip mechanic_id for admin - don't include in insert
+			}
+			
+			$sql = "INSERT INTO users (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+			$stmt = $this->conn->prepare($sql);
+			if(!empty($types)){
+				$stmt->bind_param($types, ...$values);
+			}
+			$save = $stmt->execute();
+			$id = $this->conn->insert_id;
+		} else {
+			// UPDATE - build column = placeholders
+			$set = [];
+			$values = [];
+			$types = '';
+			foreach($_POST as $k => $v){
+				if(!in_array($k, array('id'))){
+					$set[] = "`$k` = ?";
+					$values[] = $v;
+					$types .= 's';
+				}
+			}
+			
+			// If admin, set mechanic_id to NULL
+			if(isset($type) && $type == 1){
+				$sql = "UPDATE users SET " . implode(', ', $set) . ", `mechanic_id` = NULL WHERE id = ?";
+			} else {
+				$sql = "UPDATE users SET " . implode(', ', $set) . " WHERE id = ?";
+			}
+			$values[] = $id;
+			$types .= 'i';
+			
+			$stmt = $this->conn->prepare($sql);
+			$stmt->bind_param($types, ...$values);
+			$save = $stmt->execute();
 		}
-		
-		$save = $this->conn->query($sql);
 
 		if($save){
-			$id = empty($id) ? $this->conn->insert_id : $id;
 			$this->settings->set_flashdata('success','User Details successfully saved.');
 			
 			// === AVATAR UPLOAD - NEW SIMPLE & RELIABLE METHOD ===
@@ -87,17 +124,24 @@ Class Users extends DBConnection {
 				    $move = move_uploaded_file($_FILES['img']['tmp_name'], base_app . $fname);
 
 				    if($move){
-				        // Purani image delete karo (agar alag extension wali ho)
-				        $old_avatar = $meta['avatar'] ?? '';
-				        if(!empty($old_avatar) && file_exists(base_app . $old_avatar)){
-				            // Sirf avatars folder ki files delete karo
-				            if(strpos($old_avatar, 'uploads/avatars/') === 0){
-				                unlink(base_app . $old_avatar);
+				        // Purani image delete karo (agar alag extensionwali ho)
+				        $old_stmt = $this->conn->prepare("SELECT avatar FROM users WHERE id = ?");
+				        $old_stmt->bind_param("i", $id);
+				        $old_stmt->execute();
+				        $old_result = $old_stmt->get_result();
+				        if($old_result->num_rows > 0){
+				            $old_avatar = $old_result->fetch_assoc()['avatar'];
+				            if(!empty($old_avatar) && file_exists(base_app . $old_avatar)){
+				                if(strpos($old_avatar, 'uploads/avatars/') === 0){
+				                    unlink(base_app . $old_avatar);
+				                }
 				            }
 				        }
 
-				        // Database mein path save karo (without cache busting ?v= – browser cache handle kar lenge)
-				        $this->conn->query("UPDATE users SET avatar = '{$fname}' WHERE id = '{$id}'");
+				        // Database mein path save karo - Prepared Statement
+				        $avatar_stmt = $this->conn->prepare("UPDATE users SET avatar = ? WHERE id = ?");
+				        $avatar_stmt->bind_param("si", $fname, $id);
+				        $avatar_stmt->execute();
 
 				        // Agar current logged in user hai, toh session update karo
 				        if($this->settings->userdata('id') == $id){
@@ -127,11 +171,25 @@ Class Users extends DBConnection {
 
 	public function delete_users(){
 		extract($_POST);
-		$avatar = $this->conn->query("SELECT avatar FROM users where id = $id")->fetch_array()['avatar'];
-		$qry = $this->conn->query("DELETE FROM users where id = $id");
+		
+		// Get avatar first - Prepared Statement
+		$avatar_stmt = $this->conn->prepare("SELECT avatar FROM users WHERE id = ?");
+		$avatar_stmt->bind_param("i", $id);
+		$avatar_stmt->execute();
+		$avatar_result = $avatar_stmt->get_result();
+		$avatar = '';
+		if($avatar_result->num_rows > 0){
+			$avatar = $avatar_result->fetch_assoc()['avatar'];
+		}
+		
+		// Delete user - Prepared Statement
+		$del_stmt = $this->conn->prepare("DELETE FROM users WHERE id = ?");
+		$del_stmt->bind_param("i", $id);
+		$qry = $del_stmt->execute();
+		
 		if($qry){
 			$this->settings->set_flashdata('success','User Details successfully deleted.');
-			if(is_file(base_app.$avatar)) unlink(base_app.$avatar);
+			if(!empty($avatar) && is_file(base_app.$avatar)) unlink(base_app.$avatar);
 			return 1;
 		}else{
 			return false;

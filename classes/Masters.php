@@ -60,7 +60,9 @@ Class Master extends DBConnection {
 	}
 	function delete_message(){
 		extract($_POST);
-		$del = $this->conn->query("DELETE FROM `message_list` where id = '{$id}'");
+		$stmt = $this->conn->prepare("DELETE FROM `message_list` WHERE id = ?");
+		$stmt->bind_param("i", $id);
+		$del = $stmt->execute();
 		if($del){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success',"Message has been deleted successfully.");
@@ -98,6 +100,17 @@ Class Master extends DBConnection {
 			}
 		}
 		$check = $this->conn->query("SELECT * FROM `service_list` where `name` = '{$name}' ".(!empty($id) ? " and id != {$id} " : "")." ")->num_rows;
+		// Prepared Statement version
+		if(empty($id)){
+			$chk_stmt = $this->conn->prepare("SELECT id FROM `service_list` WHERE `name` = ?");
+			$chk_stmt->bind_param("s", $name);
+		} else {
+			$chk_stmt = $this->conn->prepare("SELECT id FROM `service_list` WHERE `name` = ? AND id != ?");
+			$chk_stmt->bind_param("si", $name, $id);
+		}
+		$chk_stmt->execute();
+		$chk_result = $chk_stmt->get_result();
+		$check = $chk_result->num_rows;
 		if($this->capture_err())
 			return $this->capture_err();
 		if($check > 0){
@@ -130,7 +143,9 @@ Class Master extends DBConnection {
 	}
 	function delete_service(){
 		extract($_POST);
-		$del = $this->conn->query("UPDATE `service_list` set `delete_flag` = 1 where id = '{$id}'");
+		$stmt = $this->conn->prepare("UPDATE `service_list` SET `delete_flag` = 1 WHERE id = ?");
+		$stmt->bind_param("i", $id);
+		$del = $stmt->execute();
 		if($del){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success'," Service successfully deleted.");
@@ -152,17 +167,24 @@ Class Master extends DBConnection {
 				$data .= " `{$k}`='{$v}' ";
 			}
 		}
-		// save_mechanic function ke andar
+		// save_mechanic function ke andar - Prepared Statement
 if(isset($commission_percent)){
-    $this->conn->query("INSERT INTO `mechanic_commission_history` set mechanic_id = '{$id}', commission_percent = '{$commission_percent}', effective_date = '".date('Y-m-d')."' ");
+    $comm_stmt = $this->conn->prepare("INSERT INTO `mechanic_commission_history` (mechanic_id, commission_percent, effective_date) VALUES (?, ?, ?)");
+    $eff_date = date('Y-m-d');
+    $comm_stmt->bind_param("ids", $id, $commission_percent, $eff_date);
+    $comm_stmt->execute();
 }
 
 		// Check karein ki kya ye naya staff hai ya purana edit ho raha hai
 		if(empty($id)){
 			$sql = "INSERT INTO `mechanic_list` set {$data} ";
 		}else{
-			// Purani salary check karein history ke liye
-			$old_salary_row = $this->conn->query("SELECT daily_salary FROM mechanic_list where id = '{$id}'")->fetch_array();
+			// Purani salary check karein history ke liye - Prepared Statement
+			$salary_stmt = $this->conn->prepare("SELECT daily_salary FROM mechanic_list WHERE id = ?");
+			$salary_stmt->bind_param("i", $id);
+			$salary_stmt->execute();
+			$salary_result = $salary_stmt->get_result();
+			$old_salary_row = $salary_result->fetch_array();
 			$old_salary = $old_salary_row ? $old_salary_row['daily_salary'] : 0;
 			$sql = "UPDATE `mechanic_list` set {$data} where id = '{$id}' ";
 		}
@@ -173,15 +195,12 @@ if(isset($commission_percent)){
 			$mid = empty($id) ? $this->conn->insert_id : $id;
 			$resp['status'] = 'success';
 
-			// --- SALARY HISTORY LOGIC ---
-			// Agar naya staff hai, toh pehla record history mein daalein
-			// Agar purana staff hai aur salary badli hai, tabhi history mein daalein
+			// --- SALARY HISTORY LOGIC - Prepared Statement ---
 			if(empty($id) || ($old_salary != $daily_salary)){
-				$effective_date = date('Y-m-d'); // Aaj se naya rate lagu
-				$this->conn->query("INSERT INTO `mechanic_salary_history` SET 
-					mechanic_id = '{$mid}', 
-					salary = '{$daily_salary}', 
-					effective_date = '{$effective_date}'");
+				$effective_date = date('Y-m-d');
+				$hist_stmt = $this->conn->prepare("INSERT INTO `mechanic_salary_history` (mechanic_id, salary, effective_date) VALUES (?, ?, ?)");
+				$hist_stmt->bind_param("ids", $mid, $daily_salary, $effective_date);
+				$hist_stmt->execute();
 			}
 
 			if(empty($id))
@@ -196,7 +215,9 @@ if(isset($commission_percent)){
 	}
 	function delete_mechanic(){
 		extract($_POST);
-		$del = $this->conn->query("UPDATE `mechanic_list` set `delete_flag` = 1 where id = '{$id}'");
+		$stmt = $this->conn->prepare("UPDATE `mechanic_list` SET `delete_flag` = 1 WHERE id = ?");
+		$stmt->bind_param("i", $id);
+		$del = $stmt->execute();
 		if($del){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success'," Mechanic successfully deleted.");
@@ -321,7 +342,9 @@ if(isset($commission_percent)){
 	}
 	function delete_inventory(){
 		extract($_POST);
-		$del = $this->conn->query("DELETE FROM `inventory_list` where id = '{$id}'");
+		$stmt = $this->conn->prepare("DELETE FROM `inventory_list` WHERE id = ?");
+		$stmt->bind_param("i", $id);
+		$del = $stmt->execute();
 		if($del){
 			$resp['status'] = 'success';
 			$this->settings->set_flashdata('success'," Stock has been deleted successfully.");
@@ -344,17 +367,33 @@ if(isset($commission_percent)){
         }
     }
 
-    // ====== DUPLICATE MOBILE CHECK ======
-    $contact_check = $this->conn->query("SELECT id FROM `client_list` WHERE contact = '{$contact}' AND delete_flag = 0 ".(!empty($id) ? " AND id != '{$id}'" : "")." ");
-    if($contact_check->num_rows > 0){
+    // ====== DUPLICATE MOBILE CHECK - Prepared Statement ======
+    if(empty($id)){
+        $contact_stmt = $this->conn->prepare("SELECT id FROM `client_list` WHERE contact = ? AND delete_flag = 0");
+        $contact_stmt->bind_param("s", $contact);
+    } else {
+        $contact_stmt = $this->conn->prepare("SELECT id FROM `client_list` WHERE contact = ? AND delete_flag = 0 AND id != ?");
+        $contact_stmt->bind_param("si", $contact, $id);
+    }
+    $contact_stmt->execute();
+    $contact_result = $contact_stmt->get_result();
+    if($contact_result->num_rows > 0){
         echo json_encode(['status' => 'failed', 'msg' => 'This Mobile/Whatsapp number is already registered!']);
         exit;
     }
 
-    // ====== DUPLICATE EMAIL CHECK (अगर भरा है तो) ======
+    // ====== DUPLICATE EMAIL CHECK - Prepared Statement ======
     if(!empty($email)){
-        $email_check = $this->conn->query("SELECT id FROM `client_list` WHERE email = '{$email}' AND delete_flag = 0 ".(!empty($id) ? " AND id != '{$id}'" : "")." ");
-        if($email_check->num_rows > 0){
+        if(empty($id)){
+            $email_stmt = $this->conn->prepare("SELECT id FROM `client_list` WHERE email = ? AND delete_flag = 0");
+            $email_stmt->bind_param("s", $email);
+        } else {
+            $email_stmt = $this->conn->prepare("SELECT id FROM `client_list` WHERE email = ? AND delete_flag = 0 AND id != ?");
+            $email_stmt->bind_param("si", $email, $id);
+        }
+        $email_stmt->execute();
+        $email_result = $email_stmt->get_result();
+        if($email_result->num_rows > 0){
             echo json_encode(['status' => 'failed', 'msg' => 'This Email/Mobile is already registered!']);
             exit;
         }
@@ -410,16 +449,19 @@ if(isset($commission_percent)){
     $chosen_date = !empty($_POST['date_created']) ? $_POST['date_created'] : date("Y-m-d H:i:s");
     $_POST['date_created'] = $chosen_date; 
 
-    // Only for new transaction (jab $id empty ho)
+    // Only for new transaction (jab $id empty ho) - Prepared Statement
     if(empty($id)){
         $_POST['user_id'] = $this->settings->userdata('id');
         
-        // Code generate karne ke liye select ki gayi date ka prefix use karein
         $prefix = date("Ymd", strtotime($chosen_date)); 
         $code = sprintf("%'.02d", 1);
         while(true){
-            $check = $this->conn->query("SELECT * FROM `transaction_list` where code = '{$prefix}{$code}' ")->num_rows;
-            if($check > 0){
+            $code_check_stmt = $this->conn->prepare("SELECT id FROM `transaction_list` WHERE code = ?");
+            $full_code = $prefix . $code;
+            $code_check_stmt->bind_param("s", $full_code);
+            $code_check_stmt->execute();
+            $code_result = $code_check_stmt->get_result();
+            if($code_result->num_rows > 0){
                 $code = sprintf("%'.02d", abs($code) + 1);
             }else{
                 $_POST['code'] = $prefix.$code;
@@ -447,9 +489,13 @@ if(isset($commission_percent)){
             }
         }
         
-        // Mechanic ka commission percentage nikalna
+        // Mechanic ka commission percentage nikalna - Prepared Statement
         $m_id = isset($_POST['mechanic_id']) ? $_POST['mechanic_id'] : 0;
-        $mech_data = $this->conn->query("SELECT commission_percent FROM mechanic_list WHERE id = '{$m_id}'")->fetch_assoc();
+        $mech_stmt = $this->conn->prepare("SELECT commission_percent FROM mechanic_list WHERE id = ?");
+        $mech_stmt->bind_param("i", $m_id);
+        $mech_stmt->execute();
+        $mech_result = $mech_stmt->get_result();
+        $mech_data = $mech_result->fetch_assoc();
         $comm_percent = isset($mech_data['commission_percent']) ? (float)$mech_data['commission_percent'] : 0;
         
         // Final Commission Calculation (Sirf service par)
@@ -493,34 +539,33 @@ if(isset($commission_percent)){
     $resp['tid'] = $tid;
     $resp['status'] = 'success';
 
-    // === SERVICES SAVE ===
-    $this->conn->query("DELETE FROM `transaction_services` WHERE transaction_id = '{$tid}'");
+    // === SERVICES SAVE - Prepared Statement ===
+    $del_svc_stmt = $this->conn->prepare("DELETE FROM `transaction_services` WHERE transaction_id = ?");
+    $del_svc_stmt->bind_param("i", $tid);
+    $del_svc_stmt->execute();
+    
     if(isset($service_id) && is_array($service_id)){
-        $data = "";
+        $svc_stmt = $this->conn->prepare("INSERT INTO `transaction_services` (`transaction_id`, `service_id`, `price`) VALUES (?, ?, ?)");
         foreach($service_id as $k => $v){
-            if(!empty($data)) $data .= ", ";
-            $price = $this->conn->real_escape_string($service_price[$k]);
-            $data .= "('{$tid}', '{$v}', '{$price}')";
-        }
-        if(!empty($data)){
-            $this->conn->query("INSERT INTO `transaction_services` (`transaction_id`, `service_id`, `price`) VALUES {$data}");
+            $price = $service_price[$k];
+            $svc_stmt->bind_param("iid", $tid, $v, $price);
+            $svc_stmt->execute();
         }
     }
 
-    // === PRODUCTS SAVE ===
-    $this->conn->query("DELETE FROM `transaction_products` WHERE transaction_id = '{$tid}'");
+    // === PRODUCTS SAVE - Prepared Statement ===
+    $del_prod_stmt = $this->conn->prepare("DELETE FROM `transaction_products` WHERE transaction_id = ?");
+    $del_prod_stmt->bind_param("i", $tid);
+    $del_prod_stmt->execute();
+    
     if(isset($product_id) && is_array($product_id)){
-        $data = "";
+        $prod_stmt = $this->conn->prepare("INSERT INTO `transaction_products` (`transaction_id`, `product_id`, `qty`, `price`) VALUES (?, ?, ?, ?)");
         foreach($product_id as $k => $v){
             $pid = $v;
-            $qty = $this->conn->real_escape_string($product_qty[$k]);
-            $price = $this->conn->real_escape_string($product_price[$k]);
-            if(!empty($data)) $data .= ", ";
-            $data .= "('{$tid}', '{$pid}', '{$qty}', '{$price}')";
-        }
-        if(!empty($data)){
-            $save_products = $this->conn->query("INSERT INTO `transaction_products` (`transaction_id`, `product_id`, `qty`, `price`) VALUES {$data}");
-            if(!$save_products){
+            $qty = $product_qty[$k];
+            $price = $product_price[$k];
+            $prod_stmt->bind_param("iidd", $tid, $pid, $qty, $price);
+            if(!$prod_stmt->execute()){
                 $resp['status'] = 'failed';
                 $resp['msg'] = 'Failed to save products.';
                 return json_encode($resp);
@@ -548,7 +593,9 @@ if(isset($commission_percent)){
             $destination = $upload_dir . $new_filename;
             if(move_uploaded_file($tmp_name, $destination)) {
                 $image_path = 'uploads/transactions/' . $new_filename;
-                $this->conn->query("INSERT INTO transaction_images (transaction_id, image_path) VALUES ('{$tid}', '{$image_path}')");
+                $img_stmt = $this->conn->prepare("INSERT INTO transaction_images (transaction_id, image_path) VALUES (?, ?)");
+                $img_stmt->bind_param("is", $tid, $image_path);
+                $img_stmt->execute();
             }
         }
     }
@@ -569,17 +616,22 @@ if(isset($commission_percent)){
         return json_encode($resp);
     }
 
-    $id = $this->conn->real_escape_string($_POST['id']);
+    $id = intval($_POST['id']);
 
-    // Optional: Check if transaction exists
-    $check = $this->conn->query("SELECT id FROM transaction_list WHERE id = '{$id}'");
-    if($check->num_rows == 0){
+    // Check if transaction exists - Prepared Statement
+    $check_stmt = $this->conn->prepare("SELECT id FROM transaction_list WHERE id = ?");
+    $check_stmt->bind_param("i", $id);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    if($check_result->num_rows == 0){
         $resp['status'] = 'failed';
         $resp['msg'] = 'Transaction not found';
         return json_encode($resp);
     }
 
-    $del = $this->conn->query("DELETE FROM transaction_list WHERE id = '{$id}'");
+    $del_stmt = $this->conn->prepare("DELETE FROM transaction_list WHERE id = ?");
+    $del_stmt->bind_param("i", $id);
+    $del = $del_stmt->execute();
 
     if($del){
         $resp['status'] = 'success';
@@ -599,17 +651,20 @@ if(isset($commission_percent)){
         return json_encode($resp);
     }
 
-    $id = $this->conn->real_escape_string($_POST['id']);
+    $id = intval($_POST['id']);
 
-    // Image path fetch
-    $qry = $this->conn->query("SELECT image_path FROM transaction_images WHERE id = '{$id}'");
-    if($qry->num_rows == 0){
+    // Image path fetch - Prepared Statement
+    $img_stmt = $this->conn->prepare("SELECT image_path FROM transaction_images WHERE id = ?");
+    $img_stmt->bind_param("i", $id);
+    $img_stmt->execute();
+    $img_result = $img_stmt->get_result();
+    if($img_result->num_rows == 0){
         $resp['status'] = 'failed';
         $resp['msg'] = 'Image not found';
         return json_encode($resp);
     }
 
-    $row = $qry->fetch_assoc();
+    $row = $img_result->fetch_assoc();
     $file_path = base_app . $row['image_path'];
 
     // Delete physical file
@@ -617,8 +672,10 @@ if(isset($commission_percent)){
         unlink($file_path);
     }
 
-    // Delete from database
-    $del = $this->conn->query("DELETE FROM transaction_images WHERE id = '{$id}'");
+    // Delete from database - Prepared Statement
+    $del_stmt = $this->conn->prepare("DELETE FROM transaction_images WHERE id = ?");
+    $del_stmt->bind_param("i", $id);
+    $del = $del_stmt->execute();
 
     if($del){
         $resp['status'] = 'success';
@@ -634,7 +691,9 @@ if(isset($commission_percent)){
 
 	function update_status(){
 		extract($_POST);
-		$update = $this->conn->query("UPDATE `transaction_list` set `status` = '{$status}' where id = '{$id}'");
+		$stmt = $this->conn->prepare("UPDATE `transaction_list` SET `status` = ? WHERE id = ?");
+		$stmt->bind_param("ii", $status, $id);
+		$update = $stmt->execute();
 		if($update){
 			$resp['status'] = 'success';
 		}else{
@@ -647,7 +706,11 @@ if(isset($commission_percent)){
 	}
 	function search_products(){
     $term = $_GET['term'];
-    $qry = $this->conn->query("SELECT id, name, price FROM product_list WHERE name LIKE '%$term%' AND delete_flag = 0 LIMIT 10");
+    $search_term = "%{$term}%";
+    $stmt = $this->conn->prepare("SELECT id, name, price FROM product_list WHERE name LIKE ? AND delete_flag = 0 LIMIT 10");
+    $stmt->bind_param("s", $search_term);
+    $stmt->execute();
+    $qry = $stmt->get_result();
     $data = [];
     while($row = $qry->fetch_assoc()){
         $data[] = [
@@ -682,24 +745,31 @@ function save_direct_sale(){
     if($save){
         $sale_id = empty($id) ? $this->conn->insert_id : $id;
         
-        // Delete old items if update
+        // Delete old items if update - Prepared Statement
         if(!empty($id)){
-            $this->conn->query("DELETE FROM direct_sale_items WHERE sale_id = $id");
+            $del_stmt = $this->conn->prepare("DELETE FROM direct_sale_items WHERE sale_id = ?");
+            $del_stmt->bind_param("i", $id);
+            $del_stmt->execute();
         }
         
-        // Save items
+        // Save items - Prepared Statement
         $total = 0;
+        $item_stmt = $this->conn->prepare("INSERT INTO direct_sale_items (sale_id, product_id, qty, price) VALUES (?, ?, ?, ?)");
         for($i=0; $i<count($product_id); $i++){
-            $pid = $product_id[$i];
-            $qty = $qty[$i];
-            $price = $price[$i];
+            $pid = intval($product_id[$i]);
+            $qty = floatval($qty[$i]);
+            $price = floatval($price[$i]);
             $item_total = $qty * $price;
             $total += $item_total;
             
-            $this->conn->query("INSERT INTO direct_sale_items (sale_id, product_id, qty, price) VALUES ($sale_id, $pid, $qty, $price)");
+            $item_stmt->bind_param("iidd", $sale_id, $pid, $qty, $price);
+            $item_stmt->execute();
         }
         
-        $this->conn->query("UPDATE direct_sales SET total_amount = $total WHERE id = $sale_id");
+        // Update total - Prepared Statement
+        $total_stmt = $this->conn->prepare("UPDATE direct_sales SET total_amount = ? WHERE id = ?");
+        $total_stmt->bind_param("di", $total, $sale_id);
+        $total_stmt->execute();
         
         $resp['status'] = 'success';
         $resp['id'] = $sale_id;
@@ -713,7 +783,10 @@ function save_direct_sale(){
 
 function delete_direct_sale(){
     extract($_POST);
-    $del = $this->conn->query("DELETE FROM direct_sales WHERE id = $id");
+    $id = intval($id);
+    $stmt = $this->conn->prepare("DELETE FROM direct_sales WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $del = $stmt->execute();
     if($del){
         $resp['status'] = 'success';
         $this->settings->set_flashdata('success','Direct Sale deleted successfully.');
@@ -725,19 +798,33 @@ function delete_direct_sale(){
 function get_client_balance(){
     extract($_POST);
     header('Content-Type: application/json');
+    $id = intval($id);
     
-    // 1. Opening Balance (Table: client_list)
-    $client_qry = $this->conn->query("SELECT opening_balance FROM client_list WHERE id = '{$id}'");
-    $opening = ($client_qry && $client_qry->num_rows > 0) ? floatval($client_qry->fetch_assoc()['opening_balance']) : 0;
+    // 1. Opening Balance (Table: client_list) - Prepared Statement
+    $client_stmt = $this->conn->prepare("SELECT opening_balance FROM client_list WHERE id = ?");
+    $client_stmt->bind_param("i", $id);
+    $client_stmt->execute();
+    $client_result = $client_stmt->get_result();
+    $opening = 0;
+    if($client_result->num_rows > 0){
+        $opening = floatval($client_result->fetch_assoc()['opening_balance']);
+    }
 
-    // 2. Total Billed (Status 5 = Delivered | Table: transaction_list)
-    // Note: Column name 'client_name' ID store karta hai
-    $billed_qry = $this->conn->query("SELECT SUM(amount) as total FROM transaction_list WHERE client_name = '{$id}' AND status = 5");
-    $total_billed = $billed_qry->fetch_assoc()['total'] ?? 0;
+    // 2. Total Billed (Status 5 = Delivered) - Prepared Statement
+    $billed_stmt = $this->conn->prepare("SELECT SUM(amount) as total FROM transaction_list WHERE client_name = ? AND status = 5");
+    $billed_stmt->bind_param("i", $id);
+    $billed_stmt->execute();
+    $billed_result = $billed_stmt->get_result();
+    $billed_row = $billed_result->fetch_assoc();
+    $total_billed = floatval($billed_row['total'] ?? 0);
 
-    // 3. Total Paid (Amount - Discount | Table: client_payments)
-    $paid_qry = $this->conn->query("SELECT SUM(amount - discount) as paid FROM client_payments WHERE client_id = '{$id}'");
-    $total_paid = $paid_qry->fetch_assoc()['paid'] ?? 0;
+    // 3. Total Paid - Prepared Statement
+    $paid_stmt = $this->conn->prepare("SELECT SUM(amount - discount) as paid FROM client_payments WHERE client_id = ?");
+    $paid_stmt->bind_param("i", $id);
+    $paid_stmt->execute();
+    $paid_result = $paid_stmt->get_result();
+    $paid_row = $paid_result->fetch_assoc();
+    $total_paid = floatval($paid_row['paid'] ?? 0);
 
     // Final Calculation: (Opening + Bills) - Payments
     $balance = ($opening + $total_billed) - $total_paid;
@@ -1063,12 +1150,15 @@ function update_system_info($key, $value, &$resp){
 }
 function get_status_by_contact(){
     extract($_POST);
-    // Mobile number se client ki latest transaction dhundhna
-    $qry = $this->conn->query("SELECT t.*, c.contact 
+    // Mobile number se client ki latest transaction dhundhna - Prepared Statement
+    $stmt = $this->conn->prepare("SELECT t.*, c.contact 
                                FROM transaction_list t 
                                INNER JOIN client_list c ON t.client_name = c.id 
-                               WHERE c.contact = '{$contact}' 
+                               WHERE c.contact = ? 
                                ORDER BY t.date_created DESC LIMIT 1");
+    $stmt->bind_param("s", $contact);
+    $stmt->execute();
+    $qry = $stmt->get_result();
     
     if($qry->num_rows > 0){
         $res = $qry->fetch_assoc();
@@ -1101,10 +1191,13 @@ function save_expense(){
     }
 }
 
-// Expense delete karne ke liye
+// Expense delete karne ke liye - Prepared Statement
 function delete_expense(){
     extract($_POST);
-    $del = $this->conn->query("DELETE FROM `expense_list` where id = '{$id}'");
+    $id = intval($id);
+    $stmt = $this->conn->prepare("DELETE FROM `expense_list` WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $del = $stmt->execute();
     if($del){
         return json_encode(['status'=>'success']);
     }else{
@@ -1207,11 +1300,16 @@ function save_attendance(){
 		extract($_POST);
 		$curr_date = isset($curr_date) ? $curr_date : date('Y-m-d');
 		
-		// VARIABLES KO DEFINE KAREIN (Fix for Undefined Variable Warning)
+		// VARIABLES KO DEFINE KAREIN
 		$user_type = $this->settings->userdata('type');
 		$user_mechanic_id = $this->settings->userdata('mechanic_id');
 		
 		$errors = 0;
+		
+		// Prepared statements for attendance
+		$check_stmt = $this->conn->prepare("SELECT id FROM attendance_list WHERE mechanic_id = ? AND curr_date = ?");
+		$update_stmt = $this->conn->prepare("UPDATE attendance_list SET status = ? WHERE mechanic_id = ? AND curr_date = ?");
+		$insert_stmt = $this->conn->prepare("INSERT INTO attendance_list (mechanic_id, status, curr_date) VALUES (?, ?, ?)");
 		
 		foreach($mechanic_id as $k => $id){
 			// SECURITY CHECK: Agar Admin nahi hai aur ID apni nahi hai, toh skip karein
@@ -1220,14 +1318,21 @@ function save_attendance(){
 			}
 
 			$stat = $status[$id];
-			// Check if record exists
-			$check = $this->conn->query("SELECT id FROM attendance_list WHERE mechanic_id = '{$id}' AND curr_date = '{$curr_date}'");
-			if($check->num_rows > 0){
-				$sql = "UPDATE attendance_list SET status = '{$stat}' WHERE mechanic_id = '{$id}' AND curr_date = '{$curr_date}'";
+			
+			// Check if record exists - Prepared Statement
+			$check_stmt->bind_param("is", $id, $curr_date);
+			$check_stmt->execute();
+			$check_result = $check_stmt->get_result();
+			
+			if($check_result->num_rows > 0){
+				// UPDATE
+				$update_stmt->bind_param("sis", $stat, $id, $curr_date);
+				$save = $update_stmt->execute();
 			}else{
-				$sql = "INSERT INTO attendance_list (mechanic_id, status, curr_date) VALUES ('{$id}', '{$stat}', '{$curr_date}')";
+				// INSERT
+				$insert_stmt->bind_param("iss", $id, $stat, $curr_date);
+				$save = $insert_stmt->execute();
 			}
-			$save = $this->conn->query($sql);
 			if(!$save) $errors++;
 		}
 
@@ -1264,7 +1369,10 @@ function save_attendance(){
 
 function delete_advance(){
     extract($_POST);
-    $del = $this->conn->query("DELETE FROM advance_payments where id = '{$id}'");
+    $id = intval($id);
+    $stmt = $this->conn->prepare("DELETE FROM advance_payments WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $del = $stmt->execute();
     if($del){
         return json_encode(['status'=>'success']);
     }else{
@@ -1273,22 +1381,21 @@ function delete_advance(){
 }
 function update_salary_rate(){
     extract($_POST);
-    // $_POST mein 'id', 'new_salary', aur 'effective_date' aayega
 
     if(empty($id) || empty($new_salary) || empty($effective_date)){
         return json_encode(array('status' => 'failed', 'msg' => 'Please fill all fields.'));
     }
 
-    // 1. Mechanic list mein current salary update karein (taaki dashboard par dikhe)
-    $update = $this->conn->query("UPDATE mechanic_list set daily_salary = '{$new_salary}' where id = '{$id}'");
+    // 1. Mechanic list mein current salary update karein - Prepared Statement
+    $update_stmt = $this->conn->prepare("UPDATE mechanic_list SET daily_salary = ? WHERE id = ?");
+    $update_stmt->bind_param("di", $new_salary, $id);
+    $update = $update_stmt->execute();
     
     if($update){
-        // 2. History table mein chuni hui Effective Date ke saath entry daalein
-        // Isse system ko pata chalega ki kis din se naya rate calculate karna hai
-        $this->conn->query("INSERT INTO `mechanic_salary_history` SET 
-            mechanic_id = '{$id}', 
-            salary = '{$new_salary}', 
-            effective_date = '{$effective_date}'");
+        // 2. History table mein entry daalein - Prepared Statement
+        $hist_stmt = $this->conn->prepare("INSERT INTO `mechanic_salary_history` (mechanic_id, salary, effective_date) VALUES (?, ?, ?)");
+        $hist_stmt->bind_param("ids", $id, $new_salary, $effective_date);
+        $hist_stmt->execute();
         
         return json_encode(array('status' => 'success'));
     }else{
@@ -1297,8 +1404,11 @@ function update_salary_rate(){
 }
 function delete_salary_history(){
     extract($_POST);
-    // id yahan record ki primary id hai
-    $delete = $this->conn->query("DELETE FROM `mechanic_salary_history` WHERE id = '{$id}'");
+    // id yahan record ki primary id hai - Prepared Statement
+    $id = intval($id);
+    $stmt = $this->conn->prepare("DELETE FROM `mechanic_salary_history` WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $delete = $stmt->execute();
     if($delete){
         // DELETE karne ke baad, humein mechanic_list table mein 'daily_salary' 
         // ko update karna hoga jo sabse latest bachi hui salary hai.
@@ -1313,20 +1423,32 @@ function update_history_entry(){
     // h_salary = nayi salary
     // h_date = nayi effective date
     
-    $update = $this->conn->query("UPDATE `mechanic_salary_history` SET 
-        salary = '{$h_salary}', 
-        effective_date = '{$h_date}' 
-        WHERE id = '{$h_id}'");
+    // Update history entry - Prepared Statement
+    $update_stmt = $this->conn->prepare("UPDATE `mechanic_salary_history` SET salary = ?, effective_date = ? WHERE id = ?");
+    $update_stmt->bind_param("dsi", $h_salary, $h_date, $h_id);
+    $update = $update_stmt->execute();
     
     if($update){
-        // Sabse latest salary ko mechanic_list mein bhi update kar dete hain
-        // Taaki main table aur history humesha sync rahein
-        $m_id_query = $this->conn->query("SELECT mechanic_id FROM `mechanic_salary_history` WHERE id = '{$h_id}'")->fetch_array();
-        $m_id = $m_id_query['mechanic_id'];
+        // Get mechanic_id from history - Prepared Statement
+        $m_id_stmt = $this->conn->prepare("SELECT mechanic_id FROM `mechanic_salary_history` WHERE id = ?");
+        $m_id_stmt->bind_param("i", $h_id);
+        $m_id_stmt->execute();
+        $m_id_result = $m_id_stmt->get_result();
+        $m_id_row = $m_id_result->fetch_array();
+        $m_id = $m_id_row['mechanic_id'];
         
-        // Latest record nikalein
-        $latest = $this->conn->query("SELECT salary FROM `mechanic_salary_history` WHERE mechanic_id = '$m_id' ORDER BY effective_date DESC, id DESC LIMIT 1")->fetch_array();
-        $this->conn->query("UPDATE `mechanic_list` SET daily_salary = '{$latest['salary']}' WHERE id = '$m_id'");
+        // Get latest salary - Prepared Statement
+        $latest_stmt = $this->conn->prepare("SELECT salary FROM `mechanic_salary_history` WHERE mechanic_id = ? ORDER BY effective_date DESC, id DESC LIMIT 1");
+        $latest_stmt->bind_param("i", $m_id);
+        $latest_stmt->execute();
+        $latest_result = $latest_stmt->get_result();
+        $latest_row = $latest_result->fetch_array();
+        $latest_salary = $latest_row['salary'];
+        
+        // Update mechanic list - Prepared Statement
+        $mech_update_stmt = $this->conn->prepare("UPDATE `mechanic_list` SET daily_salary = ? WHERE id = ?");
+        $mech_update_stmt->bind_param("di", $latest_salary, $m_id);
+        $mech_update_stmt->execute();
         
         return json_encode(array('status' => 'success'));
     }

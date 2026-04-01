@@ -4,12 +4,12 @@ require_once '../classes/CsrfProtection.php';
 
 class Login extends DBConnection {
 	private $settings;
+	
 	public function __construct(){
 		global $_settings;
 		$this->settings = $_settings;
 
 		parent::__construct();
-		ini_set('display_error', 1);
 	}
 	public function __destruct(){
 		parent::__destruct();
@@ -52,7 +52,9 @@ class Login extends DBConnection {
 				if (md5($password) === $password_hash) {
 					// Upgrade password to new secure hash
 					$new_hash = password_hash($password, PASSWORD_DEFAULT);
-					$this->conn->query("UPDATE users SET password = '$new_hash' WHERE id = '{$row['id']}'");
+					$update_stmt = $this->conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+					$update_stmt->bind_param("si", $new_hash, $row['id']);
+					$update_stmt->execute();
 					
 					$this->set_user_session($row);
 					return json_encode(array('status'=>'success'));
@@ -115,7 +117,9 @@ class Login extends DBConnection {
 				// Legacy MD5
 				if (md5($password) === $password_hash) {
 					$new_hash = password_hash($password, PASSWORD_DEFAULT);
-					$this->conn->query("UPDATE agent_list SET password = '$new_hash' WHERE id = '{$row['id']}'");
+					$update_stmt = $this->conn->prepare("UPDATE agent_list SET password = ? WHERE id = ?");
+					$update_stmt->bind_param("si", $new_hash, $row['id']);
+					$update_stmt->execute();
 					return $this->agent_login_success($row);
 				}
 			}
