@@ -1,0 +1,96 @@
+/* Mobile View Toggle CSS */
+/* Add this to your main CSS file or include in page head */
+
+.view-toggle-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.view-toggle-btn {
+    padding: 8px 16px;
+    border: 1px solid #6c757d;
+    background: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-toggle-btn:hover {
+    background: #f8f9fa;
+}
+
+.view-toggle-btn.active {
+    background: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+/* Table View - Default */
+.data-table-view {
+    display: table;
+}
+
+/* Card View - Hidden on desktop */
+.data-card-view {
+    display: none;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    /* Show card view by default on mobile */
+    .data-card-view {
+        display: block;
+    }
+    .data-table-view {
+        display: none;
+    }
+    .data-card-view.show-table {
+        display: table;
+    }
+    .data-table-view.show-cards {
+        display: none;
+    }
+    
+    /* Card styling for mobile */
+    .data-card-view .card {
+        margin-bottom: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .data-card-view .card-body {
+        padding: 15px;
+    }
+    
+    .data-card-view .card-title {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .data-card-view .card-text {
+        font-size: 14px;
+    }
+    
+    /* Make cards scrollable horizontally if needed */
+    .card-scroll-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (min-width: 769px) {
+    /* Always show both toggle buttons on desktop but they won't do anything */
+    .data-card-view {
+        display: none !important;
+    }
+    .data-table-view {
+        display: table !important;
+    }
+}
+</style>

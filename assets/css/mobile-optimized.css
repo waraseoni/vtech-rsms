@@ -1,0 +1,211 @@
+/* ==============================================
+   MOBILE-FRIENDLY IMPROVEMENTS
+   ============================================== */
+
+/* 1. MOBILE NAVIGATION */
+@media (max-width: 991px) {
+    /* Adjust main content for mobile sidebar */
+    .content-wrapper {
+        margin-left: 0 !important;
+    }
+    
+    .push-menu-btn {
+        display: block !important;
+    }
+}
+
+/* 2. TABLES - Horizontal scroll + better mobile display */
+@media (max-width: 768px) {
+    /* Make tables scrollable */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #dee2e6;
+    }
+    
+    /* Larger touch targets for table */
+    .table td, .table th {
+        padding: 12px 8px !important;
+        font-size: 14px;
+    }
+    
+    /* Hide less important columns on mobile */
+    .hide-mobile {
+        display: none !important;
+    }
+    
+    /* Make action buttons larger on mobile */
+    .btn-sm, .btn-group-sm > .btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    /* DataTables mobile optimization */
+    .dataTables_wrapper .form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 10px;
+    }
+}
+
+/* 3. FORMS - Bigger inputs + better spacing */
+@media (max-width: 768px) {
+    /* Larger input fields for touch */
+    .form-control, .form-select {
+        min-height: 46px;
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 12px 15px;
+    }
+    
+    /* Better spacing between form fields */
+    .form-group, .mb-3 {
+        margin-bottom: 20px !important;
+    }
+    
+    /* Label size */
+    .form-label, label {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    /* Bigger checkboxes and radios for touch */
+    .form-check-input {
+        width: 22px;
+        height: 22px;
+    }
+    
+    .form-check-label {
+        padding-left: 30px;
+        font-size: 15px;
+    }
+    
+    /* Select2 mobile optimization */
+    .select2-container--bootstrap4 .select2-selection--single,
+    .select2-container--bootstrap4 .select2-selection--multiple {
+        min-height: 46px;
+        padding: 8px 12px;
+    }
+    
+    .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
+        font-size: 14px;
+        padding: 4px 8px;
+    }
+    
+    /* Button size for touch */
+    .btn {
+        padding: 12px 24px;
+        font-size: 16px;
+        min-height: 46px;
+    }
+    
+    .btn-sm {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
+/* 4. CARDS & CONTAINERS */
+@media (max-width: 768px) {
+    /* Stack cards vertically */
+    .row > .col, .row > [class*="col-"] {
+        margin-bottom: 15px;
+    }
+    
+    /* Better card padding on mobile */
+    .card-body {
+        padding: 15px;
+    }
+    
+    /* Card shadows reduced on mobile for performance */
+    .card {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Modals full screen on mobile */
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100vh;
+    }
+    
+    .modal-content {
+        border-radius: 0;
+        height: 100vh;
+    }
+    
+    .modal-body {
+        overflow-y: auto;
+    }
+}
+
+/* 5. FONT SIZES - Readable on all devices */
+@media (max-width: 768px) {
+    /* Base font size */
+    body {
+        font-size: 15px;
+        line-height: 1.5;
+    }
+    
+    /* Headings */
+    h1, .h1 { font-size: 1.75rem; }
+    h2, .h2 { font-size: 1.5rem; }
+    h3, .h3 { font-size: 1.25rem; }
+    h4, .h4 { font-size: 1.1rem; }
+    h5, .h5 { font-size: 1rem; }
+    h6, .h6 { font-size: 0.9rem; }
+    
+    /* Card titles */
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Navigation */
+    .nav-link {
+        padding: 12px 15px;
+        font-size: 15px;
+    }
+    
+    /* Table text */
+    .table {
+        font-size: 14px;
+    }
+    
+    /* Badge sizes */
+    .badge {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+}
+
+/* Touch-friendly everywhere */
+@media (max-width: 768px) {
+    /* Minimum touch target size 44px */
+    a, button, input, select, [role="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Better spacing for clickable elements */
+    .list-group-item, .nav-item, .dropdown-item {
+        padding: 12px 15px;
+    }
+}
+
+/* Improve horizontal scroll indicator */
+.table-responsive::after {
+    display: none;
+}
+
+/* Show scroll indicator for tables */
+.table-responsive:hover::after {
+    content: '← Swipe →';
+    display: block;
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    font-size: 12px;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 4px;
+}

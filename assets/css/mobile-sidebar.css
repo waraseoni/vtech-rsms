@@ -1,0 +1,32 @@
+@media (max-width: 991px) {
+    /* Make sidebar slide in from left */
+    .main-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0;
+        z-index: 99990 !important;
+        width: 180px !important;
+        height: 100vh !important;
+    }
+    
+    /* Default state - hidden */
+    .main-sidebar {
+        transform: translateX(-100%) !important;
+    }
+    
+    /* Show state - visible */
+    .main-sidebar.show {
+        transform: translateX(0) !important;
+    }
+    
+    /* Smooth transition */
+    .main-sidebar {
+        transition: transform 0.3s ease-in-out !important;
+    }
+    
+    /* Sidebar content - scrollable */
+    .sidebar {
+        overflow-y: auto !important;
+        height: 100% !important;
+    }
+}
