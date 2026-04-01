@@ -14,9 +14,9 @@
     transform: rotate(180deg);
     transition: 0.3s;
   }
-  /* Hamburger button - always visible */
+  /* Hamburger button - only visible on mobile */
   .hamburger-btn {
-    display: inline-flex !important;
+    display: none !important;
     background: none !important;
     border: none !important;
     color: inherit !important;
@@ -24,12 +24,20 @@
     padding: 5px 10px !important;
     cursor: pointer !important;
   }
+  /* Hide hamburger container on desktop */
+  .hamburger-mobile-only {
+    display: none !important;
+  }
   /* Floating Profile Button - Mobile */
   .fab-profile {
     display: none;
     position: relative;
   }
   @media (max-width: 991px) {
+    /* Show hamburger on mobile */
+    .hamburger-mobile-only {
+      display: inline-flex !important;
+    }
     /* Hamburger button */
     .hamburger-btn {
         color: #fff !important;
@@ -127,7 +135,7 @@
     .main-header .navbar-brand {
         color: #fff !important;
     }
-    /* Hamburger button always visible on mobile */
+    /* Hamburger button styles for mobile */
     .hamburger-btn {
         display: inline-flex !important;
         color: #fff !important;
@@ -139,12 +147,6 @@
     }
     .hamburger-btn i {
         font-size: 18px !important;
-    }
-    /* Navbar brand - shorter text */
-    .main-header .navbar-brand {
-        font-size: 0.75rem !important;
-        padding: 0 4px !important;
-        line-height: 1.2 !important;
     }
   }
 </style>
@@ -163,7 +165,7 @@
 		</li>
 
         <!-- Mobile Hamburger Button -->
-        <li class="nav-item">
+        <li class="nav-item hamburger-mobile-only">
           <button class="hamburger-btn" onclick="toggleSidebar(event)" type="button">
             <i class="fas fa-bars"></i>
           </button>

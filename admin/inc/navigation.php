@@ -152,14 +152,14 @@
 <style>
 	/* Default AdminLTE sidebar width is 250px */
 .main-sidebar {
-    width: 220px !important;
+    width: 250px !important;
 }
 
 /* Content wrapper adjustment */
 .content-wrapper,
 .main-footer,
 .main-header {
-    margin-left: 220px !important;
+    margin-left: 250px !important;
 }
 
 /* Collapsed state */
@@ -174,7 +174,7 @@
 }
 	
     .main-sidebar { background: #343a40 !important; }
-    .brand-link { background: linear-gradient(180deg, #007bff, #0056b3) !important; }
+    .brand-link { background: linear-gradient(180deg, #007bff, #0056b3) !important; padding: 10px 12px !important; }
     .brand-text { font-size: 1rem; font-weight: 500; }
 
     .nav-sidebar .nav-link {
