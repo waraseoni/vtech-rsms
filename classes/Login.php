@@ -24,7 +24,7 @@ class Login extends DBConnection {
 			return json_encode(array('status'=>'failed', 'msg'=>'Username and password required'));
 		}
 
-		$stmt = $this->conn->prepare("SELECT id, username, password, firstname, lastname, type from users where username = ?");
+		$stmt = $this->conn->prepare("SELECT id, username, password, firstname, lastname, type, mechanic_id, avatar from users where username = ?");
 		$stmt->bind_param('s', $username);
 		$stmt->execute();
 		$result = $stmt->get_result();
@@ -63,6 +63,12 @@ class Login extends DBConnection {
 		$this->settings->set_userdata('lastname', $row['lastname']);
 		$this->settings->set_userdata('type', $row['type']);
 		$this->settings->set_userdata('login_type', 1);
+		if(isset($row['mechanic_id'])) {
+			$this->settings->set_userdata('mechanic_id', $row['mechanic_id']);
+		}
+		if(isset($row['avatar'])) {
+			$this->settings->set_userdata('avatar', $row['avatar']);
+		}
 	}
 
 	public function logout(){
