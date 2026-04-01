@@ -265,6 +265,18 @@ window.addEventListener('resize', function() {
         if (sidebar && !body.classList.contains('sidebar-open')) {
             sidebar.style.transform = 'translateX(-100%)';
         }
+    } else {
+        // Desktop: Reset sidebar to default state
+        if (sidebar) {
+            sidebar.classList.remove('show');
+            sidebar.style.transform = '';
+            sidebar.style.position = '';
+            sidebar.style.left = '';
+            sidebar.style.top = '';
+            sidebar.style.height = '';
+            sidebar.style.width = '';
+        }
+        body.classList.remove('sidebar-open');
     }
 });
 

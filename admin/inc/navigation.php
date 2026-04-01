@@ -155,6 +155,21 @@
     width: 250px !important;
 }
 
+/* Desktop: default to table view, hide view toggle on PC
+   and ensure desktop tables are shown while card views are hidden. */
+@media (min-width: 992px) {
+    .view-toggle-wrapper { display: none !important; }
+    .desktop-table-view { display: block !important; }
+    .card-view { display: none !important; }
+}
+
+/* Mobile: show both options for small screens */
+@media (max-width: 991px) {
+    .view-toggle-wrapper { display: inline-flex !important; }
+    .desktop-table-view { display: none !important; }
+    .card-view { display: block !important; }
+}
+
 /* Content wrapper adjustment */
 .content-wrapper,
 .main-footer,
@@ -298,7 +313,160 @@
         display: block;
     }
 }
+
+/* Desktop: Always show Table, hide view toggle - FORCE OVERRIDE */
+@media (min-width: 992px) {
+    .view-toggle-wrapper { display: none !important; }
+    .desktop-table-view { display: block !important; }
+    .desktop-table-view .table-responsive { display: block !important; }
+    .card-view { display: none !important; }
+    .table-responsive { display: block !important; }
+    /* Force all tables to show on desktop */
+    table.table { display: table !important; }
+    table.table-responsive { display: block !important; }
+    /* Hide mobile card view on desktop */
+    #mobile-view-container { display: none !important; }
+    #clientCardsContainer { display: none !important; }
+}
+
+/* Mobile: Show both toggles, default to Card */
+@media (max-width: 991px) {
+    .view-toggle-wrapper { display: inline-flex !important; }
+    .desktop-table-view { display: none !important; }
+    .desktop-table-view .table-responsive { display: none !important; }
+    /* card-view default display - JS will override this */
+    .card-view { display: block !important; }
+}
 </style>
+
+<script>
+(function() {
+    var page = '<?php echo isset($_GET['page']) ? $_GET['page'] : 'home' ?>';
+    page = page.replace(/\//g, '_');
+    
+    var isDesktop = function() { return window.innerWidth >= 992; };
+    
+    function getStorageKey() {
+        return 'view_mode_' + page;
+    }
+    
+    function applyView(view) {
+        // Force override CSS for toggle using !important
+        if (!isDesktop()) {
+            document.querySelectorAll('.desktop-table-view').forEach(function(el) {
+                el.style.setProperty('display', view === 'table' ? 'block' : 'none', 'important');
+            });
+            document.querySelectorAll('.desktop-table-view .table-responsive').forEach(function(el) {
+                el.style.setProperty('display', view === 'table' ? 'block' : 'none', 'important');
+            });
+            document.querySelectorAll('.card-view').forEach(function(el) {
+                el.style.setProperty('display', view === 'table' ? 'none' : 'block', 'important');
+            });
+            // Mobile containers
+            document.querySelectorAll('#mobile-view-container').forEach(function(el) {
+                el.style.setProperty('display', view === 'table' ? 'none' : 'block', 'important');
+            });
+            document.querySelectorAll('#clientCardsContainer').forEach(function(el) {
+                el.style.setProperty('display', view === 'table' ? 'none' : 'block', 'important');
+            });
+        } else {
+            // Desktop: force table, hide card
+            document.querySelectorAll('.desktop-table-view').forEach(function(el) {
+                el.style.setProperty('display', 'block', 'important');
+            });
+            document.querySelectorAll('.desktop-table-view .table-responsive').forEach(function(el) {
+                el.style.setProperty('display', 'block', 'important');
+            });
+            document.querySelectorAll('.card-view').forEach(function(el) {
+                el.style.setProperty('display', 'none', 'important');
+            });
+            document.querySelectorAll('#mobile-view-container').forEach(function(el) {
+                el.style.setProperty('display', 'none', 'important');
+            });
+            document.querySelectorAll('#clientCardsContainer').forEach(function(el) {
+                el.style.setProperty('display', 'none', 'important');
+            });
+        }
+        
+        var tb = document.getElementById('btn-table-view');
+        var cb = document.getElementById('btn-card-view');
+        if(tb) tb.classList.toggle('btn-primary', view === 'table');
+        if(tb) tb.classList.toggle('btn-outline-secondary', view !== 'table');
+        if(cb) cb.classList.toggle('btn-primary', view === 'card');
+        if(cb) cb.classList.toggle('btn-outline-secondary', view !== 'card');
+    }
+    
+    function saveView(view) {
+        localStorage.setItem(getStorageKey(), view);
+    }
+    
+    function loadView() {
+        return localStorage.getItem(getStorageKey());
+    }
+    
+    function handleResize() {
+        console.log('Resize event: isDesktop =', isDesktop());
+        if(isDesktop()) {
+            // Force table view on desktop - clear any saved mobile preference
+            document.body.classList.remove('show-card');
+            localStorage.setItem(getStorageKey(), 'table');
+            applyView('table');
+        } else {
+            var v = loadView() || 'card';
+            applyView(v);
+        }
+    }
+    
+    // Debounce resize event to avoid multiple rapid calls
+    var resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(handleResize, 100);
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Always force table on desktop load
+        if(isDesktop()) {
+            localStorage.setItem(getStorageKey(), 'table');
+            applyView('table');
+        } else {
+            var v = loadView() || 'card';
+            applyView(v);
+        }
+        
+        var tb = document.getElementById('btn-table-view');
+        var cb = document.getElementById('btn-card-view');
+        
+        if(tb) {
+            console.log('Table button found');
+            tb.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Table button clicked, applying table view');
+                applyView('table');
+                saveView('table');
+            });
+        } else {
+            console.log('Table button NOT found');
+        }
+        if(cb) {
+            console.log('Card button found');
+            cb.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Card button clicked, applying card view');
+                applyView('card');
+                saveView('card');
+            });
+        } else {
+            console.log('Card button NOT found');
+        }
+    });
+    
+    window.toggleView = function(view) {
+        applyView(view);
+        saveView(view);
+    };
+})();
+</script>
 
 <script>
 $(function () {

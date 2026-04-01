@@ -15,11 +15,24 @@
         border-color: #0d6efd;
     }
     
-    /* Fast toggle using body class */
-    body.show-card .table-responsive { display: none !important; }
-    body.show-card .card-view { display: block !important; }
-    body.show-table .card-view { display: none !important; }
-
+    /* Header Buttons Alignment */
+    .card-header .card-tools {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .card-header .card-tools > * {
+        margin: 2px 0;
+    }
+    .card-header .desktop-export-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+    .card-header .export-btn {
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+    
     /* --- COMMON STYLES --- */
     .address-text { font-size: 0.95rem; color: #444; line-height: 1.3; }
 
@@ -280,10 +293,8 @@
         .no-results { text-align: center; padding: 40px 20px; color: #6c757d; font-size: 1.1rem; margin: 0 10px; }
     }
 
-    @media (min-width: 769px) {
-        .card-view, .mobile-export-buttons { display: none !important; }
-        .table-responsive { display: block !important; }
-        .desktop-export-buttons { display: flex !important; }
+    @media (min-width: 992px) {
+        /* Desktop: Let navigation.php handle view toggle - remove conflicting rules */
     }
 </style>
 
@@ -380,7 +391,7 @@ try {
             </div>
 
             <!-- Desktop Table (with avatars) -->
-            <div class="table-responsive">
+            <div class="table-responsive desktop-table-view">
                 <table class="table table-hover table-striped table-bordered" id="client-list-main">
                     <thead class="bg-navy">
                         <tr>

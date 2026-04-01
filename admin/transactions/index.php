@@ -13,16 +13,6 @@
         border-color: #0d6efd;
     }
     
-    /* Fast toggle using body class */
-    body.show-card .desktop-filter-form,
-    body.show-card .table-responsive,
-    body.show-card #transaction-list,
-    body.show-card .dataTables_wrapper,
-    body.show-card .desktop-export-buttons { display: none !important; }
-    body.show-card #mobile-view-container { display: block !important; }
-    
-    body.show-table #mobile-view-container { display: none !important; }
-    
     /* Common Styles */
     .bg-navy { background-color: #001f3f !important; color: white; }
     
@@ -1086,7 +1076,7 @@
             <hr class="desktop-only">
 
             <!-- Desktop Table View -->
-            <div class="table-responsive">
+            <div class="table-responsive desktop-table-view">
                 <table class="table table-hover table-striped table-bordered align-middle" id="transaction-list">
                     <colgroup>
     <col width="4%">
