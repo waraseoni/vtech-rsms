@@ -161,7 +161,7 @@ Class Master extends DBConnection {
         $avatar = $_FILES['avatar'];
         $ext = pathinfo($avatar['name'], PATHINFO_EXTENSION);
         $fname = 'avatar_'.(isset($_POST['id']) ? $_POST['id'] : time()).'.'.$ext;
-        $upload_path = '../uploads/avatars/';
+        $upload_path = base_app . 'uploads/avatars/';
         
         // Create directory if not exists
         if(!is_dir($upload_path)){
@@ -173,7 +173,8 @@ Class Master extends DBConnection {
         $max_size = 2097152; // 2MB
         
         if(in_array(strtolower($ext), $allowed_types) && $avatar['size'] <= $max_size){
-            if(move_uploaded_file($avatar['tmp_name'], $upload_path.$fname)){
+            // Resize and compress image (max 300x300, 70% quality)
+            if(resize_image($avatar['tmp_name'], $upload_path.$fname, 300, 300, 70)){
                 $avatar_file = $fname;
                 
                 // Delete old avatar if exists and not default
@@ -254,7 +255,7 @@ public function save_mechanic_photo(){
     }
     
     $id = $_POST['id'];
-    $upload_path = '../uploads/avatars/';
+    $upload_path = base_app . 'uploads/avatars/';
     
     // Create directory if not exists
     if(!is_dir($upload_path)){
@@ -290,7 +291,8 @@ public function save_mechanic_photo(){
             $old_avatar = 'default-avatar.jpg';
         }
         
-        if(move_uploaded_file($avatar['tmp_name'], $upload_path.$fname)){
+        // Resize and compress image (max 300x300, 70% quality)
+        if(resize_image($avatar['tmp_name'], $upload_path.$fname, 300, 300, 70)){
             // Update database
             $update = $this->conn->query("UPDATE mechanic_list SET avatar = '{$fname}' WHERE id = '{$id}'");
             

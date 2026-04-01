@@ -1,6 +1,5 @@
 <?php
-require_once('../../config.php');
-require_once('../../classes/CsrfProtection.php');
+// Config already included by admin/index.php
 
 // Variables initialize karein taaki error na aaye
 $from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");

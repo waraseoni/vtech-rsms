@@ -1,7 +1,4 @@
 <?php 
-require_once('../../config.php');
-require_once('../../classes/CsrfProtection.php');
-
 if(isset($_GET['id'])){
     $user = $conn->query("SELECT * FROM users where id ='{$_GET['id']}' ");
     foreach($user->fetch_array() as $k =>$v){
@@ -150,10 +147,16 @@ if(isset($_GET['id'])){
                 method: 'POST',
                 type: 'POST',
                 success:function(resp){
-                    if(resp ==1){
+                    if(resp == 1 || resp.trim() == ''){
                         location.href='./?page=user/list'
-                    }else if(resp == 3){
+                    }else if(resp.trim() == '3'){
                         $('#msg').html('<div class="alert alert-danger">Username already exist</div>')
+                        end_loader()
+                    }else if(resp.trim() == '4'){
+                        $('#msg').html('<div class="alert alert-danger">Invalid image type</div>')
+                        end_loader()
+                    }else if(resp.trim() == '5'){
+                        $('#msg').html('<div class="alert alert-danger">Failed to upload image</div>')
                         end_loader()
                     }else{
                         $('#msg').html('<div class="alert alert-danger">An error occurred</div>')

@@ -164,4 +164,116 @@ function validate_upload($file, $allowed_types = ['jpg', 'jpeg', 'png', 'gif', '
 function validate_image_upload($file, $max_size = 2097152) { // 2MB default
     return validate_upload($file, ['jpg', 'jpeg', 'png', 'gif'], $max_size);
 }
+
+// Resize and compress image for avatars
+// $max_width, $max_height: max dimensions (keeps aspect ratio)
+// $quality: JPEG quality (0-100, default 70)
+function resize_image($source_path, $destination_path, $max_width = 300, $max_height = 300, $quality = 70) {
+    $ext = strtolower(pathinfo($destination_path, PATHINFO_EXTENSION));
+    
+    // Get image info
+    $image_info = getimagesize($source_path);
+    if ($image_info === false) {
+        error_log("resize_image: getimagesize failed for " . $source_path);
+        return false;
+    }
+    
+    $width = $image_info[0];
+    $height = $image_info[1];
+    $mime = $image_info['mime'];
+    
+    // Calculate new dimensions (maintain aspect ratio)
+    $ratio = min($max_width / $width, $max_height / $height);
+    if ($ratio >= 1) {
+        // Image is already smaller than max dimensions
+        $new_width = $width;
+        $new_height = $height;
+    } else {
+        $new_width = round($width * $ratio);
+        $new_height = round($height * $ratio);
+    }
+    
+    // Create new image resource
+    $new_image = imagecreatetruecolor($new_width, $new_height);
+    if (!$new_image) {
+        error_log("resize_image: imagecreatetruecolor failed");
+        return false;
+    }
+    
+    // Preserve transparency for PNG/GIF
+    if ($ext === 'png' || $ext === 'gif') {
+        imagealphablending($new_image, false);
+        imagesavealpha($new_image, true);
+        $transparent = imagecolorallocatealpha($new_image, 0, 0, 0, 127);
+        imagefill($new_image, 0, 0, $transparent);
+    }
+    
+    // Load source image based on type
+    $source = null;
+    switch ($mime) {
+        case 'image/jpeg':
+            $source = imagecreatefromjpeg($source_path);
+            break;
+        case 'image/png':
+            $source = imagecreatefrompng($source_path);
+            break;
+        case 'image/gif':
+            $source = imagecreatefromgif($source_path);
+            break;
+        default:
+            imagedestroy($new_image);
+            error_log("resize_image: unsupported mime type " . $mime);
+            return false;
+    }
+    
+    if (!$source) {
+        imagedestroy($new_image);
+        error_log("resize_image: imagecreatefrom failed for " . $source_path);
+        return false;
+    }
+    
+    // Resize with resampling (smooth result)
+    $resample_result = imagecopyresampled($new_image, $source, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
+    if (!$resample_result) {
+        error_log("resize_image: imagecopyresampled failed");
+        imagedestroy($source);
+        imagedestroy($new_image);
+        return false;
+    }
+    
+    // Ensure directory exists
+    $dir = dirname($destination_path);
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+    
+    // Save compressed image
+    $success = false;
+    switch ($ext) {
+        case 'jpg':
+        case 'jpeg':
+            $success = imagejpeg($new_image, $destination_path, $quality);
+            break;
+        case 'png':
+            // PNG quality is different (0-9, where 9 is smallest)
+            $png_quality = round((100 - $quality) / 11.11);
+            $success = imagepng($new_image, $destination_path, $png_quality);
+            break;
+        case 'gif':
+            $success = imagegif($new_image, $destination_path);
+            break;
+    }
+    
+    // Cleanup
+    imagedestroy($source);
+    imagedestroy($new_image);
+    
+    if (!$success) {
+        error_log("resize_image: failed to save image to " . $destination_path);
+        return false;
+    }
+    
+    error_log("resize_image: SUCCESS - saved to " . $destination_path);
+    return true;
+}
 ?>

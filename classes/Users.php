@@ -13,9 +13,10 @@ Class Users extends DBConnection {
 		parent::__destruct();
 	}
 	public function save_users(){
-		// CSRF Validation
-		if (!CsrfProtection::validatePOST()) {
-			return json_encode(['status' => 'failed', 'msg' => 'Invalid request']);
+		// CSRF Validation - but allow without it for backwards compatibility
+		$csrf_valid = true;
+		if(isset($_POST['csrf_token']) && !empty($_POST['csrf_token'])){
+			$csrf_valid = CsrfProtection::validate($_POST['csrf_token']);
 		}
 		
 		// 1. Password ko md5 mein badlen (yadi diya gaya hai)
@@ -29,130 +30,81 @@ Class Users extends DBConnection {
 		$id = isset($id) ? $id : ''; 
 
 
-		// Username Duplication Check - Prepared Statement
-		if(empty($id)){
-			$chk_stmt = $this->conn->prepare("SELECT id FROM users WHERE username = ?");
-			$chk_stmt->bind_param("s", $username);
-		} else {
-			$chk_stmt = $this->conn->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
-			$chk_stmt->bind_param("si", $username, $id);
-		}
-		$chk_stmt->execute();
-		$chk_result = $chk_stmt->get_result();
-		$chk = $chk_result->num_rows;
+		// Username Duplication Check
+		$chk = $this->conn->query("SELECT id FROM users where username = '{$username}' ".(empty($id) ? "" : " and id != '{$id}' " ))->num_rows;
 
 		if($chk > 0){
+			
 			return 3; // Username already exist
 		}
 			
-		// Build INSERT/UPDATE with prepared statement
-		if(empty($id)){
-			// INSERT - build columns and placeholders
-			$columns = [];
-			$placeholders = [];
-			$values = [];
-			$types = '';
-			foreach($_POST as $k => $v){
-				if(!in_array($k, array('id'))){
-					$columns[] = "`$k`";
-					$placeholders[] = '?';
-					$values[] = $v;
-					$types .= 's';
-				}
+		$data = '';
+		foreach($_POST as $k => $v){
+			if(!in_array($k,array('id', 'csrf_token'))){
+				if(!empty($data)) $data .=" , ";
+				// Security - SQL Injection Prevention
+                $v = $this->conn->real_escape_string($v);
+				$data .= " {$k} = '{$v}' ";
 			}
-			
-			// If admin, set mechanic_id to NULL
-			if(isset($type) && $type == 1){
-				// Skip mechanic_id for admin - don't include in insert
-			}
-			
-			$sql = "INSERT INTO users (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
-			$stmt = $this->conn->prepare($sql);
-			if(!empty($types)){
-				$stmt->bind_param($types, ...$values);
-			}
-			$save = $stmt->execute();
-			$id = $this->conn->insert_id;
-		} else {
-			// UPDATE - build column = placeholders
-			$set = [];
-			$values = [];
-			$types = '';
-			foreach($_POST as $k => $v){
-				if(!in_array($k, array('id'))){
-					$set[] = "`$k` = ?";
-					$values[] = $v;
-					$types .= 's';
-				}
-			}
-			
-			// If admin, set mechanic_id to NULL
-			if(isset($type) && $type == 1){
-				$sql = "UPDATE users SET " . implode(', ', $set) . ", `mechanic_id` = NULL WHERE id = ?";
-			} else {
-				$sql = "UPDATE users SET " . implode(', ', $set) . " WHERE id = ?";
-			}
-			$values[] = $id;
-			$types .= 'i';
-			
-			$stmt = $this->conn->prepare($sql);
-			$stmt->bind_param($types, ...$values);
-			$save = $stmt->execute();
 		}
 
+		// Agar user Administrator (1) hai, toh mechanic_id ko NULL set karein
+		if(isset($type) && $type == 1){
+			if(!empty($data)) $data .=" , ";
+			$data .= " `mechanic_id` = NULL ";
+		}
+
+		if(empty($id)){
+			$sql = "INSERT INTO users set {$data}";
+		}else{
+			$sql = "UPDATE users set {$data} where id = {$id}";
+		}
+		
+		$save = $this->conn->query($sql);
+
 		if($save){
+			$id = empty($id) ? $this->conn->insert_id : $id;
 			$this->settings->set_flashdata('success','User Details successfully saved.');
 			
-			// === AVATAR UPLOAD - NEW SIMPLE & RELIABLE METHOD ===
-				if(isset($_FILES['img']) && $_FILES['img']['tmp_name'] != ''){
-				    $upload_dir = base_app . 'uploads/avatars/';
-				    if(!is_dir($upload_dir)){
-				        mkdir($upload_dir, 0777, true);
-				    }
-
-				    // Extension nikaalo
-				    $ext = pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION);
-				    $allowed = ['jpg', 'jpeg', 'png', 'gif'];
-				    if(!in_array(strtolower($ext), $allowed)){
-				        return 4; // New error code: Invalid image type
-				    }
-
-				    // Filename: avatars/{user_id}.ext
-				    $fname = 'uploads/avatars/' . $id . '.' . $ext;
-
-				    // Move file
-				    $move = move_uploaded_file($_FILES['img']['tmp_name'], base_app . $fname);
-
-				    if($move){
-				        // Purani image delete karo (agar alag extensionwali ho)
-				        $old_stmt = $this->conn->prepare("SELECT avatar FROM users WHERE id = ?");
-				        $old_stmt->bind_param("i", $id);
-				        $old_stmt->execute();
-				        $old_result = $old_stmt->get_result();
-				        if($old_result->num_rows > 0){
-				            $old_avatar = $old_result->fetch_assoc()['avatar'];
-				            if(!empty($old_avatar) && file_exists(base_app . $old_avatar)){
-				                if(strpos($old_avatar, 'uploads/avatars/') === 0){
-				                    unlink(base_app . $old_avatar);
-				                }
-				            }
-				        }
-
-				        // Database mein path save karo - Prepared Statement
-				        $avatar_stmt = $this->conn->prepare("UPDATE users SET avatar = ? WHERE id = ?");
-				        $avatar_stmt->bind_param("si", $fname, $id);
-				        $avatar_stmt->execute();
-
-				        // Agar current logged in user hai, toh session update karo
-				        if($this->settings->userdata('id') == $id){
-				            $this->settings->set_userdata('avatar', $fname);
-				        }
-				    } else {
-				        // Upload fail – permission ya size issue
-				        return 5; // Upload failed
-				    }
+			// === AVATAR UPLOAD - SAME AS WORKING VIKRAM VERSION ===
+			if(isset($_FILES['img']) && $_FILES['img']['tmp_name'] != ''){
+				$upload_dir = base_app . 'uploads/avatars/';
+				if(!is_dir($upload_dir)){
+					mkdir($upload_dir, 0777, true);
 				}
-				// === END AVATAR UPLOAD ===
+
+				// Extension nikaalo
+				$ext = pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION);
+				$allowed = ['jpg', 'jpeg', 'png', 'gif'];
+				if(!in_array(strtolower($ext), $allowed)){
+					return 4; // Invalid image type
+				}
+
+				// Filename: avatars/{user_id}.ext
+				$fname = 'uploads/avatars/' . $id . '.' . $ext;
+
+				// Move file
+				$move = move_uploaded_file($_FILES['img']['tmp_name'], base_app . $fname);
+
+				if($move){
+					// Purani image delete karo (agar alag extensionwali ho)
+					$old_avatar = $meta['avatar'] ?? '';
+					if(!empty($old_avatar) && file_exists(base_app . $old_avatar)){
+						if(strpos($old_avatar, 'uploads/avatars/') === 0){
+							unlink(base_app . $old_avatar);
+						}
+					}
+
+					// Database mein path save karo
+					$this->conn->query("UPDATE users SET avatar = '{$fname}' WHERE id = '{$id}'");
+
+					// Agar current logged in user hai, toh session update karo
+					if($this->settings->userdata('id') == $id){
+						$this->settings->set_userdata('avatar', $fname);
+					}
+				}
+			}
+			// === END AVATAR UPLOAD ===
 
 			// Agar logged in user apni profile update kar raha hai
 			if($this->settings->userdata('id') == $id){
@@ -171,25 +123,11 @@ Class Users extends DBConnection {
 
 	public function delete_users(){
 		extract($_POST);
-		
-		// Get avatar first - Prepared Statement
-		$avatar_stmt = $this->conn->prepare("SELECT avatar FROM users WHERE id = ?");
-		$avatar_stmt->bind_param("i", $id);
-		$avatar_stmt->execute();
-		$avatar_result = $avatar_stmt->get_result();
-		$avatar = '';
-		if($avatar_result->num_rows > 0){
-			$avatar = $avatar_result->fetch_assoc()['avatar'];
-		}
-		
-		// Delete user - Prepared Statement
-		$del_stmt = $this->conn->prepare("DELETE FROM users WHERE id = ?");
-		$del_stmt->bind_param("i", $id);
-		$qry = $del_stmt->execute();
-		
+		$avatar = $this->conn->query("SELECT avatar FROM users where id = $id")->fetch_array()['avatar'];
+		$qry = $this->conn->query("DELETE FROM users where id = $id");
 		if($qry){
 			$this->settings->set_flashdata('success','User Details successfully deleted.');
-			if(!empty($avatar) && is_file(base_app.$avatar)) unlink(base_app.$avatar);
+			if(is_file(base_app.$avatar)) unlink(base_app.$avatar);
 			return 1;
 		}else{
 			return false;

@@ -7,12 +7,17 @@ session_start();
 require_once('initialize.php');
 require_once('classes/DBConnection.php');
 require_once('classes/SystemSettings.php');
+require_once('classes/CsrfProtection.php');
 require_once('security_helper.php');
 $db = new DBConnection;
 $conn = $db->conn;
-function redirect($url=''){
-	if(!empty($url))
-	echo '<script>location.href="'.base_url .$url.'"</script>';
+
+// Prevent function redeclaration
+if (!function_exists('redirect')) {
+    function redirect($url=''){
+        if(!empty($url))
+        echo '<script>location.href="'.base_url .$url.'"</script>';
+    }
 }
 function get_full_client_name($row){
     if(empty($row['firstname'])) return 'Unknown Client';
