@@ -1,6 +1,8 @@
+# Database Configuration
 DB_SERVER=localhost
 DB_USERNAME=root
 DB_PASSWORD=
 DB_NAME=vikram_db
 
-BASE_URL=http://localhost/vtech-rsms/
+# App Settings - leave empty for auto-detect, or set IP for mobile access
+# BASE_URL=http://192.168.x.x/vtech-rsms/
