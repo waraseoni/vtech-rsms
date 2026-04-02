@@ -1126,7 +1126,7 @@ function get_client_balance(){
 //}
 function create_backup(){
     $resp = array();
-    $backup_dir = __DIR__ . "/backups/"; // सही path - classes folder से relative
+    $backup_dir = __DIR__ . "/backups/";
     if(!is_dir($backup_dir)){
         if(!mkdir($backup_dir, 0777, true)){
             $resp['status'] = 'failed';
@@ -1138,14 +1138,13 @@ function create_backup(){
     $filename = "vikram_db_backup_".date("Y-m-d_H-i-s").".sql";
     $filepath = $backup_dir . $filename;
     
-    // Simple test write
     if(!is_writable($backup_dir)){
         $resp['status'] = 'failed';
         $resp['msg'] = 'Backup folder is not writable. Check permissions.';
         return json_encode($resp);
     }
     
-    $sql = "-- VTech-RSMS Backup\n-- ".date("Y-m-d H:i:s")."\n\n";
+    $sql = "-- VTech-RSMS Backup\n-- Date: ".date("Y-m-d H:i:s")."\n\n";
     
     $tables = [];
     $result = $this->conn->query("SHOW TABLES");
@@ -1153,6 +1152,7 @@ function create_backup(){
         $tables[] = $row[0];
     }
     
+    $total_records = 0;
     foreach($tables as $table){
         $sql .= "DROP TABLE IF EXISTS `$table`;\n";
         
@@ -1169,17 +1169,248 @@ function create_backup(){
                 if($k < count($row)-1) $sql .= ", ";
             }
             $sql .= ");\n";
+            $total_records++;
         }
         $sql .= "\n";
     }
     
+    // Add checksum info at end
+    $checksum = md5($sql);
+    $file_size = strlen($sql);
+    $sql .= "\n-- CHECKSUM: $checksum\n";
+    $sql .= "-- TOTAL RECORDS: $total_records\n";
+    $sql .= "-- TOTAL TABLES: " . count($tables) . "\n";
+    
     if(file_put_contents($filepath, $sql) !== false){
         $resp['status'] = 'success';
-        $resp['msg'] = 'Backup created: ' . $filename;
-        $this->settings->set_flashdata('success', $resp['msg']);
+        $resp['msg'] = 'Backup created successfully!';
+        $resp['file'] = $filename;
+        $resp['tables'] = count($tables);
+        $resp['records'] = $total_records;
+        $resp['size'] = $file_size;
+        $resp['checksum'] = $checksum;
+        $this->settings->set_flashdata('success', $resp['msg'] . " ({$total_records} records, " . round($file_size/1024,2) . " KB)");
     }else{
         $resp['status'] = 'failed';
         $resp['msg'] = 'Failed to save file. Check disk space or permissions.';
+    }
+    
+    return json_encode($resp);
+}
+
+function restore_backup(){
+    $resp = array();
+    
+    if(!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0){
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'No file uploaded or file error.';
+        return json_encode($resp);
+    }
+    
+    $backup_dir = __DIR__ . "/backups/temp/";
+    if(!is_dir($backup_dir)){
+        mkdir($backup_dir, 0777, true);
+    }
+    
+    $filename = basename($_FILES['backup_file']['name']);
+    $filepath = $backup_dir . $filename;
+    
+    if(move_uploaded_file($_FILES['backup_file']['tmp_name'], $filepath)){
+        $sql_content = file_get_contents($filepath);
+        
+        // Extract info from backup file
+        $total_records = 0;
+        $total_tables = 0;
+        $backup_checksum = '';
+        
+        // Parse backup info from comments
+        if(preg_match('/-- TOTAL RECORDS: (\d+)/', $sql_content, $matches)){
+            $total_records = intval($matches[1]);
+        }
+        if(preg_match('/-- TOTAL TABLES: (\d+)/', $sql_content, $matches)){
+            $total_tables = intval($matches[1]);
+        }
+        if(preg_match('/-- CHECKSUM: ([a-f0-9]+)/', $sql_content, $matches)){
+            $backup_checksum = $matches[1];
+        }
+        
+        // Disable foreign key checks before restore
+        $sql_content = "SET FOREIGN_KEY_CHECKS=0;\n" . $sql_content . "\nSET FOREIGN_KEY_CHECKS=1;";
+        
+        // Calculate current database stats before restore
+        $tables_before = [];
+        $result = $this->conn->query("SHOW TABLES");
+        while($row = $result->fetch_row()){
+            $tables_before[] = $row[0];
+        }
+        
+        if($this->conn->multi_query($sql_content)){
+            while($this->conn->more_results() && $this->conn->next_result()){
+                $result = $this->conn->store_result();
+                if($result) $result->free();
+            }
+            
+            // Verify restore
+            $tables_after = [];
+            $result = $this->conn->query("SHOW TABLES");
+            while($row = $result->fetch_row()){
+                $tables_after[] = $row[0];
+            }
+            
+            // Count total records after restore
+            $records_after = 0;
+            foreach($tables_after as $table){
+                $count = $this->conn->query("SELECT COUNT(*) as cnt FROM `$table`")->fetch_assoc();
+                $records_after += $count['cnt'];
+            }
+            
+            // Calculate verification checksum (without comments)
+            $clean_sql = preg_replace('/--.*$/m', '', $sql_content);
+            $verify_checksum = md5($clean_sql);
+            
+            // Check if backup data matches
+            $backup_records_match = ($records_after == $total_records);
+            $backup_tables_match = (count($tables_after) == $total_tables);
+            
+            unlink($filepath);
+            
+            $resp['status'] = 'success';
+            $resp['msg'] = 'Database restored successfully!';
+            $resp['verify'] = array(
+                'tables_backed_up' => $total_tables,
+                'tables_restored' => count($tables_after),
+                'records_backed_up' => $total_records,
+                'records_restored' => $records_after,
+                'tables_match' => $backup_tables_match,
+                'records_match' => $backup_records_match,
+                'backup_checksum' => $backup_checksum,
+                'verification_checksum' => $verify_checksum,
+                'checksum_match' => ($backup_checksum == $verify_checksum)
+            );
+        }else{
+            unlink($filepath);
+            $resp['status'] = 'failed';
+            $resp['msg'] = 'Restore failed: ' . $this->conn->error;
+        }
+    }else{
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Failed to upload backup file.';
+    }
+    
+    return json_encode($resp);
+}
+
+function dry_run_backup(){
+    $resp = array();
+    
+    if(!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0){
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'No file uploaded or file error.';
+        return json_encode($resp);
+    }
+    
+    $backup_dir = __DIR__ . "/backups/temp/";
+    if(!is_dir($backup_dir)){
+        mkdir($backup_dir, 0777, true);
+    }
+    
+    $filename = basename($_FILES['backup_file']['name']);
+    $filepath = $backup_dir . $filename;
+    
+    if(move_uploaded_file($_FILES['backup_file']['tmp_name'], $filepath)){
+        $sql_content = file_get_contents($filepath);
+        
+        // Analyze backup file without restoring
+        $tables_in_backup = [];
+        $total_records = 0;
+        $total_inserts = 0;
+        
+        // Count INSERT statements (both single and batch format)
+        preg_match_all('/INSERT INTO `([^`]+)`/', $sql_content, $matches);
+        $insert_statements = array_count_values($matches[1]);
+        
+        // For each table, count actual rows in INSERT statements
+        foreach($insert_statements as $table => $stmt_count){
+            // Count actual value rows for this specific table
+            // Match: INSERT INTO `tablename` VALUES (...), (...), ...
+            $escaped_table = preg_quote($table, '/');
+            $pattern = '/INSERT INTO `' . $escaped_table . '` VALUES\s*(\([^)]+\)(?:,\s*\([^)]+\))*)/i';
+            preg_match_all($pattern, $sql_content, $value_matches);
+            
+            $row_count = 0;
+            foreach($value_matches[1] as $values_str){
+                // Count (...) groups in each VALUES clause
+                $row_count += preg_match_all('/\([^)]+\)/', $values_str, $m);
+            }
+            
+            if($row_count > 0){
+                $tables_in_backup[$table] = $row_count;
+                $total_records += $row_count;
+            }else{
+                $tables_in_backup[$table] = $stmt_count;
+                $total_records += $stmt_count;
+            }
+            $total_inserts += $stmt_count;
+        }
+        
+        // Count tables
+        preg_match_all('/CREATE TABLE `([^`]+)`/', $sql_content, $table_matches);
+        $tables_created = count($table_matches[1]);
+        
+        // Get current database stats
+        $current_tables = [];
+        $current_tables_counts = [];
+        $current_records = 0;
+        $result = $this->conn->query("SHOW TABLES");
+        while($row = $result->fetch_row()){
+            $current_tables[] = $row[0];
+            $count = $this->conn->query("SELECT COUNT(*) as cnt FROM `$row[0]`")->fetch_assoc();
+            $current_tables_counts[$row[0]] = $count['cnt'];
+            $current_records += $count['cnt'];
+        }
+        
+        // Compare tables
+        $tables_to_create = array_diff(array_keys($tables_in_backup), $current_tables);
+        $tables_to_drop = array_diff($current_tables, array_keys($tables_in_backup));
+        $tables_same = array_intersect(array_keys($tables_in_backup), $current_tables);
+        
+        // Record comparison
+        $will_add_records = 0;
+        $will_remove_data = 0;
+        
+        foreach($tables_same as $table){
+            if(isset($tables_in_backup[$table])){
+                $will_add_records += $tables_in_backup[$table];
+            }
+        }
+        
+        unlink($filepath);
+        
+        $resp['status'] = 'success';
+        $resp['msg'] = 'Dry run completed!';
+        $resp['analysis'] = array(
+            'backup_file' => $filename,
+            'tables_in_backup' => $tables_created,
+            'records_in_backup' => $total_records,
+            'current_tables' => count($current_tables),
+            'current_records' => $current_records,
+            'backup_table_counts' => $tables_in_backup,
+            'current_table_counts' => $current_tables_counts,
+            'tables_to_create' => array_values($tables_to_create),
+            'tables_to_drop' => array_values($tables_to_drop),
+            'tables_same' => $tables_same,
+            'will_add_records' => $will_add_records,
+            'will_remove_data' => $will_remove_records ?? 0,
+            'impact' => array(
+                'new_tables' => count($tables_to_create),
+                'drop_tables' => count($tables_to_drop),
+                'affected_tables' => count($tables_same),
+                'total_changes' => count($tables_to_create) + count($tables_to_drop)
+            )
+        );
+    }else{
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Failed to upload backup file.';
     }
     
     return json_encode($resp);
@@ -1968,6 +2199,12 @@ switch ($action) {
 	break;
 	case 'create_backup':
 		echo $Master->create_backup();
+	break;
+	case 'restore_backup':
+		echo $Master->restore_backup();
+	break;
+	case 'dry_run_backup':
+		echo $Master->dry_run_backup();
 	break;
 	case 'delete_backup':
 		echo $Master->delete_backup();
