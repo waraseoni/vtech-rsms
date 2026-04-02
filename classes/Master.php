@@ -1418,7 +1418,7 @@ function dry_run_backup(){
 
 function delete_backup(){
     extract($_POST);
-    $backup_dir = dirname(__FILE__,2) . "/backup/backups/";
+    $backup_dir = __DIR__ . "/backups/";
     $file = $backup_dir . $file;
     if(file_exists($file)){
         unlink($file);

@@ -1,0 +1,3 @@
+2026-04-02 08:21:59 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\php8C22.tmp","error":0,"size":377156}}
+2026-04-02 08:21:59 - File: vikram_db.sql Error: 0
+2026-04-02 08:21:59 - Moved to: C:\xampp\htdocs\vtech-rsms\admin/uploads/vikram_db.sql

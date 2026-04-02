@@ -49,9 +49,15 @@
         })
     }
     window._conf = function($msg='',$func='',$params = []){
-       $('#confirm_modal #confirm').attr('onclick',$func+"("+$params.join(',')+")")
-       $('#confirm_modal .modal-body').html($msg)
-       $('#confirm_modal').modal('show')
+        var paramsStr = $params.map(function(p) {
+            if (typeof p === 'string') {
+                return "'" + p.replace(/'/g, "\\'") + "'";
+            }
+            return p;
+        }).join(',');
+        $('#confirm_modal #confirm').attr('onclick',$func+"("+paramsStr+")")
+        $('#confirm_modal .modal-body').html($msg)
+        $('#confirm_modal').modal('show')
     }
   })
 </script>

@@ -1,0 +1,50 @@
+2026-04-02 08:18:49 - Start
+2026-04-02 08:18:49 - After BASEPATH
+2026-04-02 11:48:49 - After require config
+2026-04-02 08:19:31 - Start
+2026-04-02 08:19:31 - After BASEPATH
+2026-04-02 11:49:31 - After require config
+2026-04-02 11:49:31 - After ob cleanup
+2026-04-02 08:20:13 - Start
+2026-04-02 08:20:13 - After BASEPATH
+2026-04-02 11:50:13 - After require config
+2026-04-02 11:50:13 - After ob cleanup
+2026-04-02 11:50:13 - Max upload: 40M, Max post: 40M
+2026-04-02 11:50:13 - FILES: []
+2026-04-02 08:25:01 - Start
+2026-04-02 08:25:01 - After BASEPATH
+2026-04-02 11:55:01 - After require config
+2026-04-02 11:55:01 - After ob cleanup
+2026-04-02 11:55:01 - Max upload: 40M, Max post: 40M
+2026-04-02 11:55:01 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\php54F7.tmp","error":0,"size":377156}}
+2026-04-02 11:55:01 - POST: {"f":"convert_mariadb"}
+2026-04-02 08:25:48 - Start
+2026-04-02 08:25:48 - After BASEPATH
+2026-04-02 11:55:48 - After require config
+2026-04-02 11:55:48 - After ob cleanup
+2026-04-02 11:55:48 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\phpCEE.tmp","error":0,"size":377156}}
+2026-04-02 11:55:48 - POST: {"f":"convert_mariadb"}
+2026-04-02 08:26:00 - Start
+2026-04-02 08:26:00 - After BASEPATH
+2026-04-02 11:56:00 - After require config
+2026-04-02 11:56:00 - After ob cleanup
+2026-04-02 11:56:00 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\php393F.tmp","error":0,"size":377156}}
+2026-04-02 11:56:00 - POST: {"f":"convert_mariadb"}
+2026-04-02 08:27:00 - Start
+2026-04-02 08:27:00 - After BASEPATH
+2026-04-02 11:57:00 - After require config
+2026-04-02 11:57:00 - After ob cleanup
+2026-04-02 11:57:00 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\php23B0.tmp","error":0,"size":377156}}
+2026-04-02 11:57:00 - Max upload: 40M, Max post: 40M
+2026-04-02 11:57:00 - Uploaded file: vikram_db.sql
+2026-04-02 11:57:00 - Output: C:\xampp\htdocs\vtech-rsms\classes/backups/converted/vikram_db_converted_2026-04-02_11-57-00.sql
+2026-04-02 11:57:00 - Converted! Tables: 24, Records: 3180
+2026-04-02 08:27:08 - Start
+2026-04-02 08:27:08 - After BASEPATH
+2026-04-02 11:57:08 - After require config
+2026-04-02 11:57:08 - After ob cleanup
+2026-04-02 11:57:08 - FILES: {"backup_file":{"name":"vikram_db.sql","full_path":"vikram_db.sql","type":"application\/octet-stream","tmp_name":"C:\\xampp\\tmp\\php44E5.tmp","error":0,"size":377156}}
+2026-04-02 11:57:08 - Max upload: 40M, Max post: 40M
+2026-04-02 11:57:08 - Uploaded file: vikram_db.sql
+2026-04-02 11:57:08 - Output: C:\xampp\htdocs\vtech-rsms\classes/backups/converted/vikram_db_converted_2026-04-02_11-57-08.sql
+2026-04-02 11:57:08 - Converted! Tables: 24, Records: 3180

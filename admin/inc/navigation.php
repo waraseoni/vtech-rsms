@@ -438,26 +438,18 @@
         var cb = document.getElementById('btn-card-view');
         
         if(tb) {
-            console.log('Table button found');
             tb.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('Table button clicked, applying table view');
                 applyView('table');
                 saveView('table');
             });
-        } else {
-            console.log('Table button NOT found');
         }
         if(cb) {
-            console.log('Card button found');
             cb.addEventListener('click', function(e) {
                 e.preventDefault();
-                console.log('Card button clicked, applying card view');
                 applyView('card');
                 saveView('card');
             });
-        } else {
-            console.log('Card button NOT found');
         }
     });
     
