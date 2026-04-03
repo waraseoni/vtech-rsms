@@ -118,7 +118,7 @@ $cover_img = validate_image($_settings->info("cover"));
                 </div>
                 <div class="modal-body"></div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id='submit' onclick="$('#uni_modal form').submit()">Save</button>
+                    <button type="button" class="btn btn-primary" id='submit' onclick="event.preventDefault(); $('#uni_modal form').trigger('submit');">Save</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 </div>
             </div>

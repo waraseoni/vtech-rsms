@@ -26,7 +26,7 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!is_numeric($v))
 					$v = $this->conn->real_escape_string($v);
 				if(!empty($data)) $data .=",";
@@ -160,12 +160,12 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
-				if(!is_numeric($v))
-					$v = $this->conn->real_escape_string($v);
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!empty($data)) $data .=",";
+				$v = $this->conn->real_escape_string($v);
 				$data .= " `{$k}`='{$v}' ";
 			}
+		}
 		}
 		// save_mechanic function ke andar - Prepared Statement
 if(isset($commission_percent)){
@@ -312,7 +312,7 @@ if(isset($commission_percent)){
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!empty($data)) $data .=",";
 				$v = $this->conn->real_escape_string($v);
 				$data .= " `{$k}`='{$v}' ";
@@ -359,7 +359,7 @@ if(isset($commission_percent)){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id'))){
+        if(!in_array($k,array('id', 'csrf_token'))){
             if(!is_numeric($v))
                 $v = $this->conn->real_escape_string($v);
             if(!empty($data)) $data .=",";
@@ -515,7 +515,7 @@ if(isset($commission_percent)){
     // Data string prepare karna
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id')) && !is_array($_POST[$k])){
+        if(!in_array($k,array('id', 'csrf_token')) && !is_array($_POST[$k])){
             if(!empty($data)) $data .=",";
             $v = $this->conn->real_escape_string($v);
             $data .= " `{$k}`='{$v}' ";
@@ -1349,7 +1349,7 @@ function save_attendance(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id'))){
+        if(!in_array($k,array('id', 'csrf_token'))){
             if(!empty($data)) $data .=",";
             $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }

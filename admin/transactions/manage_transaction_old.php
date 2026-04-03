@@ -1,6 +1,6 @@
 <?php 
-require_once('../../config.php');
-require_once('../../classes/CsrfProtection.php');
+require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
 
 if(isset($_GET['id'])){
     $qry = $conn->query("SELECT * FROM `transaction_list` where id = '{$_GET['id']}' ");

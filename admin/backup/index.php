@@ -546,23 +546,11 @@ $(document).ready(function(){
             return;
         }
         
-        console.log("File selected:", fileInput.files[0].name, fileInput.files[0].size);
-        
         start_loader();
         
         var formData = new FormData();
         formData.append('backup_file', fileInput.files[0]);
         formData.append('f', 'convert_mariadb');
-        formData.append('csrf_token', '<?php echo CsrfProtection::getToken() ?>');
-        
-        console.log("Sending AJAX request...");
-        
-        // Debug: verify form data contents
-        var formData = new FormData();
-        formData.append('backup_file', fileInput.files[0]);
-        formData.append('f', 'convert_mariadb');
-        
-        console.log("FormData backup_file:", formData.get('backup_file'));
         
         $.ajax({
             url:_base_url_+"classes/MariaDBConverter.php",
@@ -572,7 +560,6 @@ $(document).ready(function(){
             contentType: false,
             dataType:"json",
             success:function(resp){
-                console.log("Success response:", resp);
                 end_loader();
                 if(resp.status == 'success'){
                     var r = resp.result;
@@ -592,9 +579,7 @@ $(document).ready(function(){
             },
             error:function(xhr, status, error){
                 end_loader();
-                var response = xhr.responseText;
-                console.log("Full response:", response);
-                alert_toast("Error: " + (response || error),'error');
+                alert_toast("Error: " + (xhr.responseText || error),'error');
             }
         });
     });

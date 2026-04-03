@@ -467,7 +467,7 @@ public function get_mechanic_photo(){
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!empty($data)) $data .=",";
 				$v = $this->conn->real_escape_string($v);
 				$data .= " `{$k}`='{$v}' ";
@@ -517,8 +517,8 @@ public function get_mechanic_photo(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        // id और img को डेटा लूप से बाहर रखें
-        if(!in_array($k,array('id', 'img'))){
+        // id, img और csrf_token को डेटा लूप से बाहर रखें
+        if(!in_array($k,array('id', 'img', 'csrf_token'))){
             if(!is_numeric($v))
                 $v = $this->conn->real_escape_string($v);
             if(!empty($data)) $data .=",";
@@ -546,6 +546,8 @@ public function get_mechanic_photo(){
     } else {
         $sql = "UPDATE `client_list` SET {$data} WHERE id = '{$id}'";
     }
+    
+    error_log("Final SQL: " . $sql);
 
     $save = $this->conn->query($sql);
 
@@ -586,6 +588,7 @@ public function get_mechanic_photo(){
         $resp['msg'] = 'An error occurred while saving client.';
         $resp['err'] = $this->conn->error;
         $resp['sql'] = $sql;
+        error_log("save_client error: " . $this->conn->error . " | SQL: " . $sql);
     }
 
     return json_encode($resp);
@@ -693,7 +696,7 @@ public function get_mechanic_photo(){
     // Data string prepare karna (Isme ab mechanic_commission_amount bhi shamil hai)
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id')) && !is_array($_POST[$k])){
+        if(!in_array($k,array('id', 'csrf_token')) && !is_array($_POST[$k])){
             if(!empty($data)) $data .=",";
             $v = $this->conn->real_escape_string($v);
             $data .= " `{$k}`='{$v}' ";

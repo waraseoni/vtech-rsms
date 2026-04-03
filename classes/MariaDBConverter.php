@@ -1,85 +1,9 @@
 <?php
-$debugFile = __DIR__ . '/convert_debug.log';
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Start\n", FILE_APPEND);
-
 if (!defined('BASEPATH')) {
     define('BASEPATH', dirname(__DIR__) . '/');
 }
 
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - After BASEPATH\n", FILE_APPEND);
-
 require_once('../config.php');
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - After require config\n", FILE_APPEND);
-
-// Check for any output buffering issues
-while (ob_get_level()) {
-    ob_end_clean();
-}
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - After ob cleanup\n", FILE_APPEND);
-
-$maxUpload = ini_get('upload_max_filesize');
-$maxPost = ini_get('post_max_size');
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - FILES: " . json_encode($_FILES) . "\n", FILE_APPEND);
-
-// Check for any output buffering issues
-while (ob_get_level()) {
-    ob_end_clean();
-}
-
-$maxUpload = ini_get('upload_max_filesize');
-$maxPost = ini_get('post_max_size');
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Max upload: $maxUpload, Max post: $maxPost\n", FILE_APPEND);
-
-// Check if file was uploaded
-if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0) {
-    $errorMsg = "No file uploaded or file error.";
-    if (isset($_FILES['backup_file'])) {
-        $errorMsg .= " Code: " . $_FILES['backup_file']['error'];
-    }
-    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - ERROR: $errorMsg\n", FILE_APPEND);
-    echo json_encode(['status' => 'failed', 'msg' => $errorMsg]);
-    exit;
-}
-
-$uploadedFile = $_FILES['backup_file']['tmp_name'];
-$originalName = $_FILES['backup_file']['name'];
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Uploaded file: $originalName\n", FILE_APPEND);
-
-if (!file_exists($uploadedFile)) {
-    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Temp file not found\n", FILE_APPEND);
-    echo json_encode(['status' => 'failed', 'msg' => 'Temp file not found']);
-    exit;
-}
-
-$ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-if ($ext !== 'sql') {
-    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Invalid extension\n", FILE_APPEND);
-    echo json_encode(['status' => 'failed', 'msg' => 'Only .sql files allowed']);
-    exit;
-}
-
-$backupDir = __DIR__ . "/backups/converted/";
-if (!is_dir($backupDir)) {
-    mkdir($backupDir, 0777, true);
-}
-
-$outputFile = $backupDir . pathinfo($originalName, PATHINFO_FILENAME) . '_converted_' . date('Y-m-d_H-i-s') . '.sql';
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Output: $outputFile\n", FILE_APPEND);
-
-// Now process the file
-$converter = new MariaDBToSoftwareConverter($uploadedFile, $outputFile);
-$result = $converter->convert();
-
-file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Converted! Tables: " . $result['tables'] . ", Records: " . $result['records'] . "\n", FILE_APPEND);
-
-echo json_encode(['status' => 'success', 'msg' => 'File converted!', 'result' => $result]);
-exit;
 
 class MariaDBToSoftwareConverter {
     private $inputFile;
@@ -280,17 +204,7 @@ if (isset($_GET['f']) && $_GET['f'] === 'convert_mariadb') {
         if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0) {
             $errorMsg = "No file uploaded or file error.";
             if (isset($_FILES['backup_file'])) {
-                $errorCodes = [1 => 'File exceeds upload limit', 
-                              2 => 'File exceeds MAX_FILE_SIZE', 
-                              3 => 'File partially uploaded', 
-                              4 => 'No file uploaded',
-                              6 => 'Missing temp folder',
-                              7 => 'Failed to write file',
-                              8 => 'Extension blocked'];
                 $errorMsg .= " Code: " . $_FILES['backup_file']['error'];
-                if (isset($errorCodes[$_FILES['backup_file']['error']])) {
-                    $errorMsg .= " - " . $errorCodes[$_FILES['backup_file']['error']];
-                }
             }
             throw new Exception($errorMsg);
         }
@@ -299,7 +213,7 @@ if (isset($_GET['f']) && $_GET['f'] === 'convert_mariadb') {
         $originalName = $_FILES['backup_file']['name'];
         
         if (!file_exists($uploadedFile)) {
-            throw new Exception("Temporary file not found. May be too large.");
+            throw new Exception("Temporary file not found.");
         }
         
         $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
