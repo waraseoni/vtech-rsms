@@ -166,14 +166,14 @@ Class Master extends DBConnection {
 				$data .= " `{$k}`='{$v}' ";
 			}
 		}
-		}
+		
 		// save_mechanic function ke andar - Prepared Statement
-if(isset($commission_percent)){
-    $comm_stmt = $this->conn->prepare("INSERT INTO `mechanic_commission_history` (mechanic_id, commission_percent, effective_date) VALUES (?, ?, ?)");
-    $eff_date = date('Y-m-d');
-    $comm_stmt->bind_param("ids", $id, $commission_percent, $eff_date);
-    $comm_stmt->execute();
-}
+		if(isset($commission_percent)){
+		    $comm_stmt = $this->conn->prepare("INSERT INTO `mechanic_commission_history` (mechanic_id, commission_percent, effective_date) VALUES (?, ?, ?)");
+		    $eff_date = date('Y-m-d');
+		    $comm_stmt->bind_param("ids", $id, $commission_percent, $eff_date);
+		    $comm_stmt->execute();
+		}
 
 		// Check karein ki kya ye naya staff hai ya purana edit ho raha hai
 		if(empty($id)){

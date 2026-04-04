@@ -442,9 +442,10 @@ if(isset($_GET['id'])){
                 method: 'POST',
                 type: 'POST',
                 dataType: 'json',
-                error:err=>{
-                    console.log(err);
-                    alert_toast("An error occurred",'error');
+                error:function(xhr, status, error){
+                    console.log("AJAX Error:", xhr, status, error);
+                    console.log("Response Text:", xhr.responseText);
+                    alert_toast("An error occurred: " + (error || 'Unknown'),'error');
                     end_loader();
                 },
                 success:function(resp){
