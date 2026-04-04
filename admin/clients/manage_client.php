@@ -48,7 +48,7 @@ if(isset($_GET['id'])){
 <div class="content py-3">
     <div class="container-fluid">
         <div class="bg-white rounded-3 shadow-lg p-4 p-md-5" style="max-width:950px; margin:0 auto; border:1px solid #e2e8f5;">
-            <form id="client-form" class="needs-validation" novalidate>
+            <form id="client-form" class="needs-validation" novalidate enctype="multipart/form-data" method="POST" onsubmit="return false;">
                 <?php echo CsrfProtection::getField(); ?>
                 <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
 
@@ -120,7 +120,7 @@ if(isset($_GET['id'])){
                     </div>
                     
                     <div class="form-group d-flex justify-content-center">
-                        <img src="<?php echo validate_image(isset($image_path) ? $image_path : '') ?>" alt="" id="cimg" class="img-fluid img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                        <img src="<?php echo validate_image(isset($image_path) ? $image_path : '') ?>" alt="" id="cimg" class="img-fluid img-thumbnail" style="width: 150px; height: 150px; object-fit: cover; background-color: #f0f0f0;">
                     </div>
                 </div>
             </form>
@@ -142,9 +142,24 @@ function displayImg(input, _this) {
 
 $(function(){
     var form = document.getElementById('client-form');
+    var isSubmitting = false;
     
-    $('#client-form').on('submit', function(e){
+    // Completely prevent default form submission
+    form.addEventListener('submit', function(e){
+        console.log("Form submit event blocked!");
         e.preventDefault();
+        e.stopPropagation();
+        return false;
+    });
+    
+    // Modal submit button triggers AJAX directly
+    $('#uni_modal #submit').off('click').on('click', function(e){
+        e.preventDefault();
+        
+        if (isSubmitting) {
+            console.log("Already submitting, ignoring...");
+            return;
+        }
         
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
@@ -152,19 +167,25 @@ $(function(){
             return false;
         }
 
-        var _this = $(this);
+        isSubmitting = true;
         start_loader();
+        console.log("Submitting form via button click...");
         
         $.ajax({
             url: _base_url_ + "classes/Master.php?f=save_client",
-            data: new FormData(this),
+            data: new FormData(form),
             cache: false,
             contentType: false,
             processData: false,
             method: 'POST',
             dataType: 'json',
             error: function(xhr, status, error){
-                if (status === 'abort') { end_loader(); return; }
+                isSubmitting = false;
+                if (status === 'abort') { 
+                    console.log("Request aborted (likely page redirect)");
+                    end_loader(); 
+                    return; 
+                }
                 console.log("AJAX Error:", xhr, status, error);
                 alert_toast("An error occurred", 'error');
                 end_loader();
@@ -173,29 +194,21 @@ $(function(){
                 console.log("AJAX Response:", resp);
                 if(resp.status == 'success'){
                     alert_toast("Client saved successfully!", 'success');
+                    // Close modal and refresh page
                     setTimeout(function(){ 
                         $('#uni_modal').modal('hide');
                         location.reload(); 
-                    }, 1000);
+                    }, 1500);
                 } else if(resp.msg){
+                    isSubmitting = false;
                     alert_toast(resp.msg, 'error');
                 } else {
+                    isSubmitting = false;
                     alert_toast("An error occurred", 'error');
                 }
                 end_loader();
             }
         });
-        
-        // Prevent multiple submissions
-        $(this).on('submit', function(e) {
-            $(this).data('submitted', true);
-        });
-    });
-
-    $('#uni_modal #submit').click(function(){
-        if (!$('#client-form').data('submitted')) {
-            $('#client-form').submit();
-        }
     });
 });
 </script>

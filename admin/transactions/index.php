@@ -40,18 +40,10 @@
     
     /* ==================== MOBILE REDESIGN ==================== */
     @media (max-width: 768px) {
-        /* Don't hide desktop elements by default - let JS handle it */
-        /* .table-responsive,  */
-        /* .desktop-filter-form, */
-        /* #transaction-list, */
-        /* .dataTables_wrapper, */
-        /* .dataTables_length, */
-        /* .dataTables_filter, */
-        /* .dataTables_info, */
-        /* .dataTables_paginate, */
-        /* .desktop-export-buttons { */
-        /*     display: none !important; */
-        /* } */
+        /* Desktop elements visibility will be controlled by body classes (show-table/show-card) */
+        .desktop-filter-form {
+            display: none;
+        }
         
         /* Mobile View Container */
         .mobile-view {
@@ -738,7 +730,6 @@
     
     /* Desktop Styles */
     @media (min-width: 769px) {
-        .mobile-view,
         .mobile-export-buttons,
         .mobile-filter-form {
             display: none !important;
@@ -1004,6 +995,28 @@
     #transaction-list col:nth-child(10) { width: 8%; } /* Action */
 }
 }
+    /* View Toggling Functional CSS */
+    body.show-table .desktop-table-view { display: block !important; }
+    body.show-table .mobile-view { display: none !important; }
+    
+    body.show-card .desktop-table-view { display: none !important; }
+    body.show-card .mobile-view { display: block !important; }
+    
+    /* Toggle Buttons styling for mobile */
+    @media (max-width: 768px) {
+        .view-toggle-wrapper {
+            display: inline-flex !important;
+            margin-right: 0 !important;
+            background: #fff;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .view-toggle-wrapper .btn {
+            font-size: 12px;
+            padding: 4px 10px;
+        }
+    }
 </style>
 
 <div class="card card-outline rounded-0 card-navy shadow">
@@ -1126,22 +1139,30 @@
                             $where_cond = " WHERE " . implode(" AND ", $conditions);
                         }
 
-                        $qry = $conn->query("SELECT t.*, 
-                            c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, c.opening_balance, c.id as client_tbl_id,
-                            (SELECT SUM(amount) FROM transaction_list tl WHERE tl.client_name = c.id AND tl.status = 5) as total_billed,
-                            (SELECT SUM(amount + discount) FROM client_payments cp WHERE cp.client_id = c.id) as total_paid,
-							(SELECT SUM(total_amount) FROM direct_sales ds WHERE ds.client_id = c.id) as total_sale,
-                            t.code 
-                     FROM `transaction_list` t 
-                     INNER JOIN client_list c ON t.client_name = c.id 
-                     {$where_cond} 
-                     ORDER BY job_id DESC, date_created DESC");
+                        // Fetch data once for both views
+                        if (!isset($transactions_data)) {
+                            $transactions_data = [];
+                            $qry = $conn->query("SELECT t.*, 
+                                c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, c.opening_balance, c.id as client_tbl_id,
+                                (SELECT SUM(amount) FROM transaction_list tl WHERE tl.client_name = c.id AND tl.status = 5) as total_billed,
+                                (SELECT SUM(amount + discount) FROM client_payments cp WHERE cp.client_id = c.id) as total_paid,
+                                (SELECT SUM(total_amount) FROM direct_sales ds WHERE ds.client_id = c.id) as total_sale,
+                                t.code 
+                            FROM `transaction_list` t 
+                            INNER JOIN client_list c ON t.client_name = c.id 
+                            {$where_cond} 
+                            ORDER BY job_id DESC, date_created DESC");
+
+                            while($row = $qry->fetch_assoc()){
+                                $transactions_data[] = $row;
+                            }
+                        }
 
                         $total_amount = 0;
                         $total_pending = 0;
                         $total_completed = 0;
 
-                        while($row = $qry->fetch_assoc()):
+                        foreach($transactions_data as $row):
                             $fullname = trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
                             $date_created = $row['date_created'];
                             $job_id = $row['job_id'];
@@ -1294,7 +1315,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -1347,17 +1368,7 @@
                 <div id="transactionCardsContainer">
                     <?php 
                     $mobile_i = 1;
-                    $qry_mobile = $conn->query("SELECT t.*, 
-                            c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, c.opening_balance, c.id as client_tbl_id,
-                            (SELECT SUM(amount) FROM transaction_list tl WHERE tl.client_name = c.id AND tl.status = 5) as total_billed,
-                            (SELECT SUM(amount + discount) FROM client_payments cp WHERE cp.client_id = c.id) as total_paid,
-                            t.code 
-                     FROM `transaction_list` t 
-                     INNER JOIN client_list c ON t.client_name = c.id 
-                     {$where_cond} 
-                     ORDER BY job_id DESC, date_created DESC");
-
-                    while($row = $qry_mobile->fetch_assoc()):
+                    foreach($transactions_data as $row):
                         $fullname = trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
                         $mobile_client_img = $row['client_img'];
                         
@@ -1384,10 +1395,11 @@
                         $mobile_id = $row['id'];
                         
                         // Balance Calculation
+                        $calc_sale = $row['total_sale'] ?? 0;
                         $calc_billed = $row['total_billed'] ?? 0;
                         $calc_paid = $row['total_paid'] ?? 0;
                         $calc_opening = $row['opening_balance'] ?? 0;
-                        $current_balance = ($calc_opening + $calc_billed) - $calc_paid;
+                        $current_balance = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid;
 
                         // Balance Text formatting
                         if($current_balance > 0){
@@ -1524,7 +1536,7 @@
                     </div>
                     <?php 
                     $mobile_i++;
-                    endwhile; 
+                    endforeach; 
                     ?>
                 </div>
 
@@ -1870,20 +1882,12 @@ $(document).ready(function(){
 
     // Responsive view switching - only auto-switch if no user preference saved
     function checkView() {
-        const savedView = localStorage.getItem('transactions_view');
-        // Only auto-switch if no preference saved
-        if (!savedView) {
-            if ($(window).width() <= 768) {
-                $('.mobile-view').show();
-                $('.table-responsive').hide();
-                $('.desktop-filter-form').hide();
-                $('.desktop-export-buttons').hide();
-            } else {
-                $('.mobile-view').hide();
-                $('.table-responsive').show();
-                $('.desktop-filter-form').show();
-                $('.desktop-export-buttons').show();
-            }
+        if ($(window).width() <= 768) {
+            $('.desktop-filter-form, .desktop-export-buttons').hide();
+            $('.view-toggle-wrapper').show();
+        } else {
+            $('.desktop-filter-form, .desktop-export-buttons').show();
+            $('.view-toggle-wrapper').show();
         }
     }
     
@@ -1957,11 +1961,13 @@ function toggleView(viewType) {
     localStorage.setItem('transactions_view', viewType);
 }
 
-// Load saved preference - default to table view
+// Load saved preference - default to card view on mobile if no preference
 document.addEventListener('DOMContentLoaded', function() {
     let savedView = localStorage.getItem('transactions_view');
+    let isMobile = window.innerWidth <= 768;
+    
     if (!savedView) {
-        savedView = 'table';
+        savedView = isMobile ? 'card' : 'table';
         localStorage.setItem('transactions_view', savedView);
     }
     toggleView(savedView);

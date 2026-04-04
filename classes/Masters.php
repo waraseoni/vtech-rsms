@@ -93,7 +93,7 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!empty($data)) $data .=",";
 				$v = $this->conn->real_escape_string($v);
 				$data .= " `{$k}`='{$v}' ";
@@ -727,7 +727,7 @@ function save_direct_sale(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k => $v){
-        if(!in_array($k,['id','product_id','qty','price'])){
+        if(!in_array($k,['id','product_id','qty','price', 'csrf_token'])){
             if(!empty($data)) $data .= ", ";
             $data .= "`$k`='".addslashes($v)."'";
         }
@@ -1172,7 +1172,7 @@ function save_expense(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k, array('id'))){
+        if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .=",";
             $v = $this->conn->real_escape_string($v);
             $data .= " `{$k}`='{$v}' ";

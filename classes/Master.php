@@ -96,7 +96,7 @@ Class Master extends DBConnection {
 		extract($_POST);
 		$data = "";
 		foreach($_POST as $k =>$v){
-			if(!in_array($k,array('id'))){
+			if(!in_array($k,array('id', 'csrf_token'))){
 				if(!empty($data)) $data .=",";
 				$v = $this->conn->real_escape_string($v);
 				$data .= " `{$k}`='{$v}' ";
@@ -194,7 +194,7 @@ Class Master extends DBConnection {
     
     // Build data from POST
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id','current_avatar')) && $k != 'avatar'){ // Skip id and current_avatar
+        if(!in_array($k,array('id','current_avatar', 'csrf_token')) && $k != 'avatar'){ // Skip id and current_avatar
             if(!is_numeric($v))
                 $v = $this->conn->real_escape_string($v);
             if(!empty($data)) $data .=",";
@@ -1650,7 +1650,7 @@ function save_expense(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k, array('id'))){
+        if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .=",";
             $v = $this->conn->real_escape_string($v);
             $data .= " `{$k}`='{$v}' ";
@@ -1808,7 +1808,7 @@ function save_attendance(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k =>$v){
-        if(!in_array($k,array('id'))){
+        if(!in_array($k,array('id', 'csrf_token'))){
             if(!empty($data)) $data .=",";
             $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }
@@ -1910,7 +1910,7 @@ function update_history_entry(){
         $data = "";
         foreach($_POST as $k =>$v){
             // In fields ko skip karenge jo table ka hissa nahi hain ya special handle karne hain
-            if(!in_array($k,array('id'))){
+            if(!in_array($k,array('id', 'csrf_token'))){
                 if(!is_numeric($v))
                     $v = $this->conn->real_escape_string($v);
                 if(!empty($data)) $data .=",";
@@ -1967,7 +1967,7 @@ function update_history_entry(){
         extract($_POST);
         $data = "";
         foreach($_POST as $k =>$v){
-            if(!in_array($k,array('id'))){
+            if(!in_array($k,array('id', 'csrf_token'))){
                 if(!is_numeric($v))
                     $v = $this->conn->real_escape_string($v);
                 if(!empty($data)) $data .=",";
@@ -2013,7 +2013,7 @@ function save_client_loan(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k => $v){
-        if(!in_array($k, array('id', 'months'))){ 
+        if(!in_array($k, array('id', 'months', 'csrf_token'))){ 
             if(!empty($data)) $data .=",";
             $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }
@@ -2043,7 +2043,7 @@ function save_client_payment(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k => $v){
-        if(!in_array($k, array('id'))){
+        if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .= ",";
             $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }
@@ -2065,7 +2065,7 @@ function save_payment(){
     extract($_POST);
     $data = "";
     foreach($_POST as $k => $v){
-        if(!in_array($k, array('id'))){
+        if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .= ",";
             $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }

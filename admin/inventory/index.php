@@ -118,33 +118,48 @@
     
     /* Hide ALL DataTables controls on mobile */
     @media (max-width: 768px) {
-        .dataTables_wrapper {
-            display: none !important;
-        }
-        
-        .dataTables_length,
-        .dataTables_filter,
-        .dataTables_info,
-        .dataTables_paginate,
-        .dataTables_processing,
-        .dataTables_wrapper .row:first-child,
-        .dataTables_wrapper .row:last-child {
-            display: none !important;
-        }
-        
-        /* Hide desktop export buttons on mobile */
+        /* Default mobile hides - will be controlled by body classes */
         .desktop-export-buttons {
             display: none !important;
         }
         
-        /* Show mobile export buttons on mobile */
         .mobile-export-buttons {
             display: flex !important;
         }
         
-        /* Hide table responsive completely on mobile */
-        .table-responsive {
-            display: none !important;
+        /* Mobile-first cards container */
+        .card-view {
+            padding: 10px;
+            background: #f5f7fa;
+            position: relative;
+        }
+    }
+    
+    /* View Toggling Functional CSS */
+    .desktop-table-view { display: none; }
+    .card-view { display: none; }
+    
+    body.show-table .desktop-table-view { display: block !important; }
+    body.show-table .card-view { display: none !important; }
+    
+    body.show-card .desktop-table-view { display: none !important; }
+    body.show-card .card-view { display: block !important; }
+    
+    /* View Toggle Styles */
+    .view-toggle-wrapper { display: inline-flex; margin-right: 15px; }
+    .view-toggle-wrapper .btn {
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+    
+    @media (max-width: 768px) {
+        .view-toggle-wrapper {
+            display: inline-flex !important;
+            margin-right: 0 !important;
+            background: #fff;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
     }
     
@@ -157,11 +172,6 @@
         /* Show desktop export buttons on desktop */
         .desktop-export-buttons {
             display: flex !important;
-        }
-        
-        /* Show table responsive on desktop */
-        .table-responsive {
-            display: block !important;
         }
     }
     
@@ -256,16 +266,8 @@
         }
     }
     
-    /* मोबाइल कार्ड व्यू */
+    /* मोबाइल कार्ड व्यू - visibility controlled by body classes */
     @media (max-width: 768px) {
-        #inventory-list { 
-            display: none !important; 
-        }
-        
-        .card-view { 
-            display: block !important; 
-        }
-        
         .mobile-export-buttons {
             margin-top: 10px;
             margin-left: 0;
@@ -488,7 +490,16 @@
         <h3 class="card-title">
             <b><i class="fas fa-boxes text-navy"></i> Inventory Management</b>
         </h3>
-        <div class="card-tools">
+        <div class="card-tools d-flex align-items-center">
+            <!-- View Toggle Button -->
+            <div class="view-toggle-wrapper">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-table-view" onclick="toggleView('table')" title="Table View">
+                    <i class="fas fa-table"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-card-view" onclick="toggleView('card')" title="Card View">
+                    <i class="fas fa-th-large"></i>
+                </button>
+            </div>
             <!-- डेस्कटॉप Export बटन्स (मोबाइल पर छुपे होंगे) -->
             <div class="desktop-export-buttons">
                 <button type="button" class="export-btn btn-print" id="printBtn">
@@ -512,7 +523,7 @@
             </div>
             
             <!-- डेस्कटॉप/टैबलेट टेबल व्यू -->
-            <div class="table-responsive">
+            <div class="table-responsive desktop-table-view">
                 <table class="table table-hover table-striped table-bordered" id="inventory-list">
                     <thead>
                         <tr class="bg-navy">
@@ -530,50 +541,45 @@
                         <?php 
                         $i = 1;
                         
-                        // Get total product count for summary
-                        $total_result = $conn->query("SELECT COUNT(*) as total FROM product_list WHERE delete_flag = 0");
-                        $total_row = $total_result->fetch_assoc();
-                        $total_products = $total_row['total'];
-                        
-                        // Get stock summary
-                        $stock_summary = $conn->query("SELECT 
-                            SUM(CASE WHEN available <= 0 THEN 1 ELSE 0 END) as out_of_stock,
-                            SUM(CASE WHEN available > 0 AND available <= 5 THEN 1 ELSE 0 END) as low_stock,
-                            SUM(CASE WHEN available > 5 THEN 1 ELSE 0 END) as in_stock
-                            FROM (
-                                SELECT p.id, 
-                                    (SELECT SUM(quantity) FROM inventory_list WHERE product_id = p.id) - 
-                                    (SELECT SUM(qty) FROM (
-                                        SELECT product_id, qty FROM transaction_products tp 
-                                        JOIN transaction_list tl ON tp.transaction_id = tl.id 
-                                        WHERE tl.status != 4
-                                        UNION ALL
-                                        SELECT product_id, qty FROM direct_sale_items
-                                    ) as sales WHERE sales.product_id = p.id
-                                    ) as available
+                        // Fetch data once for both views
+                        if (!isset($inventory_data)) {
+                            $inventory_data = [];
+                            $qry = $conn->query("SELECT p.*, 
+                                (SELECT SUM(quantity) FROM inventory_list WHERE product_id = p.id) as total_in,
+                                (SELECT SUM(tp.qty) FROM transaction_products tp JOIN transaction_list tl ON tp.transaction_id = tl.id WHERE tl.status != 4 AND tp.product_id = p.id) as total_sold_trans,
+                                (SELECT SUM(dsi.qty) FROM direct_sale_items dsi WHERE dsi.product_id = p.id) as total_sold_direct,
+                                (SELECT place FROM inventory_list WHERE product_id = p.id ORDER BY id DESC LIMIT 1) as place
                                 FROM product_list p 
-                                WHERE p.delete_flag = 0
-                            ) as stock_data");
+                                WHERE p.delete_flag = 0 
+                                ORDER BY p.name ASC");
+
+                            while($row = $qry->fetch_assoc()){
+                                $inventory_data[] = $row;
+                            }
+                        }
+
+                        // Get total product count for summary
+                        $total_products = count($inventory_data);
                         
-                        $summary = $stock_summary->fetch_assoc();
-                        
-                        $qry = $conn->query("SELECT p.*, 
-                            (SELECT SUM(quantity) FROM inventory_list WHERE product_id = p.id) as total_in,
-                            (SELECT SUM(qty) FROM (
-                                SELECT product_id, qty FROM transaction_products tp 
-                                JOIN transaction_list tl ON tp.transaction_id = tl.id 
-                                WHERE tl.status != 4
-                                UNION ALL
-                                SELECT product_id, qty FROM direct_sale_items
-                            ) as sales WHERE sales.product_id = p.id) as total_sold,
-                            (SELECT place FROM inventory_list WHERE product_id = p.id ORDER BY id DESC LIMIT 1) as place
-                            FROM product_list p 
-                            WHERE p.delete_flag = 0 
-                            ORDER BY p.name ASC");
-                        
-                        if($qry->num_rows > 0):
-                            while($row = $qry->fetch_assoc()):
-                                $available = $row['total_in'] - $row['total_sold'];
+                        // Get stock summary from the fetched data instead of extra query
+                        $summary = [
+                            'out_of_stock' => 0,
+                            'low_stock' => 0,
+                            'in_stock' => 0
+                        ];
+
+                        foreach($inventory_data as $row){
+                            $total_sold = ($row['total_sold_trans'] ?? 0) + ($row['total_sold_direct'] ?? 0);
+                            $available = ($row['total_in'] ?? 0) - $total_sold;
+                            if ($available <= 0) $summary['out_of_stock']++;
+                            elseif ($available <= 5) $summary['low_stock']++;
+                            else $summary['in_stock']++;
+                        }
+
+                        if(count($inventory_data) > 0):
+                            foreach($inventory_data as $row):
+                                $total_sold = ($row['total_sold_trans'] ?? 0) + ($row['total_sold_direct'] ?? 0);
+                                $available = ($row['total_in'] ?? 0) - $total_sold;
                                 $is_low = ($available <= 5);
                                 $is_out = ($available <= 0);
                         ?>
@@ -589,7 +595,7 @@
                                 <td class="text-right font-weight-bold <?= $is_out ? 'text-danger' : ($is_low ? 'text-warning' : 'text-success') ?>">
                                     <?php echo number_format($available) ?>
                                 </td>
-                                <td class="text-right"><?php echo number_format($row['total_sold'] ?? 0) ?></td>
+                                <td class="text-right"><?php echo number_format($total_sold) ?></td>
                                 <td class="text-center">
                                     <?php if($is_out): ?>
                                         <span class="badge badge-danger">Out of Stock</span>
@@ -607,7 +613,7 @@
                                 </td>
                             </tr>
                         <?php 
-                            endwhile;
+                            endforeach;
                         else:
                         ?>
                             <tr>
@@ -673,24 +679,11 @@
                 <!-- इन्वेंटरी कार्ड्स -->
                 <div id="inventoryCardsContainer">
                     <?php 
-                    $i = 1;
-                    $qry = $conn->query("SELECT p.*, 
-                        (SELECT SUM(quantity) FROM inventory_list WHERE product_id = p.id) as total_in,
-                        (SELECT SUM(qty) FROM (
-                            SELECT product_id, qty FROM transaction_products tp 
-                            JOIN transaction_list tl ON tp.transaction_id = tl.id 
-                            WHERE tl.status != 4
-                            UNION ALL
-                            SELECT product_id, qty FROM direct_sale_items
-                        ) as sales WHERE sales.product_id = p.id) as total_sold,
-                        (SELECT place FROM inventory_list WHERE product_id = p.id ORDER BY id DESC LIMIT 1) as place 
-                        FROM product_list p 
-                        WHERE p.delete_flag = 0 
-                        ORDER BY p.name ASC");
-                    
-                    if($qry->num_rows > 0):
-                        while($row = $qry->fetch_assoc()):
-                            $available = $row['total_in'] - $row['total_sold'];
+                    $i_mobile = 1;
+                    if(count($inventory_data) > 0):
+                        foreach($inventory_data as $row):
+                            $total_sold = ($row['total_sold_trans'] ?? 0) + ($row['total_sold_direct'] ?? 0);
+                            $available = ($row['total_in'] ?? 0) - $total_sold;
                             $is_low = ($available <= 5);
                             $is_out = ($available <= 0);
                             
@@ -749,7 +742,7 @@
                                 </div>
                                 <div class="stock-item">
                                     <span class="stock-value text-primary">
-                                        <?php echo number_format($row['total_sold'] ?? 0) ?>
+                                        <?php echo number_format($total_sold) ?>
                                     </span>
                                     <span class="stock-label">Sold</span>
                                 </div>
@@ -762,14 +755,14 @@
                             </div>
                             
                             <div class="card-actions">
-                                <small class="text-muted mr-3">#<?php echo $i++; ?></small>
+                                <small class="text-muted mr-3">#<?php echo $i_mobile++; ?></small>
                                 <a href="./?page=inventory/view_details&id=<?= $row['id'] ?>" class="btn btn-sm btn-info">
                                     <i class="far fa-eye"></i> View History
                                 </a>
                             </div>
                         </div>
                     <?php 
-                        endwhile;
+                        endforeach;
                     else:
                     ?>
                         <div class="no-results" id="defaultNoResults">
@@ -785,7 +778,29 @@
 </div>
 
 <script>
+// View Toggle Functions
+function toggleView(viewType) {
+    // Update buttons
+    $('#btn-table-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'table' ? 'btn-primary' : 'btn-outline-secondary');
+    $('#btn-card-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'card' ? 'btn-primary' : 'btn-outline-secondary');
+    
+    // Toggle class on body
+    $('body').removeClass('show-table show-card').addClass('show-' + viewType);
+    
+    // Save to local storage with specific key for inventory
+    localStorage.setItem('inventory_view', viewType);
+}
+
 $(document).ready(function(){
+    // Initial view set
+    let savedView = localStorage.getItem('inventory_view');
+    let isMobile = window.innerWidth <= 768;
+    
+    if(!savedView){
+        savedView = isMobile ? 'card' : 'table';
+    }
+    toggleView(savedView);
+    
     // DataTable Initialization
     if($.fn.DataTable.isDataTable('#inventory-list')) {
         $('#inventory-list').DataTable().destroy();

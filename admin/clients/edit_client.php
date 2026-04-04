@@ -33,6 +33,7 @@ if(isset($_GET['id'])){
 
 <div class="container-fluid">
     <form id="client-form" enctype="multipart/form-data">
+        <?php echo CsrfProtection::getField(); ?>
         <input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
         
         <div class="row">

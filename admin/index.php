@@ -57,7 +57,7 @@
       <div class="modal-body">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id='submit' onclick="event.preventDefault(); $('#uni_modal form').trigger('submit');">Save</button>
+        <button type="button" class="btn btn-primary" id="submit" onclick="$('#uni_modal form').submit()">Save</button>
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
       </div>
       </div>

@@ -181,15 +181,39 @@
         font-weight: 600;
         color: #333;
     }
+    
+    /* View Toggling Functional CSS */
+    .desktop-table-view { display: none; }
+    .card-view { display: none; }
+    
+    body.show-table .desktop-table-view { display: block !important; }
+    body.show-table .card-view { display: none !important; }
+    
+    body.show-card .desktop-table-view { display: none !important; }
+    body.show-card .card-view { display: block !important; }
+    
+    /* View Toggle Styles */
+    .view-toggle-wrapper { display: inline-flex; margin-right: 15px; }
+    .view-toggle-wrapper .btn {
+        padding: 4px 10px;
+        font-size: 13px;
+    }
+    
+    @media (max-width: 768px) {
+        .view-toggle-wrapper {
+            display: inline-flex !important;
+            margin-right: 0 !important;
+            background: #fff;
+            padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    }
 
     /* --- MOBILE CARD VIEW STYLES (with avatar) --- */
     .mobile-export-buttons { display: none; }
 
     @media (max-width: 768px) {
-        /* Let JS handle the toggle - don't hide by default */
-        /* .table-responsive { display: none !important; } */
-        /* .card-view { display: block !important; } */
-
         .mobile-export-buttons { display: flex !important; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 0 10px; }
         .desktop-export-buttons { display: none !important; }
 
@@ -406,20 +430,27 @@ try {
                     <tbody>
                         <?php 
                         $i = 1;
-                        // Updated query to include total_loan_given from active loans
-                        $qry = $conn->query("SELECT c.*, 
-                            COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) as repair_billed,
-                            COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) as direct_sales_billed,
-                            COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0) as total_paid,
-                            COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) as total_loan_given
-                            FROM `client_list` c WHERE c.delete_flag = 0 
-                            ORDER BY (c.opening_balance + 
-                                COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) + 
-                                COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) +
-                                COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) - 
-                                COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0)) DESC");
+                        if (!isset($clients_data)) {
+                            $clients_data = [];
+                            $qry = $conn->query("SELECT c.*, 
+                                COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) as repair_billed,
+                                COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) as direct_sales_billed,
+                                COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0) as total_paid,
+                                COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) as total_loan_given,
+                                (SELECT MAX(date_created) FROM transaction_list WHERE client_name = c.id) as last_txn_date
+                                FROM `client_list` c WHERE c.delete_flag = 0 
+                                ORDER BY (c.opening_balance + 
+                                    COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) + 
+                                    COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) +
+                                    COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) - 
+                                    COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0)) DESC");
 
-                        while($row = $qry->fetch_assoc()):
+                            while($row = $qry->fetch_assoc()){
+                                $clients_data[] = $row;
+                            }
+                        }
+
+                        foreach($clients_data as $row):
                             // New net balance including loans
                             $current_balance = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
                             $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
@@ -451,13 +482,8 @@ try {
                                 $wa_text = 'Welcome';
                             }
 
-                            // Last transaction date for follow-up
-                            $last_txn_date = null;
-                            $last_txn_qry = $conn->query("SELECT MAX(date_created) as last_date FROM transaction_list WHERE client_name = '{$row['id']}'");
-                            if($last_txn_qry->num_rows > 0) {
-                                $last_txn = $last_txn_qry->fetch_assoc();
-                                $last_txn_date = $last_txn['last_date'];
-                            }
+                            // Last transaction date for follow-up directly from tuned query
+                            $last_txn_date = $row['last_txn_date'];
 
                             if($last_txn_date) {
                                 $days_diff = floor((time() - strtotime($last_txn_date)) / (60 * 60 * 24));
@@ -516,7 +542,7 @@ try {
                                 </div>
                             </td>
                         </tr>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </tbody>
                     <tfoot>
                         <tr class="bg-light">
@@ -545,21 +571,8 @@ try {
 
                 <div id="clientCardsContainer">
                 <?php 
-                // Re-run the same query for mobile cards
-                $qry = $conn->query("SELECT c.*, 
-                    COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) as repair_billed,
-                    COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) as direct_sales_billed,
-                    COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0) as total_paid,
-                    COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) as total_loan_given
-                    FROM `client_list` c WHERE c.delete_flag = 0 
-                    ORDER BY (c.opening_balance + 
-                        COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) + 
-                        COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) +
-                        COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) - 
-                        COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0)) DESC");
-
                 $i_mobile = 1;
-                while($row = $qry->fetch_assoc()):
+                foreach($clients_data as $row):
                     $current_balance = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
                     $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
 
@@ -590,12 +603,7 @@ try {
                         $wa_text = 'Welcome';
                     }
 
-                    $last_txn_date = null;
-                    $last_txn_qry = $conn->query("SELECT MAX(date_created) as last_date FROM transaction_list WHERE client_name = '{$row['id']}'");
-                    if($last_txn_qry->num_rows > 0) {
-                        $last_txn = $last_txn_qry->fetch_assoc();
-                        $last_txn_date = $last_txn['last_date'];
-                    }
+                    $last_txn_date = $row['last_txn_date'];
 
                     if($last_txn_date) {
                         $days_diff = floor((time() - strtotime($last_txn_date)) / (60 * 60 * 24));
@@ -660,7 +668,7 @@ try {
                         </div>
                     </div>
                 </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
                 </div>
             </div>
         </div>
@@ -1028,7 +1036,7 @@ $(document).ready(function(){
     }
 
     // Create new client
-    $('#create_new').click(function(e){
+    $('#create_new, #mobileCreateBtn').click(function(e){
         e.preventDefault();
         uni_modal("<i class='fa fa-plus'></i> Add New Client","clients/manage_client.php",'mid-large');
     });
@@ -1053,29 +1061,49 @@ $(document).ready(function(){
     });
 });
 
-// View Toggle Function - Using CSS classes for speed
+// View Toggle Functions
 function toggleView(viewType) {
-    console.log('Clients toggle:', viewType);
-    
-    // Update buttons with jQuery
+    // Update buttons
     $('#btn-table-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'table' ? 'btn-primary' : 'btn-outline-secondary');
     $('#btn-card-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'card' ? 'btn-primary' : 'btn-outline-secondary');
     
-    // Just toggle body class - CSS handles display
+    // Toggle class on body
     $('body').removeClass('show-table show-card').addClass('show-' + viewType);
     
     // Save preference
     localStorage.setItem('clients_view', viewType);
 }
 
-// Load saved preference - default to table view
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    // Initial view set
     let savedView = localStorage.getItem('clients_view');
-    if (!savedView) {
-        savedView = 'table';
-        localStorage.setItem('clients_view', savedView);
+    let isMobile = window.innerWidth <= 768;
+    
+    if(!savedView){
+        savedView = isMobile ? 'card' : 'table';
     }
-    console.log('Loading clients view:', savedView);
     toggleView(savedView);
+    
+    // Check view on resize
+    $(window).on('resize', function(){
+        if(window.innerWidth <= 768){
+            $('.desktop-export-buttons').hide();
+            $('.view-toggle-wrapper').show();
+        } else {
+            $('.desktop-export-buttons').show();
+            $('.view-toggle-wrapper').show();
+        }
+    });
+
+    if($.fn.DataTable.isDataTable('#client-list-main')) {
+        $('#client-list-main').DataTable().destroy();
+    }
+
+    $('#client-list-main').DataTable({
+		columnDefs: [
+				{ orderable: false, targets: [4,5] }
+		],
+		order:[0,'asc']
+	});
 });
 </script>

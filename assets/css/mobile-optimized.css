@@ -138,43 +138,49 @@
     }
 }
 
-/* 5. FONT SIZES - Readable on all devices */
+/* 5. FONT SIZES & TYPOGRAPHY - CSS clamp() for Fluid Scaling */
+:root {
+    /* Fluid typography: Minimum 14px on small phones, scaling linearly up to 16px on desktops */
+    --fluid-text-base: clamp(14px, 2vw + 10px, 16px);
+    
+    /* Headings scaling dynamically */
+    --fluid-h1: clamp(1.75rem, 4vw + 1rem, 2.5rem);
+    --fluid-h2: clamp(1.5rem, 3vw + 1rem, 2rem);
+    --fluid-h3: clamp(1.25rem, 2.5vw + 0.8rem, 1.75rem);
+    --fluid-h4: clamp(1.1rem, 2vw + 0.5rem, 1.5rem);
+    --fluid-h5: clamp(1rem, 1.5vw + 0.5rem, 1.25rem);
+    --fluid-h6: clamp(0.9rem, 1vw + 0.5rem, 1rem);
+}
+
+html {
+    /* Set root font size for REM scaling */
+    font-size: var(--fluid-text-base);
+}
+
+body {
+    font-size: var(--fluid-text-base);
+    line-height: 1.6;
+}
+
+h1, .h1 { font-size: var(--fluid-h1); }
+h2, .h2 { font-size: var(--fluid-h2); }
+h3, .h3 { font-size: var(--fluid-h3); }
+h4, .h4 { font-size: var(--fluid-h4); }
+h5, .h5 { font-size: var(--fluid-h5); }
+h6, .h6 { font-size: var(--fluid-h6); }
+
 @media (max-width: 768px) {
-    /* Base font size */
-    body {
-        font-size: 15px;
-        line-height: 1.5;
-    }
-    
-    /* Headings */
-    h1, .h1 { font-size: 1.75rem; }
-    h2, .h2 { font-size: 1.5rem; }
-    h3, .h3 { font-size: 1.25rem; }
-    h4, .h4 { font-size: 1.1rem; }
-    h5, .h5 { font-size: 1rem; }
-    h6, .h6 { font-size: 0.9rem; }
-    
     /* Card titles */
-    .card-title {
-        font-size: 1.1rem;
-    }
+    .card-title { font-size: 1.1rem; }
     
     /* Navigation */
-    .nav-link {
-        padding: 12px 15px;
-        font-size: 15px;
-    }
+    .nav-link { padding: 12px 15px; font-size: 1rem; }
     
     /* Table text */
-    .table {
-        font-size: 14px;
-    }
+    .table { font-size: 0.95rem; }
     
     /* Badge sizes */
-    .badge {
-        font-size: 12px;
-        padding: 5px 10px;
-    }
+    .badge { font-size: 0.8rem; padding: 5px 10px; }
 }
 
 /* Touch-friendly everywhere */

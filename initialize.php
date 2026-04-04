@@ -7,13 +7,10 @@ require_once __DIR__ . '/env.php';
 // Auto-detect base URL dynamically - no hardcoded folder names
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$script_path = dirname($_SERVER['SCRIPT_NAME'] ?? '');
-$path_segments = array_filter(explode('/', $script_path));
-$root_folder = end($path_segments);
-if (in_array($root_folder, ['admin', 'classes', 'dist', 'plugins', 'inc', 'assets'])) {
-    $root_folder = prev($path_segments) ?: basename(dirname(__DIR__));
-}
-if(!defined('base_url')) define('base_url', defined('BASE_URL') ? rtrim(BASE_URL, '/') . '/' : rtrim($protocol . $host . '/' . $root_folder . '/', '/') . '/');
+$doc_root = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
+$app_dir = str_replace('\\', '/', __DIR__);
+$base_folder = str_ireplace($doc_root, '', $app_dir);
+if(!defined('base_url')) define('base_url', defined('BASE_URL') ? rtrim(BASE_URL, '/') . '/' : rtrim($protocol . $host . $base_folder, '/') . '/');
 
 if(!defined('base_app')) define('base_app', str_replace('\\','/',__DIR__).'/' );
 

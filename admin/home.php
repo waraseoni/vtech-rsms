@@ -32,7 +32,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
 <!-- ===== MAIN STATISTICS CARDS (Visible to all users) ===== -->
 <div class="row">
     <!-- Total Clients -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=clients" class="text-decoration-none">
             <div class="card stat-card bg-gradient-cyan text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -51,7 +51,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- Pending Jobs (status 0) -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=transactions&status=0" class="text-decoration-none">
             <div class="card stat-card bg-gradient-orange text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -70,7 +70,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- In Progress (status 1) -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=transactions&status=1" class="text-decoration-none">
             <div class="card stat-card bg-gradient-blue text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -89,7 +89,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- Finished (status 2) -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=transactions&status=2" class="text-decoration-none">
             <div class="card stat-card bg-gradient-green text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -108,7 +108,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- Delivered (status 5) -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=transactions&status=5" class="text-decoration-none">
             <div class="card stat-card bg-gradient-purple text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -127,7 +127,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- Total Mechanics (active) -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=transactions" class="text-decoration-none">
             <div class="card stat-card bg-gradient-pink text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -165,7 +165,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div> -->
 
     <!-- Low Stock Alert -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <a href="./?page=inventory" class="text-decoration-none">
             <div class="card stat-card bg-gradient-red text-white h-100 border-0 shadow-lg">
                 <div class="card-body">
@@ -187,7 +187,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
     </div>
 
     <!-- Today's Revenue -->
-    <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+    <div class="col-lg-3 col-6 mb-4">
         <div class="card stat-card bg-gradient-indigo text-white h-100 border-0 shadow-lg">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
@@ -651,5 +651,51 @@ $(function() {
         width: 40px;
         height: 40px;
         background-size: 60%;
+    }
+    
+    @media (max-width: 768px) {
+        .stat-card {
+            margin-bottom: 15px !important;
+        }
+        .stat-card .card-body {
+            padding: 1rem !important;
+        }
+        .stat-card h2 {
+            font-size: 1.4rem !important;
+        }
+        .stat-card h6 {
+            font-size: 0.7rem !important;
+            margin-bottom: 5px !important;
+        }
+        .stat-card i {
+            font-size: 1.8rem !important;
+            position: absolute !important;
+            right: 10px !important;
+            bottom: 10px !important;
+        }
+        .info-box {
+            margin-bottom: 10px !important;
+        }
+        .info-box-icon {
+            width: 45px !important;
+            height: 45px !important;
+            font-size: 1.2rem !important;
+        }
+        .info-box-text {
+            font-size: 0.8rem !important;
+        }
+        .info-box-number {
+            font-size: 1rem !important;
+        }
+        
+        /* Reduce grid gutters on mobile */
+        .row {
+            margin-left: -7px;
+            margin-right: -7px;
+        }
+        .row > [class*="col-"] {
+            padding-left: 7px;
+            padding-right: 7px;
+        }
     }
 </style>
