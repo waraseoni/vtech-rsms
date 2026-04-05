@@ -34,12 +34,14 @@ if(isset($_GET['id'])){
                 <?php 
                 $loans = $conn->query("SELECT id, principal_amount, total_payable, emi_amount FROM `client_loans` WHERE client_id = '{$client_id}' AND status = 1");
                 while($lrow = $loans->fetch_assoc()):
-                    // Kitna pay ho chuka hai is loan ke liye
-                    $paid = $conn->query("SELECT SUM(net_amount) FROM client_payments WHERE loan_id = '{$lrow['id']}'")->fetch_array()[0] ?? 0;
+                    // Kitna pay ho chuka hai is loan ke liye (Fix: Using amount + discount)
+                    $paid = $conn->query("SELECT SUM(amount + IFNULL(discount, 0)) FROM client_payments WHERE loan_id = '{$lrow['id']}'")->fetch_array()[0] ?? 0;
                     $balance = $lrow['total_payable'] - $paid;
+                    if($balance <= 0) continue; // Skip fully paid loans in the dropdown
+                    $emi_to_pay = min($lrow['emi_amount'], $balance);
                 ?>
-                <option value="<?php echo $lrow['id'] ?>" data-emi="<?php echo $lrow['emi_amount'] ?>" <?php echo isset($loan_id) && $loan_id == $lrow['id'] ? "selected" : "" ?>>
-                    Loan ID: <?php echo $lrow['id'] ?> (Bal: ₹<?php echo number_format($balance,2) ?>) - EMI: ₹<?php echo number_format($lrow['emi_amount'],2) ?>
+                <option value="<?php echo $lrow['id'] ?>" data-emi="<?php echo $lrow['emi_amount'] ?>" data-balance="<?php echo $balance ?>" <?php echo isset($loan_id) && $loan_id == $lrow['id'] ? "selected" : "" ?>>
+                    Loan ID: <?php echo $lrow['id'] ?> (Balance: ₹<?php echo number_format($balance,2) ?>) - Recommended: ₹<?php echo number_format($emi_to_pay,2) ?>
                 </option>
                 <?php endwhile; ?>
             </select>
@@ -47,8 +49,8 @@ if(isset($_GET['id'])){
         </div>
 
         <div class="form-group">
-            <label for="net_amount" class="control-label">Amount Paid (Jama Rakam)</label>
-            <input type="number" step="any" name="net_amount" id="net_amount" class="form-control text-right" value="<?php echo isset($net_amount) ? $net_amount : '' ?>" required>
+            <label for="amount" class="control-label">Amount Paid (Jama Rakam)</label>
+            <input type="number" step="any" name="amount" id="amount" class="form-control text-right" value="<?php echo isset($amount) ? $amount : '' ?>" required>
         </div>
 
         <div class="form-group">
@@ -71,12 +73,17 @@ if(isset($_GET['id'])){
     $(function(){
         // Jab koi loan select kare toh auto-fill EMI amount
         $('#loan_id').change(function(){
-            var emi = $(this).find(':selected').attr('data-emi');
-            if(emi > 0){
-                $('#net_amount').val(emi);
+            var opt = $(this).find(':selected');
+            var emi = opt.attr('data-emi');
+            var balance = opt.attr('data-balance');
+            
+            if(emi && emi > 0){
+                // Emi aur Balance mein jo kam ho wahi fill karein
+                var to_pay = Math.min(parseFloat(emi), parseFloat(balance || 0));
+                $('#amount').val(to_pay);
                 $('#remarks').val("Monthly EMI Payment");
             }else{
-                $('#net_amount').val('');
+                $('#amount').val('');
                 $('#remarks').val("");
             }
         });

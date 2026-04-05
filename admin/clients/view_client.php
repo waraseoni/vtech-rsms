@@ -53,24 +53,28 @@ $total_paid = $stmt_paid->get_result()->fetch_assoc()['total'] ?? 0;
 $final_balance = ($opening_balance + $total_billed) - $total_paid;
 
 // 4. New Loan/Advance Summary
-// Total Loan Given (active loans)
-$stmt_loan = $conn->prepare("SELECT SUM(total_payable) as total_loan, SUM(emi_amount) as monthly_emi FROM client_loans WHERE client_id = ? AND status = 1");
-$stmt_loan->bind_param("i", $id);
-$stmt_loan->execute();
-$loan_data = $stmt_loan->get_result()->fetch_assoc();
-$total_loan_given = $loan_data['total_loan'] ?? 0;
-$monthly_emi_total = $loan_data['monthly_emi'] ?? 0;
+// Calculate summaries only for ACTIVE loans (status = 1)
+$stmt_loan_active = $conn->prepare("SELECT 
+    SUM(cl.total_payable) as total_active_loan,
+    SUM(CASE WHEN (cl.total_payable - IFNULL(paid.total, 0)) > 0 THEN LEAST(cl.emi_amount, (cl.total_payable - IFNULL(paid.total, 0))) ELSE 0 END) as monthly_emi,
+    SUM(IFNULL(paid.total, 0)) as total_active_repaid
+FROM client_loans cl
+LEFT JOIN (SELECT loan_id, SUM(amount + discount) as total FROM client_payments GROUP BY loan_id) paid ON cl.id = paid.loan_id
+WHERE cl.client_id = ? AND cl.status = 1");
+$stmt_loan_active->bind_param("i", $id);
+$stmt_loan_active->execute();
+$active_loan_data = $stmt_loan_active->get_result()->fetch_assoc();
 
-// Total Loan Repaid (payments linked to a loan)
-$stmt_loan_paid = $conn->prepare("SELECT SUM(amount + discount) as total FROM client_payments WHERE client_id = ? AND loan_id IS NOT NULL");
-$stmt_loan_paid->bind_param("i", $id);
-$stmt_loan_paid->execute();
-$total_loan_repaid = $stmt_loan_paid->get_result()->fetch_assoc()['total'] ?? 0;
+$total_active_loan_given = $active_loan_data['total_active_loan'] ?? 0;
+$total_active_loan_repaid = $active_loan_data['total_active_repaid'] ?? 0;
+$monthly_emi_total = $active_loan_data['monthly_emi'] ?? 0;
 
-$current_loan_balance = $total_loan_given - $total_loan_repaid;
+// Active Loan Balance is what remains to be paid for current active loans
+$current_loan_balance = $total_active_loan_given - $total_active_loan_repaid;
 
-// Overall balance including loans
-$net_balance = ($opening_balance + $total_billed + $total_loan_given) - ($total_paid + $total_loan_repaid);
+// Overall balance: (Opening + Total Billed - Service Paid) + Current Active Loan Balance
+// Closed/Finished loans have a net balance of 0 toward the client's current debt.
+$net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_balance;
 ?>
 
 <div class="content py-3">
@@ -781,30 +785,7 @@ $(function(){
 
     // New: Close loan functionality
     $('.close_loan').click(function(){
-        _conf("Are you sure to close this loan?", "close_loan", [$(this).attr('data-id')])
+        uni_modal("<i class='fa fa-lock'></i> Close Loan Summary", "clients/close_loan_modal.php?id=" + $(this).attr('data-id'));
     });
 });
-
-function close_loan($id){
-    start_loader();
-    $.ajax({
-        url:_base_url_+"classes/Master.php?f=close_loan",
-        method:"POST",
-        data:{id:$id},
-        dataType:"json",
-        error:err=>{
-            console.log(err)
-            alert_toast("An error occured.",'error');
-            end_loader();
-        },
-        success:function(resp){
-            if(typeof resp== 'object' && resp.status == 'success'){
-                location.reload();
-            }else{
-                alert_toast("An error occured.",'error');
-                end_loader();
-            }
-        }
-    });
-}
 </script>

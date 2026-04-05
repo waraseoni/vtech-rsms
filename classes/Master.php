@@ -2045,7 +2045,10 @@ function save_client_payment(){
     foreach($_POST as $k => $v){
         if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .= ",";
-            $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
+            if($v === '' && in_array($k, ['loan_id', 'job_id', 'bill_no']))
+                $data .= " `{$k}`=NULL ";
+            else
+                $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }
     }
     if(empty($id)){
@@ -2067,7 +2070,10 @@ function save_payment(){
     foreach($_POST as $k => $v){
         if(!in_array($k, array('id', 'csrf_token'))){
             if(!empty($data)) $data .= ",";
-            $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
+            if($v === '' && in_array($k, ['loan_id', 'job_id', 'bill_no']))
+                $data .= " `{$k}`=NULL ";
+            else
+                $data .= " `{$k}`='{$this->conn->real_escape_string($v)}' ";
         }
     }
     if(empty($id)){
