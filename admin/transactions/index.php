@@ -1139,21 +1139,39 @@
                             $where_cond = " WHERE " . implode(" AND ", $conditions);
                         }
 
-                        // Fetch data once for both views
+                        // Optimization: Fetch data with aggregate joins instead of row-level subqueries
                         if (!isset($transactions_data)) {
+                            $limit_cond = "";
+                            if(empty($conditions)){
+                                $limit_cond = " LIMIT 100"; // Show last 100 by default for speed
+                            }
+
                             $transactions_data = [];
-                            $qry = $conn->query("SELECT t.*, 
-                                c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, c.opening_balance, c.id as client_tbl_id,
-                                (SELECT SUM(amount) FROM transaction_list tl WHERE tl.client_name = c.id AND tl.status = 5) as total_billed,
-                                (SELECT SUM(amount + discount) FROM client_payments cp WHERE cp.client_id = c.id) as total_paid,
-                                (SELECT SUM(total_amount) FROM direct_sales ds WHERE ds.client_id = c.id) as total_sale,
-                                t.code 
+                            $qry_str = "SELECT t.*, 
+                                c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, 
+                                c.opening_balance, c.id as client_tbl_id,
+                                COALESCE(cb.total_billed, 0) as total_billed,
+                                COALESCE(cp.total_paid, 0) as total_paid,
+                                COALESCE(ds.total_sale, 0) as total_sale
                             FROM `transaction_list` t 
                             INNER JOIN client_list c ON t.client_name = c.id 
+                            LEFT JOIN (SELECT client_name, SUM(amount) as total_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) cb ON cb.client_name = c.id
+                            LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments GROUP BY client_id) cp ON cp.client_id = c.id
+                            LEFT JOIN (SELECT client_id, SUM(total_amount) as total_sale FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
                             {$where_cond} 
-                            ORDER BY job_id DESC, date_created DESC");
+                            ORDER BY job_id DESC, date_created DESC
+                            {$limit_cond}";
+                            
+                            $qry = $conn->query($qry_str);
 
                             while($row = $qry->fetch_assoc()){
+                                // Pre-calculate balance to avoid repeating in both loops
+                                $calc_sale = $row['total_sale'] ?? 0;
+                                $calc_billed = $row['total_billed'] ?? 0;
+                                $calc_paid = $row['total_paid'] ?? 0;
+                                $calc_opening = $row['opening_balance'] ?? 0;
+                                $row['current_balance'] = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid;
+                                
                                 $transactions_data[] = $row;
                             }
                         }
@@ -1175,11 +1193,7 @@
                             $status_val = $row['status'];
                             $client_img = $row['client_img'];
                             
-                            $calc_sale = $row['total_sale'] ?? 0;
-							$calc_billed = $row['total_billed'] ?? 0;
-                            $calc_paid = $row['total_paid'] ?? 0;
-                            $calc_opening = $row['opening_balance'] ?? 0;
-                            $current_balance = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid;
+                            $current_balance = $row['current_balance'];
                             
                             // Balance Text formatting
                             if($current_balance > 0){
@@ -1240,6 +1254,7 @@
         <img src="<?php echo validate_image($row['client_img']) ?>" 
             class="table-client-avatar" 
             onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'"
+            loading="lazy"
             alt="<?= htmlspecialchars($fullname) ?>">
 
         <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
@@ -1395,11 +1410,7 @@
                         $mobile_id = $row['id'];
                         
                         // Balance Calculation
-                        $calc_sale = $row['total_sale'] ?? 0;
-                        $calc_billed = $row['total_billed'] ?? 0;
-                        $calc_paid = $row['total_paid'] ?? 0;
-                        $calc_opening = $row['opening_balance'] ?? 0;
-                        $current_balance = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid;
+                        $current_balance = $row['current_balance'];
 
                         // Balance Text formatting
                         if($current_balance > 0){
@@ -1451,6 +1462,7 @@
                         <div class="card-client">
                             <img src="<?php echo validate_image($mobile_client_img) ?>" 
                                  class="client-avatar"
+                                 loading="lazy"
                                  onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
                             <div class="client-details">
                                 <div class="client-name">

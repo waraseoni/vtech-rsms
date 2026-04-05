@@ -4,11 +4,11 @@ ini_set('date.timezone','Asia/Kolkata');
 date_default_timezone_set('Asia/Kolkata');
 session_start();
 
-require_once('initialize.php');
-require_once('classes/DBConnection.php');
-require_once('classes/SystemSettings.php');
-require_once('classes/CsrfProtection.php');
-require_once('security_helper.php');
+require_once(__DIR__ . '/initialize.php');
+require_once(__DIR__ . '/classes/DBConnection.php');
+require_once(__DIR__ . '/classes/SystemSettings.php');
+require_once(__DIR__ . '/classes/CsrfProtection.php');
+require_once(__DIR__ . '/security_helper.php');
 $db = new DBConnection;
 $conn = $db->conn;
 

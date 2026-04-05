@@ -1,6 +1,6 @@
 <?php
-require_once('../config.php');
-require_once('../classes/CsrfProtection.php');
+require_once(__DIR__ . '/../config.php');
+require_once(__DIR__ . '/../classes/CsrfProtection.php');
 
 Class Master extends DBConnection {
 	private $settings;

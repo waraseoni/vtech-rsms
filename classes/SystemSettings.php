@@ -1,7 +1,7 @@
 <?php
 if(!class_exists('DBConnection')){
-	require_once('../config.php');
-	require_once('DBConnection.php');
+	require_once(__DIR__ . '/../config.php');
+	require_once(__DIR__ . '/DBConnection.php');
 }
 class SystemSettings extends DBConnection{
 	public function __construct(){

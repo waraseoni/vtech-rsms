@@ -97,16 +97,13 @@ $total_repayment = $emi_amount * $tenure_months;
     })
 
     // Baaki purana code (Pay EMI aur DataTable) waise hi rahega
+    // Pay EMI button click handler
     $('.pay_emi').click(function(){
         uni_modal("<i class='fa fa-money-bill-wave'></i> Record EMI Payment for "+$(this).attr('data-name'), "lenders/manage_payment.php?lender_id="+$(this).attr('data-id'))
     })
-        // Pay EMI button click handler
-        $('.pay_emi').click(function(){
-            uni_modal("<i class='fa fa-money-bill-wave'></i> Record EMI Payment for "+$(this).attr('data-name'), "lenders/manage_payment.php?lender_id="+$(this).attr('data-id'))
-        })		
-		// EMI Edit button click handler
+    
+    // EMI Edit button click handler
     $('.edit_payment').click(function(){
-        // manage_payment.php ko payment ID ke saath modal mein kholna
         uni_modal("<i class='fa fa-edit'></i> Edit EMI Payment", "lenders/manage_payment.php?id="+$(this).attr('data-id'))
     })
     

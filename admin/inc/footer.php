@@ -25,8 +25,9 @@
     $.ajax({
       url:$url,
       error:err=>{
-        console.log()
-        alert("An error occured")
+        console.error(err)
+        alert("An error occured while loading content")
+        end_loader()
       },
       success:function(resp){
         if(resp){
@@ -43,8 +44,10 @@
             keyboard:false,
             focus:true
           })
-          end_loader()
+        } else {
+            alert("Empty response received from server")
         }
+        end_loader()
       }
     })
   }

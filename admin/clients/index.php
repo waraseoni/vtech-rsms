@@ -431,28 +431,39 @@ try {
                         <?php 
                         $i = 1;
                         if (!isset($clients_data)) {
-                            $clients_data = [];
-                            $qry = $conn->query("SELECT c.*, 
-                                COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) as repair_billed,
-                                COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) as direct_sales_billed,
-                                COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0) as total_paid,
-                                COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) as total_loan_given,
-                                (SELECT MAX(date_created) FROM transaction_list WHERE client_name = c.id) as last_txn_date
-                                FROM `client_list` c WHERE c.delete_flag = 0 
-                                ORDER BY (c.opening_balance + 
-                                    COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) + 
-                                    COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) +
-                                    COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) - 
-                                    COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0)) DESC");
+                             $limit_cond = "";
+                             if(!isset($_GET['searchAll']) && !isset($_GET['minBalance'])){
+                                 $limit_cond = " LIMIT 150"; // Speed up initial load
+                             }
 
-                            while($row = $qry->fetch_assoc()){
-                                $clients_data[] = $row;
-                            }
+                             $clients_data = [];
+                             $qry_str = "SELECT c.*, 
+                                COALESCE(rb.repair_billed, 0) as repair_billed,
+                                COALESCE(ds.direct_sales_billed, 0) as direct_sales_billed,
+                                COALESCE(cp.total_paid, 0) as total_paid,
+                                COALESCE(cl.total_loan_given, 0) as total_loan_given,
+                                lt.last_txn_date
+                                FROM `client_list` c 
+                                LEFT JOIN (SELECT client_name, SUM(amount) as repair_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) rb ON rb.client_name = c.id
+                                LEFT JOIN (SELECT client_id, SUM(total_amount) as direct_sales_billed FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
+                                LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments GROUP BY client_id) cp ON cp.client_id = c.id
+                                LEFT JOIN (SELECT client_id, SUM(total_payable) as total_loan_given FROM client_loans WHERE status = 1 GROUP BY client_id) cl ON cl.client_id = c.id
+                                LEFT JOIN (SELECT client_name, MAX(date_created) as last_txn_date FROM transaction_list GROUP BY client_name) lt ON lt.client_name = c.id
+                                WHERE c.delete_flag = 0 
+                                ORDER BY (c.opening_balance + COALESCE(rb.repair_billed, 0) + COALESCE(ds.direct_sales_billed, 0) + COALESCE(cl.total_loan_given, 0) - COALESCE(cp.total_paid, 0)) DESC
+                                {$limit_cond}";
+
+                             $qry = $conn->query($qry_str);
+
+                             while($row = $qry->fetch_assoc()){
+                                 // Pre-calculate to avoid redundant math
+                                 $row['current_balance'] = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
+                                 $clients_data[] = $row;
+                             }
                         }
 
                         foreach($clients_data as $row):
-                            // New net balance including loans
-                            $current_balance = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
+                            $current_balance = $row['current_balance'];
                             $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
 
                             $row_class = '';
@@ -501,6 +512,7 @@ try {
                                     <img src="<?php echo validate_image($row['image_path']) ?>" 
                                          class="desktop-avatar view_image_full" 
                                          alt="Client"
+                                         loading="lazy"
                                          data-src="<?php echo validate_image($row['image_path']) ?>"
                                          onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
                                     <div class="client-info-text">
@@ -573,7 +585,7 @@ try {
                 <?php 
                 $i_mobile = 1;
                 foreach($clients_data as $row):
-                    $current_balance = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
+                    $current_balance = $row['current_balance'];
                     $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
 
                     $card_class = '';
@@ -623,6 +635,7 @@ try {
                             <img src="<?php echo validate_image($row['image_path']) ?>" 
                                  alt="Client"
                                  class="view_image_full"
+                                 loading="lazy"
                                  data-src="<?php echo validate_image($row['image_path']) ?>"
                                  onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
                         </div>

@@ -262,6 +262,13 @@ require_once('../classes/CsrfProtection.php');
                 </div>
               </div>
               
+              <div class="form-group d-flex justify-content-between align-items-center mb-0">
+                <div class="custom-control custom-checkbox">
+                  <input type="checkbox" class="custom-control-input" id="rememberMe">
+                  <label class="custom-control-label text-muted" for="rememberMe" style="font-size: 0.9em; cursor: pointer;">Remember Me</label>
+                </div>
+              </div>
+
               <div class="row align-items-center mt-4">
                 <div class="col-12">
                   <button type="submit" class="btn btn-login" id="loginBtn">SIGN IN</button>
@@ -293,8 +300,20 @@ require_once('../classes/CsrfProtection.php');
       }
     });
     
+    // Load remembered username
+    if(localStorage.getItem('remembered_username')){
+      $('[name="username"]').val(localStorage.getItem('remembered_username'));
+      $('#rememberMe').prop('checked', true);
+      $('[name="password"]').focus();
+    }
+
     // Form submission
-    $('#login-frm').submit(function(){
+    $('#login-frm').submit(function(e){
+      if($('#rememberMe').is(':checked')){
+        localStorage.setItem('remembered_username', $('[name="username"]').val());
+      } else {
+        localStorage.removeItem('remembered_username');
+      }
       $('#loginBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Signing in...');
     });
     
