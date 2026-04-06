@@ -739,6 +739,10 @@
             display: block !important;
         }
         
+        .fab-container {
+            display: none !important;
+        }
+        
         .desktop-filter-form {
             display: block !important;
         }
@@ -1142,9 +1146,6 @@
                         // Optimization: Fetch data with aggregate joins instead of row-level subqueries
                         if (!isset($transactions_data)) {
                             $limit_cond = "";
-                            if(empty($conditions)){
-                                $limit_cond = " LIMIT 100"; // Show last 100 by default for speed
-                            }
 
                             $transactions_data = [];
                             $qry_str = "SELECT t.*, 
@@ -1605,37 +1606,38 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Floating Action Button -->
-                <div class="fab-container">
-                    <button class="fab-main" onclick="toggleFabMenu()">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <div class="fab-menu" id="fabMenu">
-                        <a href="./?page=transactions/manage_transaction" class="fab-item">
-                            <i class="fas fa-plus-circle text-primary"></i>
-                            <span class="fab-text">Create New</span>
-                        </a>
-                        <a href="./?page=transactions/manage_transaction_old" class="fab-item">
-                            <i class="fas fa-history text-info"></i>
-                            <span class="fab-text">Old Jobs</span>
-                        </a>
-                        <a href="./?page=transactions/multi_transaction" class="fab-item">
-                            <i class="fas fa-layer-group text-success"></i>
-                            <span class="fab-text">Bulk Entry</span>
-                        </a>
-                        <hr style="margin: 8px 0; border-color: #e2e8f0;">
-                        <a href="javascript:void(0)" onclick="printReport()" class="fab-item">
-                            <i class="fas fa-print text-warning"></i>
-                            <span class="fab-text">Print Report</span>
-                        </a>
-                        <a href="javascript:void(0)" onclick="exportExcel()" class="fab-item">
-                            <i class="fas fa-file-excel text-success"></i>
-                            <span class="fab-text">Export Excel</span>
-                        </a>
-                    </div>
+            </div>
+            
+            <!-- Floating Action Button (Mobile Only) -->
+            <div class="fab-container">
+                <button class="fab-main" onclick="toggleFabMenu()">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <div class="fab-menu" id="fabMenu">
+                    <a href="./?page=transactions/manage_transaction" class="fab-item">
+                        <i class="fas fa-plus-circle text-primary"></i>
+                        <span class="fab-text">Create New</span>
+                    </a>
+                    <a href="./?page=transactions/manage_transaction_old" class="fab-item">
+                        <i class="fas fa-history text-info"></i>
+                        <span class="fab-text">Old Jobs</span>
+                    </a>
+                    <a href="./?page=transactions/multi_transaction" class="fab-item">
+                        <i class="fas fa-layer-group text-success"></i>
+                        <span class="fab-text">Bulk Entry</span>
+                    </a>
+                    <hr style="margin: 8px 0; border-color: #e2e8f0;">
+                    <a href="javascript:void(0)" onclick="printReport()" class="fab-item">
+                        <i class="fas fa-print text-warning"></i>
+                        <span class="fab-text">Print Report</span>
+                    </a>
+                    <a href="javascript:void(0)" onclick="exportExcel()" class="fab-item">
+                        <i class="fas fa-file-excel text-success"></i>
+                        <span class="fab-text">Export Excel</span>
+                    </a>
                 </div>
             </div>
+            
         </div>
     </div>
 </div>

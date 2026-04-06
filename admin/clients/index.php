@@ -432,9 +432,6 @@ try {
                         $i = 1;
                         if (!isset($clients_data)) {
                              $limit_cond = "";
-                             if(!isset($_GET['searchAll']) && !isset($_GET['minBalance'])){
-                                 $limit_cond = " LIMIT 150"; // Speed up initial load
-                             }
 
                              $clients_data = [];
                              $qry_str = "SELECT c.*, 
@@ -1113,6 +1110,8 @@ $(document).ready(function() {
     }
 
     $('#client-list-main').DataTable({
+        "pageLength": 25,
+        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
 		columnDefs: [
 				{ orderable: false, targets: [4,5] }
 		],
