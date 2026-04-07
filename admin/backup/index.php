@@ -595,6 +595,7 @@ function create_backup(){
         success:function(resp){
             end_loader();
             if(resp.status == 'success'){
+                $('#confirm_modal').modal('hide');
                 var msg = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + resp.msg + '</div>';
                 
                 if(resp.tables && resp.records){
@@ -610,12 +611,15 @@ function create_backup(){
                 }
                 
                 $('#restore-message').html(msg);
+                setTimeout(function(){ location.reload(); }, 1500);
             }else{
+                $('#confirm_modal').modal('hide');
                 alert_toast(resp.msg || "An error occurred",'error');
             }
         },
         error:function(){
             end_loader();
+            $('#confirm_modal').modal('hide');
             alert_toast("An error occurred",'error');
         }
     });

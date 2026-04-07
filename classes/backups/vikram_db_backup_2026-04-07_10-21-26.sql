@@ -1,5 +1,5 @@
 -- VTech-RSMS Backup
--- Date: 2026-04-02 10:05:36
+-- Date: 2026-04-07 10:21:26
 
 DROP TABLE IF EXISTS `advance_payments`;
 CREATE TABLE `advance_payments` (
@@ -138,7 +138,7 @@ CREATE TABLE `attendance_list` (
   PRIMARY KEY (`id`),
   KEY `mechanic_id` (`mechanic_id`),
   CONSTRAINT `attendance_list_ibfk_1` FOREIGN KEY (`mechanic_id`) REFERENCES `mechanic_list` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=631 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=646 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `attendance_list` VALUES ('1', '2', '1', '2025-12-21');
 INSERT INTO `attendance_list` VALUES ('2', '3', '2', '2025-12-21');
@@ -770,6 +770,21 @@ INSERT INTO `attendance_list` VALUES ('627', '1', '1', '2026-03-31');
 INSERT INTO `attendance_list` VALUES ('628', '2', '1', '2026-04-01');
 INSERT INTO `attendance_list` VALUES ('629', '3', '1', '2026-04-01');
 INSERT INTO `attendance_list` VALUES ('630', '1', '1', '2026-04-01');
+INSERT INTO `attendance_list` VALUES ('631', '2', '2', '2026-04-02');
+INSERT INTO `attendance_list` VALUES ('632', '3', '1', '2026-04-02');
+INSERT INTO `attendance_list` VALUES ('633', '1', '1', '2026-04-02');
+INSERT INTO `attendance_list` VALUES ('634', '2', '1', '2026-04-03');
+INSERT INTO `attendance_list` VALUES ('635', '3', '1', '2026-04-03');
+INSERT INTO `attendance_list` VALUES ('636', '1', '1', '2026-04-03');
+INSERT INTO `attendance_list` VALUES ('637', '2', '2', '2026-04-04');
+INSERT INTO `attendance_list` VALUES ('638', '3', '1', '2026-04-04');
+INSERT INTO `attendance_list` VALUES ('639', '1', '1', '2026-04-04');
+INSERT INTO `attendance_list` VALUES ('640', '2', '1', '2026-04-06');
+INSERT INTO `attendance_list` VALUES ('641', '3', '1', '2026-04-06');
+INSERT INTO `attendance_list` VALUES ('642', '1', '1', '2026-04-06');
+INSERT INTO `attendance_list` VALUES ('643', '2', '1', '2026-04-05');
+INSERT INTO `attendance_list` VALUES ('644', '3', '1', '2026-04-05');
+INSERT INTO `attendance_list` VALUES ('645', '1', '1', '2026-04-05');
 
 DROP TABLE IF EXISTS `client_list`;
 CREATE TABLE `client_list` (
@@ -786,7 +801,7 @@ CREATE TABLE `client_list` (
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   `date_updated` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=302 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=309 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_list` VALUES ('1', 'Devendra ', 'Arti', 'Namdeo', '07987953757', 'devendran@vtech.com', 'Namdeo Electronics, Ganesh Chowk, Seoni', '', '0.00', '0', '2021-12-27 10:10:55', '');
 INSERT INTO `client_list` VALUES ('2', 'Shubhank', '', 'Patel', '08817444419', 'shubbhank@vtech.com', 'Shobhit Light, Bilhari, jabalpur', 'uploads/clients/client00002.jpg', '31450.00', '0', '2021-12-27 10:33:18', '');
@@ -1094,6 +1109,13 @@ INSERT INTO `client_list` VALUES ('298', 'Nikhil ', 'kosta', 'Basant Electronics
 INSERT INTO `client_list` VALUES ('299', 'Sandeep ', 'Sahu', 'Bargi', '9691258886', '', '', '', '0.00', '0', '2026-03-30 14:38:28', '');
 INSERT INTO `client_list` VALUES ('300', 'Aakash', 'Baheliya', 'Mandla', '7089830908', '', 'Akash light, Mandla', '', '0.00', '0', '2026-03-31 17:14:47', '');
 INSERT INTO `client_list` VALUES ('301', 'Dr. Rajeev ', 'Jain', 'Star Hospital', '9907550855', '', '8827277488', '', '0.00', '0', '2026-04-01 13:02:54', '');
+INSERT INTO `client_list` VALUES ('302', 'Akshay', 'Sahu', 'Katangi', '9981908127', '', 'Akshay Light, Katangi', '', '0.00', '0', '2026-04-02 12:58:50', '');
+INSERT INTO `client_list` VALUES ('303', 'Shubham', 'Shriwastav', 'kapil bhaiya', '7697211193', '', 'Jabalpur', '', '0.00', '0', '2026-04-02 17:12:39', '');
+INSERT INTO `client_list` VALUES ('304', 'Shriyansh ', 'Rai ', 'Dindori gadasarai ', '9691832404', '', '', '', '0.00', '0', '2026-04-03 18:19:52', '');
+INSERT INTO `client_list` VALUES ('305', 'Nishant', 'Patle', 'Seoni', '9301300886', '', 'Nishant Events and Light, Seoni', 'uploads/clients/client00305.jpg', '0.00', '0', '2026-04-05 13:22:24', '');
+INSERT INTO `client_list` VALUES ('306', 'Vijay', 'Kewat', 'Suhagi', '8827451074', '', 'Suhagi', '', '0.00', '0', '2026-04-05 13:58:00', '');
+INSERT INTO `client_list` VALUES ('307', 'Dilip ', 'Sahu', 'Bombey tent Sihora', '9179244104', '', 'Bombay tent, Sihora', '', '0.00', '0', '2026-04-05 14:14:15', '');
+INSERT INTO `client_list` VALUES ('308', 'Abhay', '', 'Rai', '8817121201', '', 'Jabalpur', '', '0.00', '0', '2026-04-06 19:57:36', '');
 
 DROP TABLE IF EXISTS `client_loans`;
 CREATE TABLE `client_loans` (
@@ -1109,10 +1131,14 @@ CREATE TABLE `client_loans` (
   `status` tinyint(1) DEFAULT 1 COMMENT '1=Active, 0=Closed',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_loans` VALUES ('1', '100', '26000.00', '0.00', '0', '26000.00', '8666.67', '', '2026-02-16', '1', '2026-02-16 13:24:28');
-INSERT INTO `client_loans` VALUES ('2', '46', '1000.00', '0.00', '1', '1000.00', '1000.00', '', '2026-03-07', '1', '2026-03-07 21:43:42');
+INSERT INTO `client_loans` VALUES ('2', '46', '1000.00', '0.00', '1', '1000.00', '1000.00', '', '2026-03-07', '0', '2026-03-07 21:43:42');
+INSERT INTO `client_loans` VALUES ('3', '308', '2200.00', '0.00', '1', '2200.00', '2200.00', '', '2026-04-06', '1', '2026-04-06 19:59:20');
+INSERT INTO `client_loans` VALUES ('4', '308', '5000.00', '0.00', '0', '5000.00', '5000.00', '', '2026-04-06', '0', '2026-04-06 21:25:41');
+INSERT INTO `client_loans` VALUES ('5', '308', '5000.00', '0.00', '1', '5000.00', '5000.00', '', '2026-04-07', '0', '2026-04-07 10:01:34');
+INSERT INTO `client_loans` VALUES ('6', '308', '500.00', '0.00', '0', '500.00', '500.00', '', '2026-04-07', '0', '2026-04-07 10:02:07');
 
 DROP TABLE IF EXISTS `client_payments`;
 CREATE TABLE `client_payments` (
@@ -1133,7 +1159,7 @@ CREATE TABLE `client_payments` (
   KEY `client_id` (`client_id`),
   KEY `idx_client_id` (`client_id`),
   CONSTRAINT `client_payments_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `client_list` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=386 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=394 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_payments` VALUES ('19', '41', '', '', '', '2025-12-06', '1500.00', '0.00', '1500.00', 'Cash', 'Full', 'today adjusted', '2025-12-06 11:31:11');
 INSERT INTO `client_payments` VALUES ('20', '66', '', '', '', '2025-12-06', '500.00', '0.00', '500.00', 'Cash', 'Full', '', '2025-12-06 12:14:32');
@@ -1472,6 +1498,14 @@ INSERT INTO `client_payments` VALUES ('382', '102', '', '', '', '2026-04-01', '2
 INSERT INTO `client_payments` VALUES ('383', '60', '', '', '', '2026-04-01', '2000.00', '0.00', '2000.00', 'PhonePe/GPay', 'Full', '', '2026-04-02 00:33:45');
 INSERT INTO `client_payments` VALUES ('384', '300', '', '', '', '2026-03-31', '5500.00', '500.00', '5000.00', 'PhonePe/GPay', 'Full', '', '2026-04-02 00:35:25');
 INSERT INTO `client_payments` VALUES ('385', '283', '', '', '', '2026-04-02', '500.00', '0.00', '500.00', 'Cash', 'Full', '', '2026-04-02 00:39:37');
+INSERT INTO `client_payments` VALUES ('386', '184', '', '', '', '2026-04-02', '1500.00', '0.00', '1500.00', 'Cash', 'Full', '', '2026-04-02 17:36:18');
+INSERT INTO `client_payments` VALUES ('387', '303', '', '', '', '2026-04-02', '400.00', '0.00', '400.00', 'PhonePe/GPay', 'Full', '', '2026-04-02 18:12:31');
+INSERT INTO `client_payments` VALUES ('388', '83', '', '', '', '2026-04-03', '250.00', '0.00', '250.00', 'Cash', 'Full', '', '2026-04-03 20:20:51');
+INSERT INTO `client_payments` VALUES ('389', '221', '', '', '', '2026-04-03', '1400.00', '100.00', '1300.00', 'Cash', 'Full', '', '2026-04-03 20:21:46');
+INSERT INTO `client_payments` VALUES ('390', '217', '', '', '', '2026-04-04', '1000.00', '0.00', '1000.00', 'PhonePe/GPay', 'Full', '', '2026-04-04 13:19:50');
+INSERT INTO `client_payments` VALUES ('391', '305', '', '', '', '2026-04-05', '1000.00', '0.00', '1000.00', 'PhonePe/GPay', 'Full', '', '2026-04-05 20:40:40');
+INSERT INTO `client_payments` VALUES ('392', '259', '', '', '', '2026-04-05', '12000.00', '0.00', '12000.00', 'PhonePe/GPay', 'Full', '', '2026-04-06 00:28:28');
+INSERT INTO `client_payments` VALUES ('393', '122', '', '', '', '2026-04-06', '3000.00', '100.00', '2900.00', 'PhonePe/GPay', 'Full', '', '2026-04-06 19:46:21');
 
 DROP TABLE IF EXISTS `direct_sale_items`;
 CREATE TABLE `direct_sale_items` (
@@ -1543,7 +1577,7 @@ CREATE TABLE `expense_list` (
   `remarks` text DEFAULT NULL,
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `expense_list` VALUES ('2', 'Shop Rent', '10000.00', 'boby bhaiya via imps from pnb biz', '2025-12-21 12:09:42');
 INSERT INTO `expense_list` VALUES ('3', 'Others', '50.00', 'screw open to akbar', '2025-12-21 18:44:02');
@@ -1596,6 +1630,8 @@ INSERT INTO `expense_list` VALUES ('49', 'Spare Parts Purchase', '32000.00', '',
 INSERT INTO `expense_list` VALUES ('50', 'Spare Parts Purchase', '1500.00', 'robo', '2026-03-21 14:39:01');
 INSERT INTO `expense_list` VALUES ('51', 'Others', '10030.00', 'bob checqe for hfl', '2026-03-21 14:40:38');
 INSERT INTO `expense_list` VALUES ('52', 'Spare Parts Purchase', '1500.00', 'screw', '2026-03-25 00:53:03');
+INSERT INTO `expense_list` VALUES ('53', 'Electricity Bill', '1200.00', 'dono dukan ka mila kar', '2026-04-05 20:41:52');
+INSERT INTO `expense_list` VALUES ('54', 'Spare Parts Purchase', '9000.00', '2 x control card 12r and 650 from manjeet electronics', '2026-04-05 20:42:47');
 
 DROP TABLE IF EXISTS `inventory_list`;
 CREATE TABLE `inventory_list` (
@@ -1609,7 +1645,7 @@ CREATE TABLE `inventory_list` (
   PRIMARY KEY (`id`),
   KEY `product_id` (`product_id`),
   CONSTRAINT `product_id_fk_il` FOREIGN KEY (`product_id`) REFERENCES `product_list` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=87 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `inventory_list` VALUES ('12', '5', '12', '', '2025-10-21', '2025-10-21 21:49:10', '2026-03-07 10:51:13');
 INSERT INTO `inventory_list` VALUES ('13', '14', '5', '', '2025-10-24', '2025-10-24 15:42:22', '2025-10-29 13:30:01');
@@ -1681,6 +1717,9 @@ INSERT INTO `inventory_list` VALUES ('80', '45', '3', '', '2026-03-11', '2026-03
 INSERT INTO `inventory_list` VALUES ('81', '25', '1', '', '2026-03-25', '2026-03-25 22:33:07', '2026-03-25 22:33:07');
 INSERT INTO `inventory_list` VALUES ('82', '13', '10', 'pwn ic box', '2026-03-27', '2026-03-27 19:25:00', '2026-03-27 19:25:00');
 INSERT INTO `inventory_list` VALUES ('83', '41', '1018', '', '2026-03-28', '2026-03-28 16:05:00', '2026-03-28 16:05:00');
+INSERT INTO `inventory_list` VALUES ('84', '45', '2', '', '2026-04-05', '2026-04-05 20:32:06', '2026-04-05 20:32:06');
+INSERT INTO `inventory_list` VALUES ('85', '20', '3', '', '2026-04-05', '2026-04-05 20:34:57', '2026-04-05 20:34:57');
+INSERT INTO `inventory_list` VALUES ('86', '5', '3', '', '2026-04-05', '2026-04-05 20:47:23', '2026-04-05 20:47:23');
 
 DROP TABLE IF EXISTS `job_id_counter`;
 CREATE TABLE `job_id_counter` (
@@ -1689,7 +1728,7 @@ CREATE TABLE `job_id_counter` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `job_id_counter` VALUES ('1', '28241');
+INSERT INTO `job_id_counter` VALUES ('1', '28301');
 
 DROP TABLE IF EXISTS `lender_list`;
 CREATE TABLE `lender_list` (
@@ -2020,7 +2059,7 @@ CREATE TABLE `transaction_list` (
   KEY `mechanic_id` (`mechanic_id`),
   CONSTRAINT `mechanic_id_fk_tl` FOREIGN KEY (`mechanic_id`) REFERENCES `mechanic_list` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT `user_id_fk_tl` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=1128 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1189 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `transaction_list` VALUES ('38', '5', '2', '2025102401', '27270', '5', 'No lamp', '27270', 'Sharpy stan12r', '27270', '750.00', '0.00', '0.00', '0', '5', '2025-10-24 14:46:55', '2025-10-24 14:46:55', '2025-10-24 14:46:55');
 INSERT INTO `transaction_list` VALUES ('39', '5', '2', '2025102402', '27271', '5', 'No lamp', '27271', 'Sharpy stan12r', '27271', '750.00', '0.00', '0.00', '0', '5', '2025-10-24 14:48:18', '2025-10-24 14:48:18', '2025-10-24 14:48:18');
@@ -3075,8 +3114,69 @@ INSERT INTO `transaction_list` VALUES ('1122', '4', '1', '2026033101', '28236', 
 INSERT INTO `transaction_list` VALUES ('1123', '4', '1', '2026033102', '28237', '60', 'No dmx', '', 'Money light strobe', '', '0.00', '0.00', '0.00', '0', '5', '2026-03-31 13:37:12', '2026-04-02 00:33:24', '2026-04-01 17:33:00');
 INSERT INTO `transaction_list` VALUES ('1124', '4', '1', '2026033103', '28238', '300', 'No lamp', '', 'Sharpy eco 7r', '', '3000.00', '0.00', '0.00', '0', '5', '2026-03-31 17:17:26', '2026-04-02 00:34:38', '2026-03-31 17:34:00');
 INSERT INTO `transaction_list` VALUES ('1125', '4', '1', '2026033104', '28239', '300', 'No lamp', '', 'Sharpy eco 7r', '', '3000.00', '0.00', '0.00', '0', '5', '2026-03-31 17:17:26', '2026-04-02 00:35:05', '2026-03-31 17:34:00');
-INSERT INTO `transaction_list` VALUES ('1126', '4', '1', '2026040101', '28240', '301', 'Dead', '', 'HP Laptop Adaptor', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-01 13:05:21', '2026-04-01 13:05:21', '');
+INSERT INTO `transaction_list` VALUES ('1126', '4', '1', '2026040101', '28240', '301', 'Dead', '', 'HP Laptop Adaptor', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-01 13:05:21', '2026-04-04 13:20:41', '2026-04-01 19:20:00');
 INSERT INTO `transaction_list` VALUES ('1127', '4', '1', '2026040102', '28241', '198', 'Dead upper and side board', '', 'DMX 1024 B-Pro black', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-01 17:44:49', '2026-04-01 17:44:49', '');
+INSERT INTO `transaction_list` VALUES ('1128', '4', '1', '2026040201', '28242', '302', 'x Lock and wire Broken', '', 'sharpy 12r axis', '', '1500.00', '0.00', '150.00', '0', '5', '2026-04-02 12:59:42', '2026-04-02 16:00:17', '2026-04-02 16:00:00');
+INSERT INTO `transaction_list` VALUES ('1129', '4', '1', '2026040202', '28243', '303', 'Dead', '', 'washing machine pcb', '', '400.00', '0.00', '50.00', '0', '5', '2026-04-02 17:16:17', '2026-04-02 18:12:18', '2026-04-02 17:18:00');
+INSERT INTO `transaction_list` VALUES ('1130', '4', '1', '2026040301', '28244', '221', 'dead', 'Service', 'hawk bsm', '', '750.00', '0.00', '75.00', '0', '5', '2026-04-03 13:23:56', '2026-04-03 19:26:08', '2026-04-03 19:26:00');
+INSERT INTO `transaction_list` VALUES ('1131', '4', '1', '2026040302', '28245', '221', 'dead', 'Lock bnaya h ', 'hawk bsm', '9340499475', '750.00', '0.00', '75.00', '0', '5', '2026-04-03 13:23:56', '2026-04-03 19:26:46', '2026-04-03 19:26:00');
+INSERT INTO `transaction_list` VALUES ('1132', '3', '2', '2026040303', '28246', '83', 'Dead', '', 'Oss t12-D+ iron', '', '250.00', '0.00', '0.00', '0', '5', '2026-04-03 17:27:05', '2026-04-03 19:28:15', '2026-04-03 19:28:00');
+INSERT INTO `transaction_list` VALUES ('1133', '3', '2', '2026040304', '28247', '304', 'Button issu', '', 'Dmx pilot 2000', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-03 18:20:49', '2026-04-03 18:20:49', '');
+INSERT INTO `transaction_list` VALUES ('1134', '3', '2', '2026040305', '28248', '304', 'Dead', 'Peti sahit aaya h ', 'Dmx stan pilot 2000', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-03 18:20:49', '2026-04-03 18:20:49', '');
+INSERT INTO `transaction_list` VALUES ('1135', '4', '1', '2026040401', '28249', '217', 'off after few seconds', '', 'Igniter 12r', '', '1000.00', '0.00', '100.00', '0', '5', '2026-04-04 12:12:07', '2026-04-04 13:18:12', '2026-04-04 13:18:00');
+INSERT INTO `transaction_list` VALUES ('1136', '4', '1', '2026040402', '28250', '2', 'Dead', '', 'fog thunder 2000 ibra', '', '1500.00', '0.00', '150.00', '0', '5', '2026-04-04 15:52:04', '2026-04-06 11:27:40', '2026-04-05 17:27:00');
+INSERT INTO `transaction_list` VALUES ('1137', '4', '1', '2026040403', '28251', '2', 'Dead', '', 'fog thunder 2000 ibra', '', '1500.00', '0.00', '150.00', '0', '5', '2026-04-04 15:52:04', '2026-04-06 11:27:20', '2026-04-05 17:27:00');
+INSERT INTO `transaction_list` VALUES ('1138', '4', '1', '2025091901', '27023', '2', 'dmx malfunction', 'new card by shubhank', 'Strobe money light', '', '150.00', '0.00', '15.00', '0', '2', '2025-09-19 16:24:00', '2026-04-04 16:26:01', '');
+INSERT INTO `transaction_list` VALUES ('1139', '4', '1', '2026040404', '28252', '91', 'dead', 'new card, fan x2, blower fan and service', 'Sharpy Monster king 650', '', '7800.00', '0.00', '150.00', '0', '2', '2026-04-04 19:37:56', '2026-04-05 20:38:08', '');
+INSERT INTO `transaction_list` VALUES ('1140', '4', '1', '2026040501', '28253', '259', 'Broken', 'new  lamp new igniter ner card x and y lock repair wire repair', 'Sharpy Stan 12r axis', '', '12000.00', '0.00', '150.00', '0', '5', '2026-04-05 12:25:22', '2026-04-06 00:27:46', '2026-04-05 20:27:00');
+INSERT INTO `transaction_list` VALUES ('1141', '4', '1', '2026040502', '28254', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:57:11', '2026-04-05 16:57:00');
+INSERT INTO `transaction_list` VALUES ('1142', '4', '1', '2026040503', '28255', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:59:42', '2026-04-05 16:59:00');
+INSERT INTO `transaction_list` VALUES ('1143', '4', '1', '2026040504', '28256', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:57:57', '2026-04-05 16:57:00');
+INSERT INTO `transaction_list` VALUES ('1144', '4', '1', '2026040505', '28257', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:57:29', '2026-04-05 16:57:00');
+INSERT INTO `transaction_list` VALUES ('1145', '4', '1', '2026040506', '28258', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:56:48', '2026-04-05 16:56:00');
+INSERT INTO `transaction_list` VALUES ('1146', '4', '1', '2026040507', '28259', '305', 'Dead', '', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:56:28', '2026-04-05 16:56:00');
+INSERT INTO `transaction_list` VALUES ('1147', '4', '1', '2026040508', '28260', '305', 'Dead', 'Heater dalna h ', 'Sparkle S pro', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:29:31', '2026-04-05 17:00:08', '');
+INSERT INTO `transaction_list` VALUES ('1148', '4', '1', '2026040509', '28261', '305', 'Dead', '', 'Sparkle S Pro', '', '500.00', '0.00', '50.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 20:40:26', '2026-04-05 16:56:00');
+INSERT INTO `transaction_list` VALUES ('1149', '4', '1', '2026040510', '28262', '305', 'Jam', '', 'Co2 Jet', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:29:31', '2026-04-05 13:29:31', '');
+INSERT INTO `transaction_list` VALUES ('1150', '4', '1', '2026040511', '28263', '305', 'jam', '', 'Co2 jet', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:29:31', '2026-04-05 13:29:31', '');
+INSERT INTO `transaction_list` VALUES ('1151', '4', '1', '2026040512', '28264', '305', 'Jam', '', 'co2 jet', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:29:31', '2026-04-05 13:29:31', '');
+INSERT INTO `transaction_list` VALUES ('1152', '4', '1', '2026040513', '28265', '305', 'jam', '', 'Co2 jet', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:29:31', '2026-04-05 13:29:31', '');
+INSERT INTO `transaction_list` VALUES ('1153', '4', '1', '2026040514', '28266', '305', 'dead', '', 'dmx 512 sm', '', '0.00', '0.00', '0.00', '0', '5', '2026-04-05 13:29:31', '2026-04-05 16:59:16', '2026-04-05 16:59:00');
+INSERT INTO `transaction_list` VALUES ('1154', '4', '1', '2026040515', '28267', '305', 'Direct', 'Ek purani bali s pro sparkle bhi di h sn light likha tha usme s pro v2', 'Fire Flame', '', '500.00', '0.00', '50.00', '0', '5', '2026-04-05 13:30:54', '2026-04-05 17:09:16', '2026-04-05 16:58:00');
+INSERT INTO `transaction_list` VALUES ('1155', '3', '1', '2026040516', '28268', '306', 'Wire kate huye h ', '', 'Ac pcb ', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 13:58:42', '2026-04-05 13:58:42', '');
+INSERT INTO `transaction_list` VALUES ('1156', '4', '1', '2026040517', '28269', '307', 'Dead', '', 'supply 5v 60a', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 15:14:41', '2026-04-05 15:14:41', '');
+INSERT INTO `transaction_list` VALUES ('1157', '4', '1', '2026040518', '28270', '307', 'dead', '', 'supply 5v 60a', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 15:17:36', '2026-04-05 15:17:36', '');
+INSERT INTO `transaction_list` VALUES ('1158', '4', '1', '2026040519', '28271', '307', 'dead', '', 'supply 5v 60a', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 15:17:36', '2026-04-05 15:17:36', '');
+INSERT INTO `transaction_list` VALUES ('1159', '4', '1', '2026040520', '28272', '307', 'dead', '', 'supply 5v 60a', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-05 15:17:00', '2026-04-05 16:55:33', '2026-04-05 16:54:00');
+INSERT INTO `transaction_list` VALUES ('1160', '3', '2', '2026040601', '28273', '122', 'Dead', '', 'Smps sharpy', '', '800.00', '0.00', '0.00', '0', '5', '2026-04-06 16:52:49', '2026-04-06 19:45:36', '2026-04-06 19:45:00');
+INSERT INTO `transaction_list` VALUES ('1161', '3', '2', '2026040602', '28274', '122', 'Dead', '', 'Smps sharpy', '', '800.00', '0.00', '0.00', '0', '5', '2026-04-06 16:52:49', '2026-04-06 19:45:45', '2026-04-06 19:45:00');
+INSERT INTO `transaction_list` VALUES ('1162', '3', '2', '2026040603', '28275', '122', 'Dead', '', 'Fog bsm thunder 2000wt', '', '500.00', '0.00', '0.00', '0', '5', '2026-04-06 16:52:49', '2026-04-06 19:45:54', '2026-04-06 19:45:00');
+INSERT INTO `transaction_list` VALUES ('1163', '3', '2', '2026040604', '28276', '122', 'Dmx nhi le rha h', '', 'Spleter spro', '', '500.00', '0.00', '0.00', '0', '5', '2026-04-06 16:52:49', '2026-04-06 19:46:03', '2026-04-06 19:46:00');
+INSERT INTO `transaction_list` VALUES ('1164', '3', '2', '2026040605', '28277', '122', 'Dead', '', '4 eyes s pro', '', '500.00', '0.00', '0.00', '0', '5', '2026-04-06 16:52:49', '2026-04-06 19:45:28', '2026-04-06 19:45:00');
+INSERT INTO `transaction_list` VALUES ('1165', '3', '2', '2026040606', '28278', '206', 'Dead  smps band h ', '', 'Strobe cospo ', '', '350.00', '0.00', '0.00', '0', '2', '2026-04-06 17:33:32', '2026-04-06 19:48:27', '');
+INSERT INTO `transaction_list` VALUES ('1166', '1', '1', '2026040607', '28279', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1167', '1', '1', '2026040608', '28280', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1168', '1', '1', '2026040609', '28281', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1169', '1', '1', '2026040610', '28282', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1170', '1', '1', '2026040611', '28283', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1171', '1', '1', '2026040612', '28284', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1172', '1', '1', '2026040613', '28285', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1173', '1', '1', '2026040614', '28286', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1174', '1', '1', '2026040615', '28287', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1175', '1', '1', '2026040616', '28288', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1176', '1', '1', '2026040617', '28289', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1177', '1', '1', '2026040618', '28290', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1178', '1', '1', '2026040619', '28291', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1179', '1', '1', '2026040620', '28292', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1180', '1', '1', '2026040621', '28293', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1181', '1', '1', '2026040622', '28294', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1182', '1', '1', '2026040623', '28295', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1183', '1', '1', '2026040624', '28296', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1184', '1', '1', '2026040625', '28297', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1185', '1', '1', '2026040626', '28298', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1186', '1', '1', '2026040627', '28299', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1187', '1', '1', '2026040628', '28300', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
+INSERT INTO `transaction_list` VALUES ('1188', '1', '1', '2026040629', '28301', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
 
 DROP TABLE IF EXISTS `transaction_products`;
 CREATE TABLE `transaction_products` (
@@ -3300,6 +3400,12 @@ INSERT INTO `transaction_products` VALUES ('1124', '8', '', '1', '3000.00');
 INSERT INTO `transaction_products` VALUES ('1125', '8', '', '1', '3000.00');
 INSERT INTO `transaction_products` VALUES ('993', '41', '', '1', '4000.00');
 INSERT INTO `transaction_products` VALUES ('995', '41', '', '1', '4000.00');
+INSERT INTO `transaction_products` VALUES ('1139', '45', '', '1', '4500.00');
+INSERT INTO `transaction_products` VALUES ('1139', '20', '', '1', '1500.00');
+INSERT INTO `transaction_products` VALUES ('1139', '53', '', '2', '150.00');
+INSERT INTO `transaction_products` VALUES ('1140', '8', '', '1', '3000.00');
+INSERT INTO `transaction_products` VALUES ('1140', '45', '', '1', '4500.00');
+INSERT INTO `transaction_products` VALUES ('1140', '5', '', '1', '3000.00');
 
 DROP TABLE IF EXISTS `transaction_services`;
 CREATE TABLE `transaction_services` (
@@ -4030,6 +4136,25 @@ INSERT INTO `transaction_services` VALUES ('1112', '15', '', '300.00');
 INSERT INTO `transaction_services` VALUES ('993', '21', '', '500.00');
 INSERT INTO `transaction_services` VALUES ('995', '21', '', '500.00');
 INSERT INTO `transaction_services` VALUES ('1111', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1128', '18', '', '1500.00');
+INSERT INTO `transaction_services` VALUES ('1129', '21', '', '400.00');
+INSERT INTO `transaction_services` VALUES ('1130', '22', '', '750.00');
+INSERT INTO `transaction_services` VALUES ('1131', '22', '', '750.00');
+INSERT INTO `transaction_services` VALUES ('1132', '15', '', '250.00');
+INSERT INTO `transaction_services` VALUES ('1135', '22', '', '1000.00');
+INSERT INTO `transaction_services` VALUES ('1138', '18', '', '150.00');
+INSERT INTO `transaction_services` VALUES ('1136', '18', '', '1500.00');
+INSERT INTO `transaction_services` VALUES ('1137', '18', '', '1500.00');
+INSERT INTO `transaction_services` VALUES ('1154', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1139', '18', '', '1500.00');
+INSERT INTO `transaction_services` VALUES ('1148', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1140', '18', '', '1500.00');
+INSERT INTO `transaction_services` VALUES ('1164', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1160', '22', '', '800.00');
+INSERT INTO `transaction_services` VALUES ('1163', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1162', '21', '', '500.00');
+INSERT INTO `transaction_services` VALUES ('1161', '22', '', '800.00');
+INSERT INTO `transaction_services` VALUES ('1165', '17', '', '350.00');
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
@@ -4047,7 +4172,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `users` VALUES ('1', 'Vikram', 'Jain', 'admin', 'deaa2c28daa61222d25e7459b41eab5b', 'uploads/avatars/vik.png?v=1649834664', '', '1', '1', '2021-01-20 14:02:37', '2025-12-22 00:32:56');
+INSERT INTO `users` VALUES ('1', 'Vikram', 'Jain', 'admin', '$2y$10$a90JRwmoiLqTBNKDnskDSuDPsTlhnRjQHo8ACCD0oU8UovKQzRmVm', 'uploads/avatars/vik.png?v=1649834664', '', '1', '1', '2021-01-20 14:02:37', '2026-04-06 11:30:56');
 INSERT INTO `users` VALUES ('3', 'Hemant', 'Mehra', 'hemant', '$2y$10$UfCUhAOdsk8vEVFAwngBtufQuu4DTD2a6UEkFDTp2/IYtwdY/etXi', 'uploads/avatars/3.png', '', '2', '2', '2022-04-21 15:45:49', '2026-04-01 13:25:37');
 INSERT INTO `users` VALUES ('4', 'Vikram', 'Jain', 'vikram', '$2y$10$.TZHhD10a30MFv9gYuSENuXdlE7SFChaH09k0Enak1XAB7gkdJ7ee', 'uploads/avatars/4.jpg', '', '1', '1', '2025-10-19 22:56:35', '2026-04-01 12:35:38');
 INSERT INTO `users` VALUES ('5', 'preeti', 'jain', 'preeti', '$2y$10$9v0v6QQ1TaND5ozvMdSiFerk7Z8jL3UH6DWXeLrRWxjFV6ykNLoNe', 'uploads/avatars/5.png', '', '2', '3', '2025-10-20 00:19:18', '2026-04-01 13:45:37');
@@ -4055,6 +4180,6 @@ INSERT INTO `users` VALUES ('9', 'test', 'test', 'test', '098f6bcd4621d373cade4e
 INSERT INTO `users` VALUES ('11', 'Vikram', 'Jain', 'vikramj01', 'deaa2c28daa61222d25e7459b41eab5b', 'uploads/avatars/11.png', '', '2', '1', '2026-02-02 11:48:21', '2026-02-02 11:48:21');
 
 
--- CHECKSUM: 9efdcce7c28a07f1544ff4aec2551585
--- TOTAL RECORDS: 3661
+-- CHECKSUM: feb5549c08cc78b9980f3cd248f38c65
+-- TOTAL RECORDS: 3786
 -- TOTAL TABLES: 24
