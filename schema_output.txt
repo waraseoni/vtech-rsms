@@ -1,0 +1,11 @@
+id	int(11)	NO	PRI		auto_increment
+client_id	int(11)	NO			
+principal_amount	float(12,2)	NO			
+interest_rate	float(5,2)	YES		0.00	
+loan_period	int(11)	NO			
+total_payable	float(12,2)	NO			
+emi_amount	float(12,2)	NO			
+remarks	text	YES			
+loan_date	date	NO			
+status	tinyint(1)	YES		1	
+created_at	datetime	YES		current_timestamp()	
