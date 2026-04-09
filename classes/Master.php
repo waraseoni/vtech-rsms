@@ -1185,6 +1185,9 @@ function create_backup(){
     $sql .= "-- TOTAL TABLES: " . count($tables) . "\n";
     
     if(file_put_contents($filepath, $sql) !== false){
+        // Implement backup rotation - keep only last 10 backups
+        $this->rotate_backups($backup_dir, 10);
+
         $resp['status'] = 'success';
         $resp['msg'] = 'Backup created successfully!';
         $resp['file'] = $filename;
@@ -1201,21 +1204,61 @@ function create_backup(){
     return json_encode($resp);
 }
 
+function rotate_backups($backup_dir, $max_backups = 10) {
+    $files = glob($backup_dir . '*.sql');
+    if (count($files) > $max_backups) {
+        // Sort by modification time, oldest first
+        usort($files, function($a, $b) {
+            return filemtime($a) - filemtime($b);
+        });
+
+        // Remove oldest files
+        $files_to_delete = array_slice($files, 0, count($files) - $max_backups);
+        foreach ($files_to_delete as $file) {
+            unlink($file);
+        }
+    }
+}
+
 function restore_backup(){
     $resp = array();
-    
+
     if(!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0){
         $resp['status'] = 'failed';
         $resp['msg'] = 'No file uploaded or file error.';
         return json_encode($resp);
     }
-    
+
+    // Validate file type and size
+    $allowed_mimes = ['application/sql', 'text/plain', 'application/octet-stream'];
+    $file_mime = mime_content_type($_FILES['backup_file']['tmp_name']);
+    $file_size = $_FILES['backup_file']['size'];
+
+    if (!in_array($file_mime, $allowed_mimes)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Invalid file type. Only SQL files are allowed.';
+        return json_encode($resp);
+    }
+
+    if ($file_size > 100 * 1024 * 1024) { // 100MB limit
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'File too large. Maximum size is 100MB.';
+        return json_encode($resp);
+    }
+
     $backup_dir = __DIR__ . "/backups/temp/";
     if(!is_dir($backup_dir)){
         mkdir($backup_dir, 0777, true);
     }
-    
+
     $filename = basename($_FILES['backup_file']['name']);
+    // Validate filename
+    if (!preg_match('/^[a-zA-Z0-9_\-\.]+\.sql$/', $filename)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Invalid filename.';
+        return json_encode($resp);
+    }
+
     $filepath = $backup_dir . $filename;
     
     if(move_uploaded_file($_FILES['backup_file']['tmp_name'], $filepath)){
@@ -1305,19 +1348,43 @@ function restore_backup(){
 
 function dry_run_backup(){
     $resp = array();
-    
+
     if(!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0){
         $resp['status'] = 'failed';
         $resp['msg'] = 'No file uploaded or file error.';
         return json_encode($resp);
     }
-    
+
+    // Validate file type and size
+    $allowed_mimes = ['application/sql', 'text/plain', 'application/octet-stream'];
+    $file_mime = mime_content_type($_FILES['backup_file']['tmp_name']);
+    $file_size = $_FILES['backup_file']['size'];
+
+    if (!in_array($file_mime, $allowed_mimes)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Invalid file type. Only SQL files are allowed.';
+        return json_encode($resp);
+    }
+
+    if ($file_size > 100 * 1024 * 1024) { // 100MB limit
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'File too large. Maximum size is 100MB.';
+        return json_encode($resp);
+    }
+
     $backup_dir = __DIR__ . "/backups/temp/";
     if(!is_dir($backup_dir)){
         mkdir($backup_dir, 0777, true);
     }
-    
+
     $filename = basename($_FILES['backup_file']['name']);
+    // Validate filename
+    if (!preg_match('/^[a-zA-Z0-9_\-\.]+\.sql$/', $filename)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Invalid filename.';
+        return json_encode($resp);
+    }
+
     $filepath = $backup_dir . $filename;
     
     if(move_uploaded_file($_FILES['backup_file']['tmp_name'], $filepath)){
@@ -1419,16 +1486,60 @@ function dry_run_backup(){
     return json_encode($resp);
 }
 
+function get_db_tables_info(){
+    $resp = array('status' => 'success', 'tables' => array());
+    $result = $this->conn->query("SHOW TABLES");
+    $total_records = 0;
+    $total_tables = 0;
+    
+    while($row = $result->fetch_row()){
+        $table_name = $row[0];
+        $count = $this->conn->query("SELECT COUNT(*) as cnt FROM `$table_name`")->fetch_assoc();
+        $record_count = intval($count['cnt']);
+        
+        $resp['tables'][] = array(
+            'name' => $table_name,
+            'rows' => $record_count
+        );
+        $total_records += $record_count;
+        $total_tables++;
+    }
+    
+    $resp['total_tables'] = $total_tables;
+    $resp['total_records'] = $total_records;
+    return json_encode($resp);
+}
+
 function delete_backup(){
-    extract($_POST);
+    $file = isset($_POST['file']) ? $_POST['file'] : '';
+    if (empty($file)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'No file specified.';
+        return json_encode($resp);
+    }
+
+    // Validate filename to prevent directory traversal
+    if (!preg_match('/^[a-zA-Z0-9_\-\.]+\.sql$/', $file)) {
+        $resp['status'] = 'failed';
+        $resp['msg'] = 'Invalid filename.';
+        return json_encode($resp);
+    }
+
     $backup_dir = __DIR__ . "/backups/";
-    $file = $backup_dir . $file;
-    if(file_exists($file)){
-        unlink($file);
-        $resp['status'] = 'success';
-        $this->settings->set_flashdata('success','Backup deleted successfully.');
+    $filepath = $backup_dir . $file;
+
+    if(file_exists($filepath)){
+        if (unlink($filepath)) {
+            $resp['status'] = 'success';
+            $resp['msg'] = 'Backup deleted successfully.';
+            $this->settings->set_flashdata('success', $resp['msg']);
+        } else {
+            $resp['status'] = 'failed';
+            $resp['msg'] = 'Failed to delete backup file.';
+        }
     }else{
         $resp['status'] = 'failed';
+        $resp['msg'] = 'Backup file not found.';
     }
     return json_encode($resp);
 }		

@@ -11,7 +11,6 @@ if($_settings->chk_flashdata('success')): ?>
     border-radius: 12px;
     box-shadow: 0 0 20px rgba(0,0,0,0.08);
     transition: transform 0.2s, box-shadow 0.2s;
-    margin-bottom: 2rem;
 }
 .backup-card:hover {
     transform: translateY(-2px);
@@ -38,7 +37,6 @@ if($_settings->chk_flashdata('success')): ?>
     border-radius: 8px;
     padding: 6px 12px;
     transition: all 0.2s;
-    margin: 0 2px;
 }
 .action-btn:hover {
     transform: scale(1.05);
@@ -46,11 +44,10 @@ if($_settings->chk_flashdata('success')): ?>
 .restore-zone {
     border: 2px dashed #ffc107;
     border-radius: 12px;
-    padding: 40px 20px;
+    padding: 30px;
     text-align: center;
     background: #fffdf5;
     transition: all 0.3s;
-    cursor: pointer;
 }
 .restore-zone:hover {
     border-color: #ff9800;
@@ -93,7 +90,6 @@ if($_settings->chk_flashdata('success')): ?>
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 15px;
-    height: 100%;
 }
 .stats-icon {
     font-size: 2rem;
@@ -109,29 +105,11 @@ if($_settings->chk_flashdata('success')): ?>
     margin-bottom: 15px;
     opacity: 0.3;
 }
-.card-header {
-    padding: 1.5rem;
-}
-.card-body {
-    padding: 1.5rem;
-}
-@media (max-width: 768px) {
-    .stats-card {
-        margin-bottom: 1rem;
-    }
-    .action-btn {
-        padding: 4px 8px;
-        font-size: 0.8rem;
-    }
-    .restore-zone {
-        padding: 30px 15px;
-    }
-}
 </style>
 
 <div class="row">
     <!-- Backup Section -->
-    <div class="col-12 mb-4">
+    <div class="col-md-6">
         <div class="card backup-card border-0">
             <div class="card-header bg-white border-0 pb-0">
                 <div class="d-flex justify-content-between align-items-center">
@@ -158,74 +136,11 @@ if($_settings->chk_flashdata('success')): ?>
                 foreach($sql_files as $file) {
                     $total_size += filesize($backup_dir . $file);
                 }
-
-                $current_tables = [];
-                $current_records_total = 0;
-                $table_result = $conn->query("SHOW TABLES");
-                while($table_row = $table_result->fetch_row()){
-                    $table_name = $table_row[0];
-                    $count_result = $conn->query("SELECT COUNT(*) as cnt FROM `{$table_name}`");
-                    $count_row = $count_result->fetch_assoc();
-                    $table_count = intval($count_row['cnt']);
-                    $current_records_total += $table_count;
-                    $current_tables[] = [
-                        'name' => $table_name,
-                        'rows' => $table_count
-                    ];
-                }
                 ?>
-                
-                <!-- Current Database Snapshot -->
-                <div class="mb-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-white border-0">
-                            <h5 class="mb-0"><i class="fa fa-database text-primary"></i> Current Database Snapshot</h5>
-                            <small class="text-muted">All current tables and row counts</small>
-                        </div>
-                        <div class="card-body p-3">
-                            <div class="row mb-3">
-                                <div class="col-sm-6">
-                                    <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                                        <div>
-                                            <h5 class="mb-0 font-weight-bold"><?= count($current_tables) ?></h5>
-                                            <small>Tables</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                                        <div>
-                                            <h5 class="mb-0 font-weight-bold"><?= number_format($current_records_total) ?></h5>
-                                            <small>Total Rows</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive" style="max-height:320px; overflow:auto;">
-                                <table class="table table-sm table-bordered mb-0">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th>Table Name</th>
-                                            <th class="text-right">Rows</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach($current_tables as $table): ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($table['name']) ?></td>
-                                            <td class="text-right"><?= number_format($table['rows']) ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Stats -->
                 <div class="row mb-4">
-                    <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="col-md-4">
                         <div class="stats-card">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -238,7 +153,7 @@ if($_settings->chk_flashdata('success')): ?>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="col-md-4">
                         <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -251,7 +166,7 @@ if($_settings->chk_flashdata('success')): ?>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="col-md-4">
                         <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
@@ -260,19 +175,6 @@ if($_settings->chk_flashdata('success')): ?>
                                 </div>
                                 <div class="stats-icon">
                                     <i class="fa fa-clock"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h4 class="mb-0 font-weight-bold">10</h4>
-                                    <small>Max Backups</small>
-                                </div>
-                                <div class="stats-icon">
-                                    <i class="fa fa-shield-alt"></i>
                                 </div>
                             </div>
                         </div>
@@ -336,17 +238,15 @@ if($_settings->chk_flashdata('success')): ?>
     </div>
 
     <!-- Restore Section -->
-    <div class="col-12 mb-4">
-        <div class="card backup-card border-0">
-            <div class="card-header bg-white border-0">
-                <h4 class="card-title text-warning mb-0"><i class="fa fa-upload"></i> <b>Restore Database</b></h4>
-                <p class="text-muted mb-0">Restore database from backup file</p>
-            </div>
+    <div class="col-md-2">
+        <div class="card backup-card border-0" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
             <div class="card-body">
+                <h4 class="text-warning mb-4"><i class="fa fa-upload"></i> <b>Restore</b></h4>
+                
                 <div class="restore-zone" id="drop-zone">
                     <i class="fa fa-cloud-upload-alt text-warning" style="font-size: 2rem;"></i>
-                    <p class="mt-2 mb-1"><strong>Drop SQL file here</strong></p>
-                    <small class="text-muted">.sql files only (max 100MB)</small>
+                    <p class="mt-2 mb-1"><strong>Drop file</strong></p>
+                    <small class="text-muted">.sql only</small>
                 </div>
                 
                 <form id="restore-form" enctype="multipart/form-data">
@@ -357,12 +257,14 @@ if($_settings->chk_flashdata('success')): ?>
                         <small id="file-name" class="text-muted d-block text-center mt-2">No file selected</small>
                     </div>
                     
-                    <div class="mt-3 text-center">
-                        <button type="button" id="dry_run_btn" class="btn btn-info mr-2">
-                            <i class="fa fa-search"></i> Analyze First
+                    <div class="mt-3">
+                        <button type="button" id="dry_run_btn" class="btn btn-info btn-block rounded-lg py-2">
+                            <i class="fa fa-search"></i> Analyze
                         </button>
-                        <button type="button" id="restore_btn" class="btn btn-restore">
-                            <i class="fa fa-upload"></i> Restore Database
+                    </div>
+                    <div class="mt-2">
+                        <button type="submit" class="btn btn-restore btn-block rounded-lg py-2">
+                            <i class="fa fa-upload"></i> Restore
                         </button>
                     </div>
                 </form>
@@ -370,24 +272,22 @@ if($_settings->chk_flashdata('success')): ?>
                 <div id="restore-message" class="mt-3"></div>
                 
                 <div class="alert alert-warning mt-3 py-2">
-                    <small><i class="fa fa-exclamation-triangle"></i> <strong>Warning:</strong> This will overwrite all current data!</small>
+                    <small><i class="fa fa-exclamation-triangle"></i> Overwrites all data!</small>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Convert MariaDB Dump Section -->
-    <div class="col-12 mb-4">
-        <div class="card backup-card border-0">
-            <div class="card-header bg-white border-0">
-                <h4 class="card-title text-info mb-0"><i class="fa fa-file-import"></i> <b>Convert MariaDB Dump</b></h4>
-                <p class="text-muted mb-0">Convert phpMyAdmin dumps to software format</p>
-            </div>
+    <div class="col-md-2">
+        <div class="card backup-card border-0" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);">
             <div class="card-body">
+                <h4 class="text-info mb-4"><i class="fa fa-file-import"></i> <b>Convert</b></h4>
+                
                 <div class="restore-zone" id="convert-drop-zone">
                     <i class="fa fa-file-archive text-info" style="font-size: 2rem;"></i>
-                    <p class="mt-2 mb-1"><strong>Drop dump file here</strong></p>
-                    <small class="text-muted">phpMyAdmin .sql files</small>
+                    <p class="mt-2 mb-1"><strong>Drop dump</strong></p>
+                    <small class="text-muted">phpMyAdmin</small>
                 </div>
                 
                 <form id="convert-form" enctype="multipart/form-data">
@@ -398,17 +298,15 @@ if($_settings->chk_flashdata('success')): ?>
                         <small id="convert-file-name" class="text-muted d-block text-center mt-2">No file selected</small>
                     </div>
                     
-                    <div class="mt-3 text-center">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-cogs"></i> Convert File
-                        </button>
-                    </div>
+                    <button type="submit" class="btn btn-primary btn-block rounded-lg py-2 mt-3">
+                        <i class="fa fa-cogs"></i> Convert
+                    </button>
                 </form>
                 
                 <div id="convert-message" class="mt-3"></div>
                 
                 <div class="alert alert-info mt-3 py-2">
-                    <small><i class="fa fa-info-circle"></i> Converts MariaDB dumps to VTech-RSMS format</small>
+                    <small><i class="fa fa-info-circle"></i> Converts MariaDB dump to software format</small>
                 </div>
             </div>
         </div>
@@ -476,63 +374,18 @@ $(document).ready(function(){
     });
     
     $('#create_backup').click(function(){
-        if(confirm("Are you sure to create a new database backup now? This may take a few moments.")){
-            start_loader();
-            $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Creating...');
-            
-            $.ajax({
-                url:_base_url_+"classes/Master.php?f=create_backup",
-                method:"POST",
-                data:{<?= CsrfProtection::getTokenName() ?>: '<?= CsrfProtection::getToken() ?>'},
-                dataType:"json",
-                success:function(resp){
-                    end_loader();
-                    $('#create_backup').prop('disabled', false).html('<i class="fa fa-plus-circle"></i> Create New Backup');
-                    
-                    if(resp.status == 'success'){
-                        var msg = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + resp.msg + '</div>';
-                        if(resp.tables && resp.records){
-                            msg += '<div class="mt-2 p-2 bg-light border rounded">';
-                            msg += '<h6><i class="fa fa-database"></i> <strong>Backup Details</strong></h6>';
-                            msg += '<ul class="mb-0">';
-                            msg += '<li><strong>Tables:</strong> ' + resp.tables + '</li>';
-                            msg += '<li><strong>Records:</strong> ' + resp.records + '</li>';
-                            msg += '<li><strong>Size:</strong> ' + Math.round(resp.size/1024,2) + ' KB</li>';
-                            msg += '<li><strong>Checksum:</strong> <code>' + resp.checksum.substring(0,16) + '...</code></li>';
-                            msg += '</ul></div>';
-                        }
-                        $('#restore-message').html(msg);
-                        setTimeout(function(){ location.reload(); }, 2000);
-                    }else{
-                        alert_toast(resp.msg || "Backup creation failed",'error');
-                    }
-                },
-                error:function(){
-                    end_loader();
-                    $('#create_backup').prop('disabled', false).html('<i class="fa fa-plus-circle"></i> Create New Backup');
-                    alert_toast("An error occurred during backup creation",'error');
-                }
-            });
-        }
+        _conf("Are you sure to create a new database backup now?","create_backup",[]);
     });
 
     $('.delete_backup').click(function(){
-        delete_backup($(this).attr('data-file'));
+        _conf("Are you sure to delete this backup permanently?","delete_backup",[$(this).attr('data-file')]);
     });
 
     $('.table').dataTable();
 
     $('#restore-form').submit(function(e){
         e.preventDefault();
-        if(confirm("Are you sure you want to restore the database? All current data will be overwritten! This action cannot be undone.")){
-            do_restore();
-        }
-    });
-
-    $('#restore_btn').click(function(){
-        if(confirm("Are you sure you want to restore the database? All current data will be overwritten! This action cannot be undone.")){
-            do_restore();
-        }
+        _conf("Are you sure you want to restore the database? All current data will be overwritten!","do_restore",[]);
     });
 
     $('#dry_run_btn').click(function(){
@@ -693,11 +546,6 @@ $(document).ready(function(){
             return;
         }
         
-        if(fileInput.files[0].size > 200 * 1024 * 1024){
-            alert_toast("File too large. Maximum 200MB allowed.",'error');
-            return;
-        }
-        
         start_loader();
         
         var formData = new FormData();
@@ -705,7 +553,7 @@ $(document).ready(function(){
         formData.append('f', 'convert_mariadb');
         
         $.ajax({
-            url:_base_url_+"classes/MariaDBConverter.php?f=convert_mariadb",
+            url:_base_url_+"classes/MariaDBConverter.php",
             method:"POST",
             data:formData,
             processData: false,
@@ -736,6 +584,46 @@ $(document).ready(function(){
         });
     });
 });
+
+function create_backup(){
+    start_loader();
+    $.ajax({
+        url:_base_url_+"classes/Master.php?f=create_backup",
+        method:"POST",
+        data:{<?= CsrfProtection::getTokenName() ?>: '<?= CsrfProtection::getToken() ?>'},
+        dataType:"json",
+        success:function(resp){
+            end_loader();
+            if(resp.status == 'success'){
+                $('#confirm_modal').modal('hide');
+                var msg = '<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + resp.msg + '</div>';
+                
+                if(resp.tables && resp.records){
+                    var verifyHtml = '<div class="mt-2 p-2 bg-light border rounded">';
+                    verifyHtml += '<h6 class="mb-2"><i class="fa fa-database"></i> <strong>Backup Details</strong></h6>';
+                    verifyHtml += '<ul class="mb-0">';
+                    verifyHtml += '<li><strong>Tables:</strong> ' + resp.tables + '</li>';
+                    verifyHtml += '<li><strong>Records:</strong> ' + resp.records + '</li>';
+                    verifyHtml += '<li><strong>Size:</strong> ' + Math.round(resp.size/1024,2) + ' KB</li>';
+                    verifyHtml += '<li><strong>Checksum:</strong> <code>' + resp.checksum.substring(0,16) + '...</code></li>';
+                    verifyHtml += '</ul></div>';
+                    msg += verifyHtml;
+                }
+                
+                $('#restore-message').html(msg);
+                setTimeout(function(){ location.reload(); }, 1500);
+            }else{
+                $('#confirm_modal').modal('hide');
+                alert_toast(resp.msg || "An error occurred",'error');
+            }
+        },
+        error:function(){
+            end_loader();
+            $('#confirm_modal').modal('hide');
+            alert_toast("An error occurred",'error');
+        }
+    });
+}
 
 function delete_backup(file){
     start_loader();
