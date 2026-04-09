@@ -1,5 +1,5 @@
 -- VTech-RSMS Backup
--- Date: 2026-04-07 20:12:22
+-- Date: 2026-04-07 10:24:09
 
 DROP TABLE IF EXISTS `advance_payments`;
 CREATE TABLE `advance_payments` (
@@ -801,7 +801,7 @@ CREATE TABLE `client_list` (
   `date_created` datetime NOT NULL DEFAULT current_timestamp(),
   `date_updated` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=310 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=309 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_list` VALUES ('1', 'Devendra ', 'Arti', 'Namdeo', '07987953757', 'devendran@vtech.com', 'Namdeo Electronics, Ganesh Chowk, Seoni', '', '0.00', '0', '2021-12-27 10:10:55', '');
 INSERT INTO `client_list` VALUES ('2', 'Shubhank', '', 'Patel', '08817444419', 'shubbhank@vtech.com', 'Shobhit Light, Bilhari, jabalpur', 'uploads/clients/client00002.jpg', '31450.00', '0', '2021-12-27 10:33:18', '');
@@ -1116,7 +1116,6 @@ INSERT INTO `client_list` VALUES ('305', 'Nishant', 'Patle', 'Seoni', '930130088
 INSERT INTO `client_list` VALUES ('306', 'Vijay', 'Kewat', 'Suhagi', '8827451074', '', 'Suhagi', '', '0.00', '0', '2026-04-05 13:58:00', '');
 INSERT INTO `client_list` VALUES ('307', 'Dilip ', 'Sahu', 'Bombey tent Sihora', '9179244104', '', 'Bombay tent, Sihora', '', '0.00', '0', '2026-04-05 14:14:15', '');
 INSERT INTO `client_list` VALUES ('308', 'Abhay', '', 'Rai', '8817121201', '', 'Jabalpur', '', '0.00', '0', '2026-04-06 19:57:36', '');
-INSERT INTO `client_list` VALUES ('309', 'Raja', 'Yadav', 'Shahpura Dindori', '7999081393', '', 'Maa Kali Tent, Shahpura, Dindori.', '', '0.00', '0', '2026-04-07 11:26:47', '');
 
 DROP TABLE IF EXISTS `client_loans`;
 CREATE TABLE `client_loans` (
@@ -1132,12 +1131,14 @@ CREATE TABLE `client_loans` (
   `status` tinyint(1) DEFAULT 1 COMMENT '1=Active, 0=Closed',
   `created_at` datetime DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_loans` VALUES ('1', '100', '26000.00', '0.00', '0', '26000.00', '8666.67', '', '2026-02-16', '1', '2026-02-16 13:24:28');
 INSERT INTO `client_loans` VALUES ('2', '46', '1000.00', '0.00', '1', '1000.00', '1000.00', '', '2026-03-07', '0', '2026-03-07 21:43:42');
 INSERT INTO `client_loans` VALUES ('3', '308', '2200.00', '0.00', '1', '2200.00', '2200.00', '', '2026-04-06', '1', '2026-04-06 19:59:20');
-INSERT INTO `client_loans` VALUES ('4', '308', '5000.00', '0.00', '0', '5000.00', '5000.00', '', '2026-04-06', '1', '2026-04-06 21:25:41');
+INSERT INTO `client_loans` VALUES ('4', '308', '5000.00', '0.00', '0', '5000.00', '5000.00', '', '2026-04-06', '0', '2026-04-06 21:25:41');
+INSERT INTO `client_loans` VALUES ('5', '308', '5000.00', '0.00', '1', '5000.00', '5000.00', '', '2026-04-07', '0', '2026-04-07 10:01:34');
+INSERT INTO `client_loans` VALUES ('6', '308', '500.00', '0.00', '0', '500.00', '500.00', '', '2026-04-07', '0', '2026-04-07 10:02:07');
 
 DROP TABLE IF EXISTS `client_payments`;
 CREATE TABLE `client_payments` (
@@ -1158,7 +1159,7 @@ CREATE TABLE `client_payments` (
   KEY `client_id` (`client_id`),
   KEY `idx_client_id` (`client_id`),
   CONSTRAINT `client_payments_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `client_list` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=395 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=394 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `client_payments` VALUES ('19', '41', '', '', '', '2025-12-06', '1500.00', '0.00', '1500.00', 'Cash', 'Full', 'today adjusted', '2025-12-06 11:31:11');
 INSERT INTO `client_payments` VALUES ('20', '66', '', '', '', '2025-12-06', '500.00', '0.00', '500.00', 'Cash', 'Full', '', '2025-12-06 12:14:32');
@@ -1505,7 +1506,6 @@ INSERT INTO `client_payments` VALUES ('390', '217', '', '', '', '2026-04-04', '1
 INSERT INTO `client_payments` VALUES ('391', '305', '', '', '', '2026-04-05', '1000.00', '0.00', '1000.00', 'PhonePe/GPay', 'Full', '', '2026-04-05 20:40:40');
 INSERT INTO `client_payments` VALUES ('392', '259', '', '', '', '2026-04-05', '12000.00', '0.00', '12000.00', 'PhonePe/GPay', 'Full', '', '2026-04-06 00:28:28');
 INSERT INTO `client_payments` VALUES ('393', '122', '', '', '', '2026-04-06', '3000.00', '100.00', '2900.00', 'PhonePe/GPay', 'Full', '', '2026-04-06 19:46:21');
-INSERT INTO `client_payments` VALUES ('394', '309', '', '', '', '2026-04-07', '1800.00', '0.00', '1800.00', 'Cash', 'Full', '', '2026-04-07 20:11:42');
 
 DROP TABLE IF EXISTS `direct_sale_items`;
 CREATE TABLE `direct_sale_items` (
@@ -1728,7 +1728,7 @@ CREATE TABLE `job_id_counter` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `job_id_counter` VALUES ('1', '28302');
+INSERT INTO `job_id_counter` VALUES ('1', '28301');
 
 DROP TABLE IF EXISTS `lender_list`;
 CREATE TABLE `lender_list` (
@@ -2059,7 +2059,7 @@ CREATE TABLE `transaction_list` (
   KEY `mechanic_id` (`mechanic_id`),
   CONSTRAINT `mechanic_id_fk_tl` FOREIGN KEY (`mechanic_id`) REFERENCES `mechanic_list` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
   CONSTRAINT `user_id_fk_tl` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=1190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1189 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 INSERT INTO `transaction_list` VALUES ('38', '5', '2', '2025102401', '27270', '5', 'No lamp', '27270', 'Sharpy stan12r', '27270', '750.00', '0.00', '0.00', '0', '5', '2025-10-24 14:46:55', '2025-10-24 14:46:55', '2025-10-24 14:46:55');
 INSERT INTO `transaction_list` VALUES ('39', '5', '2', '2025102402', '27271', '5', 'No lamp', '27271', 'Sharpy stan12r', '27271', '750.00', '0.00', '0.00', '0', '5', '2025-10-24 14:48:18', '2025-10-24 14:48:18', '2025-10-24 14:48:18');
@@ -3177,7 +3177,6 @@ INSERT INTO `transaction_list` VALUES ('1185', '1', '1', '2026040626', '28298', 
 INSERT INTO `transaction_list` VALUES ('1186', '1', '1', '2026040627', '28299', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
 INSERT INTO `transaction_list` VALUES ('1187', '1', '1', '2026040628', '28300', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
 INSERT INTO `transaction_list` VALUES ('1188', '1', '1', '2026040629', '28301', '97', 'Dead', '', 'Par 007-h', '', '0.00', '0.00', '0.00', '0', '0', '2026-04-06 21:27:44', '2026-04-06 21:27:44', '');
-INSERT INTO `transaction_list` VALUES ('1189', '4', '1', '2026040701', '28302', '309', 'lamp issue', '', 'sharpy beam', '', '1800.00', '0.00', '150.00', '0', '5', '2026-04-07 11:27:59', '2026-04-07 20:11:27', '2026-04-07 20:11:00');
 
 DROP TABLE IF EXISTS `transaction_products`;
 CREATE TABLE `transaction_products` (
@@ -3407,7 +3406,6 @@ INSERT INTO `transaction_products` VALUES ('1139', '53', '', '2', '150.00');
 INSERT INTO `transaction_products` VALUES ('1140', '8', '', '1', '3000.00');
 INSERT INTO `transaction_products` VALUES ('1140', '45', '', '1', '4500.00');
 INSERT INTO `transaction_products` VALUES ('1140', '5', '', '1', '3000.00');
-INSERT INTO `transaction_products` VALUES ('1189', '41', '', '1', '300.00');
 
 DROP TABLE IF EXISTS `transaction_services`;
 CREATE TABLE `transaction_services` (
@@ -4157,7 +4155,6 @@ INSERT INTO `transaction_services` VALUES ('1163', '21', '', '500.00');
 INSERT INTO `transaction_services` VALUES ('1162', '21', '', '500.00');
 INSERT INTO `transaction_services` VALUES ('1161', '22', '', '800.00');
 INSERT INTO `transaction_services` VALUES ('1165', '17', '', '350.00');
-INSERT INTO `transaction_services` VALUES ('1189', '18', '', '1500.00');
 
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
@@ -4183,6 +4180,6 @@ INSERT INTO `users` VALUES ('9', 'test', 'test', 'test', '098f6bcd4621d373cade4e
 INSERT INTO `users` VALUES ('11', 'Vikram', 'Jain', 'vikramj01', 'deaa2c28daa61222d25e7459b41eab5b', 'uploads/avatars/11.png', '', '2', '1', '2026-02-02 11:48:21', '2026-02-02 11:48:21');
 
 
--- CHECKSUM: d2cd8f79be53606147ade6f126be4afd
--- TOTAL RECORDS: 3789
+-- CHECKSUM: 6fbf03cc64b570bf9efae63547a9d14c
+-- TOTAL RECORDS: 3786
 -- TOTAL TABLES: 24
