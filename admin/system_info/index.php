@@ -1,6 +1,6 @@
 <?php 
-require_once('../../config.php');
-require_once('../../classes/CsrfProtection.php');
+require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
 
 if($_settings->chk_flashdata('success')): ?>
 <script>
