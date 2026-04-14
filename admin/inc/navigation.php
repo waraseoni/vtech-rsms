@@ -55,7 +55,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="./?page=direct_sales" class="nav-link">
+                    <a href="./?page=direct_sales" class="nav-link nav-direct_sales">
                         <i class="nav-icon fas fa-cash-register text-primary"></i>
                         <p>Direct Sales</p>
                     </a>

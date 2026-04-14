@@ -1077,10 +1077,10 @@
                                     <button type="button" class="day-nav-btn" onclick="shiftDay(1, '#filter-form')">Next Day <i class="fa fa-arrow-right"></i></button>
                                     <button type="button" onclick="printTransactions()" class="btn btn-success"><i class="fa fa-print"></i> Print</button>
                                     <button type="button" onclick="exportExcel()" class="btn btn-warning"><i class="fa fa-file-excel"></i> Excel</button>
-                                    <!-- Hide Delivered Toggle (Desktop) -->
+                                    <!-- Hide Delivered Toggle (Desktop) - CHECKED BY DEFAULT -->
                                     <span class="desktop-hide-delivered">
                                         <label>
-                                            <input type="checkbox" id="toggleDeliveredDesktop"> Hide Delivered
+                                            <input type="checkbox" id="toggleDeliveredDesktop" checked> Hide Delivered
                                         </label>
                                     </span>
                                 </div>
@@ -1119,7 +1119,7 @@
                             <th>Amount</th>
                             <th>Status</th>
                             <th class="text-center">Action</th>
-                        </tr>
+                         </tr>
                     </thead>
                     <tbody>
                         <?php 
@@ -1220,7 +1220,7 @@
                                 case 5: $status_text = 'Delivered'; break;
                             }
                         ?> 
-                        <tr>
+                         <tr>
                             <td class="text-center"><?php echo $i++; ?></td>
                             <td class="py-2" data-order="<?= date("YmdHis", strtotime($date_created)) ?>">
                                 <div class="d-flex flex-column" style="line-height: 1.3;">
@@ -1330,7 +1330,7 @@
                                     <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Delete</a>
                                 </div>
                             </td>
-                        </tr>
+                         </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -1353,10 +1353,10 @@
                         </div>
                     </div>
 
-                    <!-- Hide Delivered Toggle (Mobile) -->
+                    <!-- Hide Delivered Toggle (Mobile) - CHECKED BY DEFAULT -->
                     <div class="mobile-hide-delivered">
                         <label>
-                            <input type="checkbox" id="toggleDeliveredMobile"> Hide Delivered
+                            <input type="checkbox" id="toggleDeliveredMobile" checked> Hide Delivered
                         </label>
                     </div>
                 </div>
@@ -1859,9 +1859,10 @@ $(document).ready(function(){
         applyMobileFilters();
     };
 
-    // Initial sync
+    // Initial sync and apply default hide delivered filter
     $('#toggleDeliveredMobile').prop('checked', $('#toggleDeliveredDesktop').is(':checked'));
     applyMobileFilters();
+    table.draw(); // apply initial DataTable filter (hide delivered)
 
     // ==================== END MOBILE FILTERING ====================
 
