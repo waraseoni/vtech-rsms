@@ -16,6 +16,10 @@ if(isset($_GET['id']) && $_GET['id'] > 0){
  		<?php echo CsrfProtection::getField(); ?>
  		<input type="hidden" name="id" value="<?php echo isset($id) ? $id : '' ?>">
 		<div class="form-group">
+			<label for="date_created" class="control-label">Date</label>
+			<input type="date" name="date_created" id="date_created" class="form-control form-control-sm rounded-0" value="<?php echo isset($date_created) ? date('Y-m-d', strtotime($date_created)) : date('Y-m-d'); ?>" required/>
+		</div>
+		<div class="form-group">
 			<label for="category" class="control-label">Expense Category</label>
 			<select name="category" id="category" class="form-control form-control-sm rounded-0" required>
                 <option value="" disabled <?php echo !isset($category) ? "selected" : "" ?>>Select Category</option>
