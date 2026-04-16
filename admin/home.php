@@ -231,7 +231,7 @@ $to   = isset($_GET['to'])   ? $_GET['to']   : date('Y-m-t');
 
                 $grossProfit = $totalSales - $partsCost;
 
-                $discounts = $conn->query("SELECT SUM(discount) FROM client_payments WHERE DATE(created_at) BETWEEN '$from' AND '$to'")->fetch_row()[0] ?? 0;
+                $discounts = $conn->query("SELECT SUM(discount) FROM client_payments WHERE DATE(payment_date) BETWEEN '$from' AND '$to'")->fetch_row()[0] ?? 0;
 
                 $salary = $conn->query("SELECT SUM(CASE WHEN a.status = 1 THEN m.daily_salary WHEN a.status = 3 THEN m.daily_salary/2 ELSE 0 END) FROM attendance_list a INNER JOIN mechanic_list m ON a.mechanic_id = m.id WHERE a.curr_date BETWEEN '$from' AND '$to'")->fetch_row()[0] ?? 0;
 
