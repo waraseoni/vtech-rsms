@@ -5,10 +5,10 @@ $search = isset($_POST['search']) ? $_POST['search'] : '';
 $resp = array();
 
 if(!empty($search)){
-    $search = $conn->real_escape_string($search);
+    $search = $conn->real_escape_string(strtolower($search));
     
     // 1. Search Clients
-    $clients = $conn->query("SELECT id, CONCAT(firstname, ' ', middlename, ' ', lastname) as name, contact, address, email FROM client_list WHERE delete_flag = 0 AND (firstname LIKE '%$search%' OR middlename LIKE '%$search%' OR lastname LIKE '%$search%' OR contact LIKE '%$search%' OR address LIKE '%$search%' OR email LIKE '%$search%') LIMIT 5");
+    $clients = $conn->query("SELECT id, CONCAT(firstname, ' ', middlename, ' ', lastname) as name, contact, address, email FROM client_list WHERE delete_flag = 0 AND (LOWER(firstname) LIKE '%$search%' OR LOWER(middlename) LIKE '%$search%' OR LOWER(lastname) LIKE '%$search%' OR LOWER(contact) LIKE '%$search%' OR LOWER(address) LIKE '%$search%' OR LOWER(email) LIKE '%$search%')");
     while($row = $clients->fetch_assoc()){
         $resp[] = array(
             'type' => 'Client',
@@ -20,7 +20,7 @@ if(!empty($search)){
     }
 
     // 2. Search Transactions (Jobs)
-    $transactions = $conn->query("SELECT id, job_id, code, item, fault, status FROM transaction_list WHERE (job_id LIKE '%$search%' OR code LIKE '%$search%' OR item LIKE '%$search%' OR fault LIKE '%$search%') LIMIT 5");
+    $transactions = $conn->query("SELECT id, job_id, code, item, fault, status FROM transaction_list WHERE (LOWER(job_id) LIKE '%$search%' OR LOWER(code) LIKE '%$search%' OR LOWER(item) LIKE '%$search%' OR LOWER(fault) LIKE '%$search%')");
     while($row = $transactions->fetch_assoc()){
         $status_text = '';
         switch($row['status']){
@@ -41,7 +41,7 @@ if(!empty($search)){
     }
 
     // 3. Search Products
-    $products = $conn->query("SELECT id, name, description FROM product_list WHERE delete_flag = 0 AND (name LIKE '%$search%' OR description LIKE '%$search%') LIMIT 5");
+    $products = $conn->query("SELECT id, name, description FROM product_list WHERE delete_flag = 0 AND (LOWER(name) LIKE '%$search%' OR LOWER(description) LIKE '%$search%')");
     while($row = $products->fetch_assoc()){
         $resp[] = array(
             'type' => 'Product',
@@ -53,7 +53,7 @@ if(!empty($search)){
     }
 
     // 4. Search Services
-    $services = $conn->query("SELECT id, name, description FROM service_list WHERE delete_flag = 0 AND (name LIKE '%$search%' OR description LIKE '%$search%') LIMIT 5");
+    $services = $conn->query("SELECT id, name, description FROM service_list WHERE delete_flag = 0 AND (LOWER(name) LIKE '%$search%' OR LOWER(description) LIKE '%$search%')");
     while($row = $services->fetch_assoc()){
         $resp[] = array(
             'type' => 'Service',
