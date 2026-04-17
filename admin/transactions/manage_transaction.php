@@ -619,8 +619,7 @@ $(function(){
 
         let stock = parseFloat($('#product_sel option:selected').data('stock')); // available stock
         if (stock <= 0) {
-            alert_toast("Stock khatam ho gaya hai!", 'warning');
-            return;
+            alert_toast("Stock khatam ho gaya hai! (Available: " + stock + ") Billing going negative.", 'info');
         }
 
         let name = $('#product_sel option:selected').data('name');
@@ -630,7 +629,7 @@ $(function(){
         tr.find('[name="product_id[]"]').val(id);
         tr.find('.product_name_input').val(name);
         tr.find('.product_price_input').val(price);
-        tr.find('.product_qty_input').attr('max', stock).val(1); // set max to available stock, default 1
+        tr.find('.product_qty_input').val(1); // negative billing allowed, removed max constraint
         tr.find('.product_total').text('₹' + parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2}));
 
         $('#product-list tbody').append(tr);
@@ -673,16 +672,10 @@ $(function(){
     // Recalculate on any input change
     $(document).on('input change', '.service_price_input, .product_qty_input, .product_price_input', calc_total);
     
-    // Validate product quantity against available stock (when user changes quantity)
+    // Validation removed for negative billing support
     $(document).on('change', '.product_qty_input', function() {
-        let $this = $(this);
-        let max = parseFloat($this.attr('max'));
-        let val = parseFloat($this.val());
-        if (val > max) {
-            alert_toast('Quantity exceeds available stock! Maximum allowed: ' + max, 'warning');
-            $this.val(max);
-            calc_total();
-        }
+        // Just recalculate
+        calc_total();
     });
 
     // Form submission
@@ -704,20 +697,13 @@ $(function(){
             return false;
         }
 
-        // Double-check product quantities against stock before submit
-        let stockErrors = false;
+        // Double-check product quantities against stock before submit (warn only)
         $('#product-list tbody tr').each(function() {
-            let $qtyInput = $(this).find('.product_qty_input');
-            let max = parseFloat($qtyInput.attr('max'));
-            let val = parseFloat($qtyInput.val());
-            if (val > max) {
-                alert_toast('Product quantity exceeds available stock!', 'error');
-                stockErrors = true;
-                return false; // break each
-            }
+            let val = parseFloat($(this).find('.product_qty_input').val());
+            let name = $(this).find('.product_name_input').val();
+            // Optional: you can show warning if we stored available stock in inputs, but since we removed it, we just proceed.
         });
-        if (stockErrors) return false;
-
+        
         saveBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
         start_loader();
 

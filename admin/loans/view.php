@@ -21,7 +21,7 @@ if (!$loan) {
 $client_name = trim($loan['firstname'] . ' ' . ($loan['middlename'] ? $loan['middlename'] . ' ' : '') . $loan['lastname']);
 $loan_id_display = 'LN-' . str_pad($id, 5, '0', STR_PAD_LEFT);
 
-$payments = $conn->query("SELECT * FROM client_payments WHERE loan_id = $id ORDER BY payment_date DESC");
+$payments = $conn->query("SELECT * FROM client_payments WHERE loan_id = '{$id}' ORDER BY payment_date DESC");
 $paid_sum = $conn->query("SELECT SUM(amount + discount) as total FROM client_payments WHERE loan_id = $id")->fetch_assoc()['total'] ?? 0;
 $balance = $loan['total_payable'] - $paid_sum;
 

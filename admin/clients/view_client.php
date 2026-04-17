@@ -303,7 +303,7 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                     </thead>
                     <tbody>
                         <?php
-                        $loan_qry = $conn->query("SELECT * FROM `client_loans` WHERE client_id = $id AND status = 1");
+                        $loan_qry = $conn->query("SELECT * FROM `client_loans` WHERE client_id = '{$id}' AND status = 1");
                         while($lrow = $loan_qry->fetch_assoc()):
                             $p_stmt = $conn->query("SELECT SUM(amount + discount) FROM client_payments WHERE loan_id = '{$lrow['id']}'");
                             $l_paid = $p_stmt->fetch_array()[0] ?? 0;

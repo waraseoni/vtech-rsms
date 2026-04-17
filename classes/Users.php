@@ -57,7 +57,7 @@ Class Users extends DBConnection {
 		if(empty($id)){
 			$sql = "INSERT INTO users set {$data}";
 		}else{
-			$sql = "UPDATE users set {$data} where id = {$id}";
+			$sql = "UPDATE users set {$data} where id = '{$id}'";
 		}
 		
 		$save = $this->conn->query($sql);
@@ -84,7 +84,7 @@ Class Users extends DBConnection {
 				$fname = 'uploads/avatars/' . $id . '.' . $ext;
 
 				// Move file
-				$move = move_uploaded_file($_FILES['img']['tmp_name'], base_app . $fname);
+				$move = move_and_compress_uploaded_file($_FILES['img']['tmp_name'], base_app . $fname);
 
 				if($move){
 					// Purani image delete karo (agar alag extensionwali ho)
@@ -123,8 +123,8 @@ Class Users extends DBConnection {
 
 	public function delete_users(){
 		extract($_POST);
-		$avatar = $this->conn->query("SELECT avatar FROM users where id = $id")->fetch_array()['avatar'];
-		$qry = $this->conn->query("DELETE FROM users where id = $id");
+		$avatar = $this->conn->query("SELECT avatar FROM users where id = '{$id}'")->fetch_array()['avatar'];
+		$qry = $this->conn->query("DELETE FROM users where id = '{$id}'");
 		if($qry){
 			$this->settings->set_flashdata('success','User Details successfully deleted.');
 			if(is_file(base_app.$avatar)) unlink(base_app.$avatar);

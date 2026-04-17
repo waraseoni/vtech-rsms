@@ -102,7 +102,7 @@ Class Master extends DBConnection {
 				$data .= " `{$k}`='{$v}' ";
 			}
 		}
-		$check = $this->conn->query("SELECT * FROM `service_list` where `name` = '{$name}' ".(!empty($id) ? " and id != {$id} " : "")." ")->num_rows;
+		$check = $this->conn->query("SELECT * FROM `service_list` where `name` = '{$name}' ".(!empty($id) ? " and id != '{$id}' " : "")." ")->num_rows;
 		if($this->capture_err())
 			return $this->capture_err();
 		if($check > 0){
@@ -410,7 +410,7 @@ public function get_mechanic_photo(){
             // पुरानी फोटो डिलीट करने के लिए (Optional)
             if(is_file(base_app.$fname)) unlink(base_app.$fname);
 
-            $move = move_uploaded_file($_FILES['img']['tmp_name'], base_app.$fname);
+            $move = move_and_compress_uploaded_file($_FILES['img']['tmp_name'], base_app.$fname);
             
             if($move){
                 $img_stmt = $this->conn->prepare("UPDATE `product_list` SET `image_path` = ? WHERE id = ?");
@@ -571,7 +571,7 @@ public function get_mechanic_photo(){
             $old_path_qry = $this->conn->query("SELECT image_path FROM client_list WHERE id = '{$cid}'");
             $old_path = $old_path_qry->fetch_array()['image_path'] ?? '';
 
-            $upload = move_uploaded_file($_FILES['img']['tmp_name'], $dir_path);
+            $upload = move_and_compress_uploaded_file($_FILES['img']['tmp_name'], $dir_path);
             if($upload){
                 // डेटाबेस में इमेज पाथ अपडेट करें
                 $this->conn->query("UPDATE `client_list` SET `image_path` = '{$fname}' WHERE id = '{$cid}'");
@@ -788,7 +788,7 @@ if(isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
         $new_filename = 'job_' . $tid . '_' . time() . '_' . $key . '.' . $ext;
         $destination = $upload_dir . $new_filename;
 
-        if(move_uploaded_file($tmp_name, $destination)) {
+        if(move_and_compress_uploaded_file($tmp_name, $destination)) {
             $image_path = 'uploads/transactions/' . $new_filename;
             $this->conn->query("INSERT INTO transaction_images (transaction_id, image_path) VALUES ('{$tid}', '{$image_path}')");
         }
@@ -1688,7 +1688,7 @@ function delete_backup(){
 
         $ext = pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION);
         $fname = 'uploads/logo.' . $ext;  // Fixed name (overwrite purana)
-        $move = move_uploaded_file($_FILES['img']['tmp_name'], $upload_dir . basename($fname));
+        $move = move_and_compress_uploaded_file($_FILES['img']['tmp_name'], $upload_dir . basename($fname));
 
         if($move){
             // Purani logo delete karo agar alag hai (optional)
@@ -1720,7 +1720,7 @@ function delete_backup(){
 
         $ext = pathinfo($_FILES['cover']['name'], PATHINFO_EXTENSION);
         $fname = 'uploads/cover.' . $ext;  // Fixed name
-        $move = move_uploaded_file($_FILES['cover']['tmp_name'], $upload_dir . basename($fname));
+        $move = move_and_compress_uploaded_file($_FILES['cover']['tmp_name'], $upload_dir . basename($fname));
 
         if($move){
             // Purani cover delete
@@ -1754,7 +1754,7 @@ function delete_backup(){
             if(!empty($_FILES['banners']['tmp_name'][$i])){
                 $ext = pathinfo($_FILES['banners']['name'][$i], PATHINFO_EXTENSION);
                 $fname = time() . '_' . str_replace(' ', '_', $_FILES['banners']['name'][$i]);  // Unique name
-                $move = move_uploaded_file($_FILES['banners']['tmp_name'][$i], $banner_dir . $fname);
+                $move = move_and_compress_uploaded_file($_FILES['banners']['tmp_name'][$i], $banner_dir . $fname);
 
                 if(!$move){
                     $resp['status'] = 'failed';
@@ -2271,7 +2271,7 @@ function get_payment(){
     if(!$id){
         return json_encode(['status' => 'failed', 'msg' => 'Invalid ID']);
     }
-    $qry = $this->conn->query("SELECT * FROM client_payments WHERE id = '$id'");
+    $qry = $this->conn->query("SELECT * FROM client_payments WHERE id = '{$id}'");
     if($qry->num_rows > 0){
         $res = $qry->fetch_assoc();
         return json_encode(['status' => 'success', 'data' => $res]);

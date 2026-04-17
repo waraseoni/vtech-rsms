@@ -99,7 +99,7 @@ Class Master extends DBConnection {
 				$data .= " `{$k}`='{$v}' ";
 			}
 		}
-		$check = $this->conn->query("SELECT * FROM `service_list` where `name` = '{$name}' ".(!empty($id) ? " and id != {$id} " : "")." ")->num_rows;
+		$check = $this->conn->query("SELECT * FROM `service_list` where `name` = '{$name}' ".(!empty($id) ? " and id != '{$id}' " : "")." ")->num_rows;
 		// Prepared Statement version
 		if(empty($id)){
 			$chk_stmt = $this->conn->prepare("SELECT id FROM `service_list` WHERE `name` = ?");
@@ -263,7 +263,7 @@ Class Master extends DBConnection {
 					mkdir(base_app.'uploads/products');
 				$ext = pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION);
 				$fname = 'uploads/products/'.$resp['id'].'.'.$ext;
-				$move = move_uploaded_file($_FILES['img']['tmp_name'],base_app.$fname);
+				$move = move_and_compress_uploaded_file($_FILES['img']['tmp_name'],base_app.$fname);
 				
 				if($move){
 					$img_stmt = $this->conn->prepare("UPDATE `product_list` SET `image_path` = ? WHERE id = ?");
@@ -591,7 +591,7 @@ Class Master extends DBConnection {
             $ext = pathinfo($original_name, PATHINFO_EXTENSION);
             $new_filename = 'job_' . $tid . '_' . time() . '_' . $key . '.' . $ext;
             $destination = $upload_dir . $new_filename;
-            if(move_uploaded_file($tmp_name, $destination)) {
+            if(move_and_compress_uploaded_file($tmp_name, $destination)) {
                 $image_path = 'uploads/transactions/' . $new_filename;
                 $img_stmt = $this->conn->prepare("INSERT INTO transaction_images (transaction_id, image_path) VALUES (?, ?)");
                 $img_stmt->bind_param("is", $tid, $image_path);
@@ -1035,7 +1035,7 @@ function delete_backup(){
 
         $ext = pathinfo($_FILES['img']['name'], PATHINFO_EXTENSION);
         $fname = 'uploads/logo.' . $ext;  // Fixed name (overwrite purana)
-        $move = move_uploaded_file($_FILES['img']['tmp_name'], $upload_dir . basename($fname));
+        $move = move_and_compress_uploaded_file($_FILES['img']['tmp_name'], $upload_dir . basename($fname));
 
         if($move){
             // Purani logo delete karo agar alag hai (optional)
@@ -1067,7 +1067,7 @@ function delete_backup(){
 
         $ext = pathinfo($_FILES['cover']['name'], PATHINFO_EXTENSION);
         $fname = 'uploads/cover.' . $ext;  // Fixed name
-        $move = move_uploaded_file($_FILES['cover']['tmp_name'], $upload_dir . basename($fname));
+        $move = move_and_compress_uploaded_file($_FILES['cover']['tmp_name'], $upload_dir . basename($fname));
 
         if($move){
             // Purani cover delete
@@ -1101,7 +1101,7 @@ function delete_backup(){
             if(!empty($_FILES['banners']['tmp_name'][$i])){
                 $ext = pathinfo($_FILES['banners']['name'][$i], PATHINFO_EXTENSION);
                 $fname = time() . '_' . str_replace(' ', '_', $_FILES['banners']['name'][$i]);  // Unique name
-                $move = move_uploaded_file($_FILES['banners']['tmp_name'][$i], $banner_dir . $fname);
+                $move = move_and_compress_uploaded_file($_FILES['banners']['tmp_name'][$i], $banner_dir . $fname);
 
                 if(!$move){
                     $resp['status'] = 'failed';

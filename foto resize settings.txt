@@ -1,0 +1,8 @@
+XAMPP कण्ट्रोल पैनल (XAMPP Control Panel) खोलें।
+Apache के सामने मौजूद Config बटन पर क्लिक करें।
+php.ini ऑप्शन पर क्लिक करें (इससे एक नोटपैड फाइल खुलेगी)।
+उस नोटपैड फाइल में Ctrl + F दबाएं और ;extension=gd सर्च करें।
+आपको यह लाइन मिलेगी: ;extension=gd
+इसके आगे लगा हुआ सेमीकोलन (;) हटा दें। (यानी इसे ;extension=gd की जगह सिर्फ extension=gd कर दें)
+फाइल को Save करें (Ctrl + S) और नोटपैड बंद कर दें।
+XAMPP पैनल से Apache को Stop करके वापस Start कर दें।

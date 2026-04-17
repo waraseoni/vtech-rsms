@@ -1,6 +1,6 @@
 <?php 
 if(isset($_GET['id']) && $_GET['id'] > 0){
-    $qry = $conn->query("SELECT * FROM direct_sales where id = {$_GET['id']}");
+    $qry = $conn->query("SELECT * FROM direct_sales where id = '{$_GET['id']}'");
     if($qry->num_rows > 0){
         $res = $qry->fetch_array();
         foreach($res as $k => $v){
@@ -311,8 +311,7 @@ $(function(){
 
         // Stock check for new addition
         if(stock <= 0){
-            alert_toast("Stock khatam ho gaya hai! (" + stock + " available)", "error");
-            return;
+            alert_toast("Stock khatam ho gaya hai! (" + stock + " available). Billing going negative.", "info");
         }
 
         // Check if already added
@@ -332,7 +331,7 @@ $(function(){
         var tr = `
         <tr>
             <td class="product_name">${product_name}<input type="hidden" name="product_id[]" value="${product_id}"></td>
-            <td><input type="number" name="qty[]" class="form-control text-center" value="1" min="1" max="${stock}" data-original-qty="1" data-current-available="${stock}" required></td>
+            <td><input type="number" name="qty[]" class="form-control text-center" value="1" min="1" data-original-qty="1" data-current-available="${stock}" required></td>
             <td><input type="number" name="price[]" class="form-control text-right" value="${price}" step="0.01" required></td>
             <td class="text-right product_total">${parseFloat(price).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-danger rem-product"><i class="fa fa-trash"></i></button></td>
@@ -360,9 +359,7 @@ $(function(){
         if (qty > originalQty) {
             var extraNeeded = qty - originalQty;
             if (extraNeeded > currentAvailable) {
-                alert_toast("Extra quantity required exceeds current available stock!", "warning");
-                input.val(originalQty + currentAvailable);
-                qty = originalQty + currentAvailable;
+                alert_toast("Note: Quantity exceeds available stock! Stock will go negative.", "info");
             }
         }
 
@@ -407,9 +404,8 @@ $(function(){
             return;
         }
         
-        // Stock validation logic
-        let stockError = false;
-        let errorMessages = [];
+        // Stock validation logic (just warn, don't block)
+        let warningMessages = [];
 
         $('#item-list tbody tr').each(function(){
             var qtyInput = $(this).find('[name="qty[]"]');
@@ -420,19 +416,17 @@ $(function(){
             if (currentQty > originalQty) {
                 var extraNeeded = currentQty - originalQty;
                 if (extraNeeded > currentAvailable) {
-                    stockError = true;
                     var productName = $(this).find('.product_name').text().trim();
-                    errorMessages.push(
-                        `${productName}: Extra ${extraNeeded} required, but only ${currentAvailable} available`
+                    warningMessages.push(
+                        `${productName}: extra ${extraNeeded} needed but only ${currentAvailable} available`
                     );
                 }
             }
         });
 
-        if(stockError){
-            let msg = "Stock issue:\n" + errorMessages.join("\n");
-            alert_toast(msg, "error");
-            return;
+        if(warningMessages.length > 0){
+            let msg = "Stock note:\n" + warningMessages.join("\n");
+            alert_toast(msg, "info");
         }
 
         var clientId = $('#client_id').val();
