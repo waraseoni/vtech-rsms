@@ -1281,7 +1281,7 @@ function restore_backup(){
         }
         
         // Disable foreign key checks before restore
-        $sql_content = "SET FOREIGN_KEY_CHECKS=0;\n" . $sql_content . "\nSET FOREIGN_KEY_CHECKS=1;";
+        $this->conn->query("SET FOREIGN_KEY_CHECKS=0");
         
         // Calculate current database stats before restore
         $tables_before = [];
@@ -1290,12 +1290,78 @@ function restore_backup(){
             $tables_before[] = $row[0];
         }
         
-        if($this->conn->multi_query($sql_content)){
-            while($this->conn->more_results() && $this->conn->next_result()){
-                $result = $this->conn->store_result();
-                if($result) $result->free();
+        $success = true;
+        $error_msg = '';
+        $current_query = '';
+        $in_string = false;
+        $string_char = '';
+        $len = strlen($sql_content);
+        
+        for ($i = 0; $i < $len; $i++) {
+            $char = $sql_content[$i];
+            if (!$in_string) {
+                if ($char == "'" || $char == '"') {
+                    $in_string = true;
+                    $string_char = $char;
+                } elseif ($char == ';') {
+                    $query_to_run = trim($current_query);
+                    if (!empty($query_to_run)) {
+                        $is_comment_only = true;
+                        foreach(explode("\n", $query_to_run) as $l){
+                            $l = trim($l);
+                            if($l !== '' && strpos($l, '--') !== 0){
+                                $is_comment_only = false;
+                                break;
+                            }
+                        }
+                        if (!$is_comment_only) {
+                            if (!$this->conn->query($query_to_run)) {
+                                $success = false;
+                                $error_msg = $this->conn->error;
+                                break;
+                            }
+                        }
+                    }
+                    $current_query = '';
+                    continue;
+                }
+            } else {
+                if ($char == '\\') {
+                    $current_query .= $char;
+                    $i++;
+                    if ($i < $len) {
+                        $char = $sql_content[$i];
+                    }
+                } elseif ($char == $string_char) {
+                    $in_string = false;
+                }
             }
-            
+            $current_query .= $char;
+        }
+        
+        if ($success) {
+            $query_to_run = trim($current_query);
+            if (!empty($query_to_run)) {
+                $is_comment_only = true;
+                foreach(explode("\n", $query_to_run) as $l){
+                    $l = trim($l);
+                    if($l !== '' && strpos($l, '--') !== 0){
+                        $is_comment_only = false;
+                        break;
+                    }
+                }
+                if (!$is_comment_only) {
+                    if (!$this->conn->query($query_to_run)) {
+                        $success = false;
+                        $error_msg = $this->conn->error;
+                    }
+                }
+            }
+        }
+        
+        $this->conn->query("SET FOREIGN_KEY_CHECKS=1");
+        
+        if($success){
             // Verify restore
             $tables_after = [];
             $result = $this->conn->query("SHOW TABLES");
@@ -1336,7 +1402,7 @@ function restore_backup(){
         }else{
             unlink($filepath);
             $resp['status'] = 'failed';
-            $resp['msg'] = 'Restore failed: ' . $this->conn->error;
+            $resp['msg'] = 'Restore failed: ' . $error_msg;
         }
     }else{
         $resp['status'] = 'failed';
