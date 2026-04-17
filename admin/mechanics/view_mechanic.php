@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once('../config.php');
 
 if(isset($_GET['id']) && $_GET['id'] > 0){
@@ -71,285 +71,144 @@ $filtered_paid = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE me
 $filtered_balance = $filtered_earned - $filtered_paid;
 ?>
 
-<div class="content">
-    <div class="container-fluid py-3">
-        
+<div class="container-fluid">
+
         <!-- Compact Header with Image -->
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="card bg-dark-gray border-0">
-                    <div class="card-body p-3">
-                        <div class="row align-items-center">
-                            <div class="col-auto">
-                                <a href="./?page=mechanics" class="btn btn-outline-light btn-sm rounded-circle">
-                                    <i class="fa fa-arrow-left"></i>
-                                </a>
-                            </div>
-                            <div class="col-auto">
-                                <div class="avatar-container">
-                                    <img src="<?php echo $avatar_url ?>" alt="<?= isset($name) ? $name : 'Mechanic' ?>" class="avatar-img" onerror="this.src='<?php echo validate_image('uploads/avatars/default-avatar.jpg') ?>'">
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div>
-                                    <h4 class="text-light mb-0"><b><?= isset($name) ? $name : 'N/A' ?></b></h4>
-                                    <div class="d-flex flex-wrap align-items-center mt-1">
-                                        <span class="badge badge-<?= ($status == 1) ? 'success' : 'secondary' ?> badge-sm mr-2">
-                                            <?= ($status == 1) ? 'Active' : 'Inactive' ?>
-                                        </span>
-                                        <?php if(isset($contact) && !empty($contact)): ?>
-                                        <span class="text-muted small mr-3">
-                                            <i class="fa fa-phone-alt mr-1"></i> <?= $contact ?>
-                                        </span>
-                                        <?php endif; ?>
-                                        <?php if(isset($address) && !empty($address)): ?>
-                                        <span class="text-muted small">
-                                            <i class="fa fa-map-marker-alt mr-1"></i> <?= substr($address, 0, 30) ?>...
-                                        </span>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-success btn-sm px-3" onclick="add_payment()">
-                                    <i class="fa fa-plus mr-1"></i> Add Payment
-                                </button>
-                            </div>
+        <div class="card card-outline card-primary shadow-sm mb-3">
+            <div class="card-body p-3">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <a href="./?page=mechanics" class="btn btn-outline-secondary btn-sm">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                    <div class="col-auto">
+                        <img src="<?php echo $avatar_url ?>" alt="<?= isset($name) ? $name : 'Mechanic' ?>"
+                             class="img-circle elevation-1"
+                             style="width:60px;height:60px;object-fit:cover;"
+                             onerror="this.src='<?php echo validate_image('uploads/avatars/default-avatar.jpg') ?>'">
+                    </div>
+                    <div class="col">
+                        <h4 class="mb-0"><b><?= isset($name) ? $name : 'N/A' ?></b></h4>
+                        <div class="d-flex flex-wrap align-items-center mt-1">
+                            <span class="badge badge-<?= ($status == 1) ? 'success' : 'secondary' ?> mr-2"><?= ($status == 1) ? 'Active' : 'Inactive' ?></span>
+                            <?php if(isset($contact) && !empty($contact)): ?>
+                            <small class="text-muted mr-3"><i class="fa fa-phone-alt mr-1"></i><?= $contact ?></small>
+                            <?php endif; ?>
+                            <?php if(isset($designation) && !empty($designation)): ?>
+                            <span class="badge badge-info"><?= $designation ?></span>
+                            <?php endif; ?>
                         </div>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-success btn-sm" onclick="add_payment()">
+                            <i class="fa fa-plus"></i> Add Payment
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="card bg-dark-gray border-0">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <span class="text-muted small mr-2">Period:</span>
-                                <h6 class="mb-0 text-light">
-                                    <i class="fa fa-calendar-alt text-primary mr-1"></i>
-                                    <?= date("d M, Y", strtotime($from)) ?> - <?= date("d M, Y", strtotime($to)) ?>
-                                </h6>
-                            </div>
-                            <div class="btn-group btn-group-sm">
-                                <button class="btn btn-outline-light border-secondary" onclick="window.print()" title="Print">
-                                    <i class="fa fa-print"></i>
-                                </button>
-                                <button class="btn btn-outline-light border-secondary ml-1" onclick="send_whatsapp()" title="WhatsApp">
-                                    <i class="fab fa-whatsapp"></i>
-                                </button>
-                                <button class="btn btn-outline-light border-secondary ml-1" onclick="showFullReport()" title="Detailed Report">
-                                    <i class="fa fa-chart-bar"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Quick Actions & Date Filter -->
+        <div class="card card-outline card-secondary shadow-sm mb-3">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fa fa-calendar-alt text-primary mr-1"></i>
+                    Period: <?= date("d M, Y", strtotime($from)) ?> — <?= date("d M, Y", strtotime($to)) ?>
+                </h3>
+                <div class="card-tools">
+                    <button class="btn btn-flat btn-sm btn-default" onclick="window.print()" title="Print"><i class="fa fa-print"></i></button>
+                    <button class="btn btn-flat btn-sm btn-success ml-1" onclick="send_whatsapp()" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                 </div>
+            </div>
+            <div class="card-body">
+                <div class="btn-group btn-group-sm mb-3">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('<?= $last_month_from ?>', '<?= $last_month_to ?>')"><i class="fa fa-chevron-left"></i> Last Month</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="setCurrentMonth()">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('<?= $next_month_from ?>', '<?= $next_month_to ?>')">Next Month <i class="fa fa-chevron-right"></i></button>
+                </div>
+                <form id="filter-form" class="form-inline">
+                    <input type="hidden" name="page" value="mechanics/view_mechanic">
+                    <input type="hidden" name="id" value="<?= isset($_GET['id']) ? $_GET['id'] : '' ?>">
+                    <div class="input-group input-group-sm mr-2">
+                        <div class="input-group-prepend"><span class="input-group-text">From</span></div>
+                        <input type="date" name="from" class="form-control" value="<?= $from ?>">
+                    </div>
+                    <div class="input-group input-group-sm mr-2">
+                        <div class="input-group-prepend"><span class="input-group-text">To</span></div>
+                        <input type="date" name="to" class="form-control" value="<?= $to ?>">
+                    </div>
+                    <button class="btn btn-primary btn-sm btn-flat mr-1"><i class="fa fa-filter"></i> Apply</button>
+                    <button type="button" class="btn btn-secondary btn-sm btn-flat" onclick="resetFilter()"><i class="fa fa-redo"></i></button>
+                </form>
             </div>
         </div>
 
-        <!-- Enhanced Date Filter with Quick Buttons -->
+        <!-- Statistics Cards (AdminLTE small-box style) -->
         <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="card bg-dark-gray border-0">
-                    <div class="card-header bg-dark border-0 p-2">
-                        <h6 class="mb-0 text-light"><i class="fa fa-filter mr-1"></i> Date Filter</h6>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-primary">
+                    <div class="inner">
+                        <h4>₹ <?= number_format($filtered_earned, 2) ?></h4>
+                        <p>Total Earned (Period)<br><small>Salary: ₹<?= number_format($filtered_salary,2) ?> | Comm: ₹<?= number_format($filtered_comm,2) ?></small></p>
                     </div>
-                    <div class="card-body p-2">
-                        <!-- Quick Date Buttons -->
-                        <div class="row mb-2">
-                            <div class="col-md-12">
-                                <div class="btn-group btn-group-sm d-flex">
-                                    <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setDateRange('<?= $last_month_from ?>', '<?= $last_month_to ?>')">
-                                        <i class="fa fa-chevron-left mr-1"></i> Last Month
-                                    </button>
-                                    <button type="button" class="btn btn-outline-primary flex-fill" onclick="setCurrentMonth()">
-                                        This Month
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setDateRange('<?= $next_month_from ?>', '<?= $next_month_to ?>')">
-                                        Next Month <i class="fa fa-chevron-right ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Date Inputs -->
-                        <form id="filter-form" class="row align-items-center">
-                            <input type="hidden" name="page" value="mechanics/view_mechanic">
-                            <input type="hidden" name="id" value="<?= isset($_GET['id']) ? $_GET['id'] : '' ?>">
-                            
-                            <div class="col-md-4">
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-dark border-secondary text-light">From</span>
-                                    </div>
-                                    <input type="date" name="from" class="form-control bg-dark border-secondary text-light" value="<?= $from ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="input-group input-group-sm">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-dark border-secondary text-light">To</span>
-                                    </div>
-                                    <input type="date" name="to" class="form-control bg-dark border-secondary text-light" value="<?= $to ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="d-flex">
-                                    <button class="btn btn-primary btn-sm mr-1 px-3 flex-fill">
-                                        <i class="fa fa-filter mr-1"></i> Apply Filter
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetFilter()" title="Reset to Current Month">
-                                        <i class="fa fa-redo"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    <div class="icon"><i class="fas fa-wallet"></i></div>
                 </div>
             </div>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="row mb-3">
-            <!-- Total Earned -->
-            <div class="col-md-3">
-                <div class="card bg-dark-card border-0 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="text-muted d-block">TOTAL EARNED</small>
-                                <h4 class="mb-0 text-primary">₹ <?= number_format($filtered_earned, 2) ?></h4>
-                                <div class="mt-2">
-                                    <small class="text-muted d-block">
-                                        <i class="fa fa-money-bill-wave mr-1"></i> Salary: ₹<?= number_format($filtered_salary, 2) ?>
-                                    </small>
-                                    <small class="text-muted d-block">
-                                        <i class="fa fa-percentage mr-1"></i> Commission: ₹<?= number_format($filtered_comm, 2) ?>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="icon-circle bg-primary-soft">
-                                <i class="fa fa-wallet text-primary"></i>
-                            </div>
-                        </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h4>₹ <?= number_format($filtered_paid, 2) ?></h4>
+                        <p>Total Advance Paid<br><small><?= date("M Y", strtotime($from)) ?></small></p>
                     </div>
+                    <div class="icon"><i class="fas fa-hand-holding-usd"></i></div>
                 </div>
             </div>
-
-            <!-- Total Advance -->
-            <div class="col-md-3">
-                <div class="card bg-dark-card border-0 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="text-muted d-block">TOTAL ADVANCE</small>
-                                <h4 class="mb-0 text-danger">₹ <?= number_format($filtered_paid, 2) ?></h4>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fa fa-calendar mr-1"></i> <?= date("M Y", strtotime($from)) ?>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="icon-circle bg-danger-soft">
-                                <i class="fa fa-hand-holding-usd text-danger"></i>
-                            </div>
-                        </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h4>₹ <?= number_format($filtered_balance, 2) ?></h4>
+                        <p>Period Balance<br><small><?= $filtered_balance > 0 ? 'Payable to Staff' : ($filtered_balance < 0 ? 'Advance Taken' : 'Settled') ?></small></p>
                     </div>
+                    <div class="icon"><i class="fas fa-balance-scale"></i></div>
                 </div>
             </div>
-
-            <!-- Period Balance -->
-            <div class="col-md-3">
-                <div class="card bg-dark-card border-0 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="text-muted d-block">PERIOD BALANCE</small>
-                                <h4 class="mb-0 text-warning">₹ <?= number_format($filtered_balance, 2) ?></h4>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <?php if($filtered_balance > 0): ?>
-                                            <i class="fa fa-arrow-up text-success mr-1"></i> Payable to Staff
-                                        <?php elseif($filtered_balance < 0): ?>
-                                            <i class="fa fa-arrow-down text-danger mr-1"></i> Advance Taken
-                                        <?php else: ?>
-                                            <i class="fa fa-check text-success mr-1"></i> Settled
-                                        <?php endif; ?>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="icon-circle bg-warning-soft">
-                                <i class="fa fa-balance-scale text-warning"></i>
-                            </div>
-                        </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h4>₹ <?= number_format($net_payable_overall, 2) ?></h4>
+                        <p>Overall Balance<br><small>Lifetime Pending</small></p>
                     </div>
-                </div>
-            </div>
-
-            <!-- Overall Net Payable -->
-            <div class="col-md-3">
-                <div class="card bg-dark-card border-0 shadow-sm">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <small class="text-muted d-block">OVERALL BALANCE</small>
-                                <h4 class="mb-0 text-success">₹ <?= number_format($net_payable_overall, 2) ?></h4>
-                                <div class="mt-2">
-                                    <small class="text-muted">
-                                        <i class="fa fa-history mr-1"></i> Lifetime Pending
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="icon-circle bg-success-soft">
-                                <i class="fa fa-money-check-alt text-success"></i>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="icon"><i class="fas fa-money-check-alt"></i></div>
                 </div>
             </div>
         </div>
 
         <!-- Summary Bar -->
+        <?php 
+        $job_count = $conn->query("SELECT COUNT(*) FROM transaction_list WHERE mechanic_id = '{$id}' AND status = 5 AND date_updated BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
+        $days_count = $conn->query("SELECT COUNT(DISTINCT curr_date) FROM attendance_list WHERE mechanic_id = '{$id}' AND status IN (1,3) AND curr_date BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
+        ?>
         <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="card bg-dark-card border-0">
+            <div class="col-12">
+                <div class="card card-outline card-info shadow-sm">
                     <div class="card-body p-3">
                         <div class="row text-center">
-                            <div class="col-md-3 border-right border-secondary">
-                                <h6 class="text-muted mb-1">Total Jobs</h6>
-                                <h4 class="text-primary mb-0">
-                                    <?php 
-                                    $job_count = $conn->query("SELECT COUNT(*) FROM transaction_list WHERE mechanic_id = '{$id}' AND status = 5 AND date_updated BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
-                                    echo $job_count;
-                                    ?>
-                                </h4>
+                            <div class="col-md-3 border-right">
+                                <small class="text-muted d-block">TOTAL JOBS</small>
+                                <h4 class="text-primary mb-0"><?= $job_count ?></h4>
                             </div>
-                            <div class="col-md-3 border-right border-secondary">
-                                <h6 class="text-muted mb-1">Avg. Commission</h6>
-                                <h4 class="text-warning mb-0">
-                                    ₹ <?= ($job_count > 0) ? number_format($filtered_comm / $job_count, 2) : '0.00' ?>
-                                </h4>
+                            <div class="col-md-3 border-right">
+                                <small class="text-muted d-block">AVG. COMMISSION</small>
+                                <h4 class="text-warning mb-0">₹ <?= ($job_count > 0) ? number_format($filtered_comm / $job_count, 2) : '0.00' ?></h4>
                             </div>
-                            <div class="col-md-3 border-right border-secondary">
-                                <h6 class="text-muted mb-1">Working Days</h6>
-                                <h4 class="text-info mb-0">
-                                    <?php 
-                                    $days_count = $conn->query("SELECT COUNT(DISTINCT curr_date) FROM attendance_list WHERE mechanic_id = '{$id}' AND status IN (1,3) AND curr_date BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
-                                    echo $days_count;
-                                    ?>
-                                </h4>
+                            <div class="col-md-3 border-right">
+                                <small class="text-muted d-block">WORKING DAYS</small>
+                                <h4 class="text-info mb-0"><?= $days_count ?></h4>
                             </div>
                             <div class="col-md-3">
-                                <h6 class="text-muted mb-1">Avg. Daily Earn</h6>
-                                <h4 class="text-success mb-0">
-                                    ₹ <?= ($days_count > 0) ? number_format($filtered_earned / $days_count, 2) : '0.00' ?>
-                                </h4>
+                                <small class="text-muted d-block">AVG. DAILY EARN</small>
+                                <h4 class="text-success mb-0">₹ <?= ($days_count > 0) ? number_format($filtered_earned / $days_count, 2) : '0.00' ?></h4>
                             </div>
                         </div>
                     </div>
@@ -358,43 +217,37 @@ $filtered_balance = $filtered_earned - $filtered_paid;
         </div>
 
         <!-- Main Content Tabs -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card bg-dark-card border-0">
-                    <div class="card-header bg-dark border-0 p-0">
-                        <ul class="nav nav-tabs nav-justified border-0" id="custom-tabs" role="tablist">
-                            <li class="nav-item">
-                                <a class="nav-link active py-2" data-toggle="pill" href="#work">
-                                    <i class="fa fa-tools mr-1"></i> Work History
-                                    <span class="badge badge-primary ml-1"><?= $job_count ?></span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link py-2" data-toggle="pill" href="#ledger">
-                                    <i class="fa fa-file-invoice-dollar mr-1"></i> Payment Ledger
-                                    <span class="badge badge-danger ml-1">
-                                        <?php 
-                                        $pay_count = $conn->query("SELECT COUNT(*) FROM advance_payments WHERE mechanic_id = '{$id}' AND date_paid BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
-                                        echo $pay_count;
-                                        ?>
-                                    </span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link py-2" data-toggle="pill" href="#attendance">
-                                    <i class="fa fa-calendar-check mr-1"></i> Attendance
-                                    <span class="badge badge-info ml-1"><?= $days_count ?></span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    
+        <?php $pay_count = $conn->query("SELECT COUNT(*) FROM advance_payments WHERE mechanic_id = '{$id}' AND date_paid BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0; ?>
+        <div class="card card-outline card-primary shadow-sm">
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs" id="custom-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="pill" href="#work">
+                            <i class="fa fa-tools"></i> Work History
+                            <span class="badge badge-primary ml-1"><?= $job_count ?></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="pill" href="#ledger">
+                            <i class="fa fa-file-invoice-dollar"></i> Payment Ledger
+                            <span class="badge badge-danger ml-1"><?= $pay_count ?></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="pill" href="#attendance">
+                            <i class="fa fa-calendar-check"></i> Attendance
+                            <span class="badge badge-info ml-1"><?= $days_count ?></span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
                     <div class="card-body p-0">
                         <div class="tab-content">
                             <!-- Work History Tab -->
                             <div class="tab-pane fade show active p-3" id="work">
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-dark" id="work-table">
+                                    <table class="table table-hover table-striped table-bordered" id="work-table">
                                         <thead class="bg-primary">
                                             <tr>
                                                 <th class="py-2"><i class="fa fa-calendar mr-1"></i> Date</th>
@@ -451,8 +304,8 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                             <!-- Payment Ledger Tab -->
                             <div class="tab-pane fade p-3" id="ledger">
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-dark" id="ledger-table">
-                                        <thead class="bg-danger">
+                                    <table class="table table-hover table-striped table-bordered" id="ledger-table">
+                                        <thead class="bg-danger text-white">
                                             <tr>
                                                 <th class="py-2"><i class="fa fa-calendar mr-1"></i> Date</th>
                                                 <th class="py-2">Note</th>
@@ -537,8 +390,8 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                                 </div>
                                 
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-dark" id="attendance-table">
-                                        <thead class="bg-info">
+                                    <table class="table table-hover table-striped table-bordered" id="attendance-table">
+                                        <thead class="bg-info text-white">
                                             <tr>
                                                 <th class="py-2">Date</th>
                                                 <th class="py-2">Day</th>
@@ -591,7 +444,6 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                 </div>
             </div>
         </div>
-    </div>
 </div>
 
 <script>
@@ -702,414 +554,21 @@ $(function(){
 </script>
 
 <style>
-/* Refined Dark Theme with Better Contrast */
-:root {
-    --dark-bg: #121826;
-    --dark-gray: #1e2536;
-    --dark-card: #252d3d;
-    --dark-border: #374151;
-    --text-light: #f3f4f6;
-    --text-muted: #9ca3af;
-    --primary: #3b82f6;
-    --secondary: #6b7280;
-    --success: #10b981;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --info: #0ea5e9;
-}
+/* Mechanic View - Minimal overrides for AdminLTE light theme */
 
-body {
-    background: var(--dark-bg);
-    color: var(--text-light);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
+/* Attendance summary soft backgrounds */
+.bg-success-soft { background: rgba(40, 167, 69, 0.12) !important; border-radius: 8px; }
+.bg-warning-soft { background: rgba(255, 193, 7, 0.12) !important; border-radius: 8px; }
+.bg-danger-soft  { background: rgba(220, 53, 69, 0.12) !important; border-radius: 8px; }
 
-/* Card Styles */
-.bg-dark-gray {
-    background: var(--dark-gray) !important;
-    border: 1px solid var(--dark-border) !important;
-}
-
-.bg-dark-card {
-    background: var(--dark-card) !important;
-    border: 1px solid var(--dark-border) !important;
-}
-
-.bg-dark {
-    background: var(--dark-bg) !important;
-}
-
-/* Avatar Styles */
-.avatar-container {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid var(--primary);
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-}
-
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Icon Circles */
-.icon-circle {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-}
-
-.bg-primary-soft { background: rgba(59, 130, 246, 0.15) !important; }
-.bg-danger-soft { background: rgba(239, 68, 68, 0.15) !important; }
-.bg-warning-soft { background: rgba(245, 158, 11, 0.15) !important; }
-.bg-success-soft { background: rgba(16, 185, 129, 0.15) !important; }
-.bg-info-soft { background: rgba(14, 165, 233, 0.15) !important; }
-
-/* Table Styles */
-.table-dark {
-    background-color: transparent;
-    color: var(--text-light);
-    border-color: var(--dark-border);
-}
-
-.table-dark thead th {
-    background-color: rgba(0,0,0,0.3);
-    border-color: var(--dark-border);
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
-    padding: 12px;
-}
-
-.table-dark tbody td {
-    border-color: var(--dark-border);
-    padding: 12px;
-    vertical-align: middle;
-}
-
-.table-dark tbody tr {
-    transition: all 0.2s ease;
-}
-
-.table-dark tbody tr:hover {
-    background-color: rgba(255,255,255,0.05);
-    transform: translateX(2px);
-}
-
-/* Header Backgrounds */
-.bg-primary { background: var(--primary) !important; }
-.bg-danger { background: var(--danger) !important; }
-.bg-info { background: var(--info) !important; }
-
-/* Form Controls */
-.form-control {
-    background-color: rgba(255,255,255,0.05);
-    border: 1px solid var(--dark-border);
-    color: var(--text-light);
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.form-control:focus {
-    background-color: rgba(255,255,255,0.08);
-    border-color: var(--primary);
-    color: var(--text-light);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.input-group-text {
-    background-color: rgba(255,255,255,0.05);
-    border: 1px solid var(--dark-border);
-    color: var(--text-muted);
-    border-right: none;
-}
-
-/* Button Styles */
-.btn {
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.btn-sm {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-}
-
-.btn-outline-light {
-    color: var(--text-muted);
-    border-color: var(--dark-border);
-    background: transparent;
-}
-
-.btn-outline-light:hover {
-    background-color: rgba(255,255,255,0.1);
-    border-color: var(--text-muted);
-    color: var(--text-light);
-}
-
-.btn-outline-secondary {
-    color: var(--text-muted);
-    border-color: var(--dark-border);
-    background: transparent;
-}
-
-.btn-outline-secondary:hover {
-    background-color: rgba(255,255,255,0.05);
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.btn-group-sm > .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-/* Tab Styles */
-.nav-tabs {
-    border-bottom: 1px solid var(--dark-border);
-    background: var(--dark-card);
-}
-
-.nav-tabs .nav-link {
-    color: var(--text-muted);
-    border: none;
-    border-bottom: 3px solid transparent;
-    padding: 1rem;
-    font-weight: 500;
-    transition: all 0.2s;
-    position: relative;
-}
-
-.nav-tabs .nav-link:hover {
-    color: var(--text-light);
-    background: rgba(255,255,255,0.05);
-    border-bottom-color: var(--dark-border);
-}
-
-.nav-tabs .nav-link.active {
-    color: var(--primary);
-    background: transparent;
-    border-bottom: 3px solid var(--primary);
-}
-
-.nav-tabs .nav-link.active .badge {
-    background: var(--primary) !important;
-}
-
-/* Badge Styles */
-.badge {
-    font-weight: 500;
-    padding: 0.35em 0.65em;
-    border-radius: 20px;
-}
-
-/* DataTable Customization */
-.dataTables_wrapper {
-    font-size: 0.95rem;
-}
-
-.dataTables_filter input {
-    background-color: rgba(255,255,255,0.05) !important;
-    border: 1px solid var(--dark-border) !important;
-    color: var(--text-light) !important;
-    padding: 0.5rem 0.75rem !important;
-    border-radius: 6px !important;
-    margin-left: 0.5rem !important;
-}
-
-.dataTables_length select {
-    background-color: rgba(255,255,255,0.05) !important;
-    border: 1px solid var(--dark-border) !important;
-    color: var(--text-light) !important;
-    padding: 0.375rem 1.75rem 0.375rem 0.75rem !important;
-    border-radius: 6px !important;
-}
-
-.dataTables_info, .dataTables_paginate {
-    color: var(--text-muted) !important;
-    font-size: 0.875rem;
-    padding-top: 1rem !important;
-}
-
-.page-link {
-    background-color: rgba(255,255,255,0.05) !important;
-    border: 1px solid var(--dark-border) !important;
-    color: var(--text-muted) !important;
-    margin: 0 2px;
-    border-radius: 4px !important;
-}
-
-.page-link:hover {
-    background-color: rgba(255,255,255,0.1) !important;
-    border-color: var(--primary) !important;
-    color: var(--text-light) !important;
-}
-
-.page-item.active .page-link {
-    background-color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    color: white !important;
-}
-
-/* Quick Date Buttons */
-.btn-group .btn {
-    margin: 0;
-}
-
-/* Border Utilities */
-.border-secondary {
-    border-color: var(--dark-border) !important;
-}
-
-/* =========================================== */
-/* FIX FOR MODAL TEXT IN DARK THEME */
-/* =========================================== */
-.modal-content {
-    background-color: #1e2536 !important;
-    color: #f3f4f6 !important;
-    border: 1px solid #374151 !important;
-}
-
-.modal-header {
-    background-color: #252d3d !important;
-    border-bottom: 1px solid #374151 !important;
-    color: #f3f4f6 !important;
-}
-
-.modal-title {
-    color: #f3f4f6 !important;
-}
-
-.modal-body {
-    background-color: #1e2536 !important;
-    color: #f3f4f6 !important;
-}
-
-.modal-body label {
-    color: #d1d5db !important;
-}
-
-.modal-body .form-control {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
-}
-
-.modal-body .form-control:focus {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    border-color: #3b82f6 !important;
-    color: #f3f4f6 !important;
-}
-
-.modal-body .input-group-text {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #374151 !important;
-    color: #9ca3af !important;
-}
-
-.modal-footer {
-    background-color: #252d3d !important;
-    border-top: 1px solid #374151 !important;
-}
-
-.modal-body .text-muted {
-    color: #9ca3af !important;
-}
-
-.modal-body .help-text {
-    color: #9ca3af !important;
-}
-
-.modal-body small {
-    color: #9ca3af !important;
-}
-
-/* Fix for select2 dropdown in modal */
-.select2-container--default .select2-selection--single,
-.select2-container--default .select2-selection--multiple {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    color: #f3f4f6 !important;
-}
-
-.select2-container--default .select2-results__option {
-    background-color: #1e2536 !important;
-    color: #f3f4f6 !important;
-}
-
-.select2-container--default .select2-results__option--highlighted[aria-selected] {
-    background-color: #3b82f6 !important;
-    color: white !important;
-}
-
-.select2-dropdown {
-    background-color: #1e2536 !important;
-    border-color: #374151 !important;
-}
-
-/* Fix for radio and checkbox labels */
-.modal-body .form-check-label {
-    color: #d1d5db !important;
-}
-
-/* Fix for alert messages in modal */
-.modal-body .alert {
-    background-color: rgba(255, 255, 255, 0.05) !important;
-    border-color: #374151 !important;
-    color: #f3f4f6 !important;
+/* Print Styles */
+@media print {
+    .no-print, .card-tools, .btn-group { display: none !important; }
+    .card { border: 1px solid #ddd !important; box-shadow: none !important; }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .avatar-container {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .nav-tabs .nav-link {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.85rem;
-    }
-    
-    .icon-circle {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-    }
-    
-    .btn-group-sm > .btn {
-        font-size: 0.8rem;
-        padding: 0.2rem 0.4rem;
-    }
-}
-
-/* Print Styles */
-@media print {
-    body {
-        background: white !important;
-        color: black !important;
-    }
-    
-    .card {
-        background: white !important;
-        border: 1px solid #ddd !important;
-    }
-    
-    .table-dark {
-        color: black !important;
-    }
+    .form-inline .input-group { margin-bottom: 8px; }
 }
 </style>

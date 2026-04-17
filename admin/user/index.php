@@ -2,8 +2,8 @@
 // NOTE: 'config.php' और $conn ऑब्जेक्ट पहले से ही main index.php द्वारा शामिल किए गए हैं।
 // पुराने insecure code को Prepared Statement से replace किया गया है।
 
-require_once('../../config.php');
-require_once('../../classes/CsrfProtection.php');
+require_once('../config.php');
+require_once('../classes/CsrfProtection.php');
 
 $meta = [];
 // 🛡️ SECURITY FIX: SQL Injection से बचने के लिए Prepared Statement का उपयोग
