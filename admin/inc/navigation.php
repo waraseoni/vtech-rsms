@@ -101,6 +101,7 @@
                         <li class="nav-item"><a href="./?page=reports/daily_service_report" class="nav-link"><i class="nav-icon fas fa-wrench text-teal"></i><p>Daily Service Report</p></a></li>
                         <li class="nav-item"><a href="./?page=reports/custom_sales_report" class="nav-link"><i class="nav-icon fas fa-shopping-cart text-pink"></i><p>Custom Sales Report</p></a></li>
                         <li class="nav-item"><a href="./?page=reports/custom_service_report" class="nav-link"><i class="nav-icon fas fa-file-alt text-indigo"></i><p>Custom Service Report</p></a></li>
+                        <li class="nav-item"><a href="./?page=reports/activity_log" class="nav-link"><i class="nav-icon fas fa-fingerprint text-danger"></i><p>Activity Log</p></a></li>
                     </ul>
                 </li>
                 

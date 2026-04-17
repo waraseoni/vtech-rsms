@@ -31,6 +31,7 @@ trait SalesTrait {
                     if(!empty($old_path) && is_file(base_app.$old_path) && $old_path != $fname) unlink(base_app.$old_path);
                 }
             }
+            $this->log_activity(empty($id) ? "Added Client" : "Updated Client", "Clients", $cid, "Client Name: " . $firstname . " " . $lastname);
             $this->settings->set_flashdata('success', empty($id) ? "Client has been added successfully." : "Client has been updated successfully.");
             return json_encode(['status' => 'success']);
         }
@@ -40,7 +41,8 @@ trait SalesTrait {
     function delete_client(){
         extract($_POST);
         if($this->conn->query("UPDATE `client_list` set delete_flag = 1 where id = '{$id}'")){
-            $this->settings->set_flashdata('success',"Client has been deleted successfully.");
+            $this->log_activity("Deleted Client", "Clients", $id);
+            $this->settings->set_flashdata('success', "Client has been deleted successfully.");
             return json_encode(['status' => 'success']);
         }
         return json_encode(['status' => 'failed', 'error' => $this->conn->error]);
@@ -124,6 +126,7 @@ trait SalesTrait {
                 }
             }
         }
+        $this->log_activity(empty($id) ? "Created Transaction" : "Updated Transaction", "Transactions", $tid, "Job ID: " . ($_POST['job_id'] ?? '') . ", Amount: " . ($_POST['amount'] ?? '0'));
         $this->settings->set_flashdata('success', empty($id) ? "New Transaction successfully saved." : "Transaction successfully updated.");
         return json_encode(['status' => 'success', 'tid' => $tid]);
     }
@@ -131,6 +134,7 @@ trait SalesTrait {
     function delete_transaction(){
         $id = $this->conn->real_escape_string($_POST['id'] ?? '');
         if($this->conn->query("DELETE FROM transaction_list WHERE id = '{$id}'")){
+            $this->log_activity("Deleted Transaction", "Transactions", $id);
             $this->settings->set_flashdata('success', "Transaction successfully deleted.");
             return json_encode(['status' => 'success']);
         }

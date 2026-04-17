@@ -53,6 +53,7 @@ trait StaffTrait {
                 $effective_date = date('Y-m-d');
                 $this->conn->query("INSERT INTO `mechanic_salary_history` SET mechanic_id = '{$mid}', salary = '{$daily_salary}', effective_date = '{$effective_date}'");
             }
+            $this->log_activity(empty($id) ? "Added Mechanic" : "Updated Mechanic", "Mechanics", $mid, "Name: " . ($firstname . ' ' . $lastname));
             if(empty($id)) $this->settings->set_flashdata('success',"New Mechanic successfully saved.");
             else $this->settings->set_flashdata('success',"Mechanic Details successfully updated.");
         } else {
@@ -110,6 +111,7 @@ trait StaffTrait {
     function delete_mechanic(){
         extract($_POST);
         if($this->conn->query("UPDATE `mechanic_list` set `delete_flag` = 1 where id = '{$id}'")){
+            $this->log_activity("Deleted Mechanic", "Mechanics", $id);
             $this->settings->set_flashdata('success'," Mechanic successfully deleted.");
             return json_encode(['status' => 'success']);
         }

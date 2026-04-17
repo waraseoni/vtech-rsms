@@ -9,12 +9,13 @@ require_once(__DIR__ . '/Master/StaffTrait.php');
 require_once(__DIR__ . '/Master/SalesTrait.php');
 require_once(__DIR__ . '/Master/FinancialTrait.php');
 require_once(__DIR__ . '/Master/SystemTrait.php');
+require_once(__DIR__ . '/Master/DashboardTrait.php');
 
 Class Master extends DBConnection {
 	private $settings;
     
     // Use Traits to split the massive class into manageable modules
-    use InquiryTrait, ProductTrait, StaffTrait, SalesTrait, FinancialTrait, SystemTrait;
+    use InquiryTrait, ProductTrait, StaffTrait, SalesTrait, FinancialTrait, SystemTrait, DashboardTrait;
 
 	public function __construct(){
 		global $_settings;

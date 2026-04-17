@@ -100,6 +100,7 @@ trait ProductTrait {
             $resp['msg'] = 'Database Error: ' . $stmt->error;
         }
         $stmt->close();
+            $this->log_activity(empty($id) ? "Added Product" : "Updated Product", "Inventory", $resp['id'], "Product: " . $name);
         if($resp['status'] == 'success')
             $this->settings->set_flashdata('success', $resp['msg']);
         return json_encode($resp);
@@ -117,8 +118,10 @@ trait ProductTrait {
             $resp['msg'] = 'Database Error: ' . $stmt->error;
         }
         $stmt->close();
-        if($resp['status'] == 'success')
+        if($resp['status'] == 'success') {
+            $this->log_activity("Deleted Product", "Inventory", $id);
             $this->settings->set_flashdata('success', $resp['msg']);
+        }
         return json_encode($resp);
     }
 
@@ -151,6 +154,7 @@ trait ProductTrait {
             $resp['status'] = 'failed';
             $resp['err'] = $this->conn->error."[{$sql}]";
         }
+            $this->log_activity(empty($id) ? "Added Stock" : "Updated Stock", "Inventory", (empty($id) ? $this->conn->insert_id : $id), "Product ID: " . ($product_id ?? 'Unknown') . ", Qty: " . ($quantity ?? '0'));
         if($resp['status'] == 'success')
             $this->settings->set_flashdata('success',$resp['msg']);
         return json_encode($resp);
@@ -160,6 +164,7 @@ trait ProductTrait {
         extract($_POST);
         $del = $this->conn->query("DELETE FROM `inventory_list` where id = '{$id}'");
         if($del){
+            $this->log_activity("Deleted Stock Entry", "Inventory", $id);
             $resp['status'] = 'success';
             $this->settings->set_flashdata('success'," Stock has been deleted successfully.");
         }else{
