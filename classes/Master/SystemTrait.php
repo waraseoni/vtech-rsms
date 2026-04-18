@@ -63,10 +63,72 @@ trait SystemTrait {
     }
 
     function dry_run_backup(){
-        if(!isset($_FILES['backup_file'])) return json_encode(['status' => 'failed']);
+        if(!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== 0) 
+            return json_encode(['status' => 'failed', 'msg' => 'No file uploaded or upload error.']);
+
         $sql = file_get_contents($_FILES['backup_file']['tmp_name']);
-        preg_match_all('/CREATE TABLE `([^`]+)`/', $sql, $m);
-        return json_encode(['status' => 'success', 'analysis' => ['tables_in_backup' => count($m[1])]]);
+        $backup_file_name = $_FILES['backup_file']['name'];
+
+        // 1. Analyze Backup File
+        preg_match_all('/CREATE TABLE `([^`]+)`/', $sql, $create_matches);
+        $backup_tables = array_unique($create_matches[1]);
+        
+        $backup_table_counts = [];
+        foreach($backup_tables as $table){
+            // Count INSERT statements for this table
+            // Using a more robust regex for INSERT INTO `table`
+            $pattern = '/INSERT INTO `'.preg_quote($table).'`/i';
+            preg_match_all($pattern, $sql, $insert_matches);
+            $backup_table_counts[$table] = count($insert_matches[0]);
+        }
+
+        $records_in_backup = array_sum($backup_table_counts);
+
+        // 2. Get Current Database Info
+        $current_tables_info = [];
+        $current_table_counts = [];
+        $res = $this->conn->query("SHOW TABLES");
+        while($row = $res->fetch_row()){
+            $t = $row[0];
+            $count_res = $this->conn->query("SELECT COUNT(*) FROM `{$t}`");
+            $cnt = $count_res ? $count_res->fetch_row()[0] : 0;
+            $current_table_counts[$t] = intval($cnt);
+        }
+
+        $current_tables = array_keys($current_table_counts);
+        $records_in_db = array_sum($current_table_counts);
+
+        // 3. Compare and Calculate Impact
+        $tables_to_create = array_diff($backup_tables, $current_tables);
+        $tables_to_drop_if_exists = array_intersect($backup_tables, $current_tables); // These will be dropped and recreated
+        
+        // This is what the user is worried about: Tables in DB but NOT in backup
+        $tables_not_in_backup = array_diff($current_tables, $backup_tables);
+
+        // Check if the SQL file explicitly drops tables not in its list (rare but possible)
+        preg_match_all('/DROP TABLE IF EXISTS `([^`]+)`/', $sql, $drop_matches);
+        $explicit_drops = array_unique($drop_matches[1]);
+        $extra_tables_to_be_dropped = array_intersect($tables_not_in_backup, $explicit_drops);
+
+        $analysis = [
+            'backup_file' => $backup_file_name,
+            'tables_in_backup' => count($backup_tables),
+            'records_in_backup' => $records_in_backup,
+            'current_tables' => count($current_tables),
+            'current_records' => $records_in_db,
+            'backup_table_counts' => $backup_table_counts,
+            'current_table_counts' => $current_table_counts,
+            'tables_to_create' => $tables_to_create,
+            'tables_to_drop' => $extra_tables_to_be_dropped, // Tables that WILL be lost but aren't replaced
+            'impact' => [
+                'new_tables' => count($tables_to_create),
+                'drop_tables' => count($extra_tables_to_be_dropped),
+                'affected_tables' => count($tables_to_drop_if_exists),
+                'total_changes' => count($tables_to_create) + count($extra_tables_to_be_dropped) + count($tables_to_drop_if_exists)
+            ]
+        ];
+
+        return json_encode(['status' => 'success', 'analysis' => $analysis]);
     }
 
     function delete_backup(){
