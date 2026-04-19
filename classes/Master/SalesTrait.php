@@ -156,15 +156,45 @@ trait SalesTrait {
 
     function update_status(){
         extract($_POST);
-        $sql = "UPDATE `transaction_list` set `status` = '{$status}'" . ($status == 5 ? ", `date_completed` = NOW() " : "") . " where id = '{$id}'";
-        if($this->conn->query($sql)) return json_encode(['status' => 'success', 'msg' => "Transaction Status successfully updated."]);
+        $id_esc = $this->conn->real_escape_string($id ?? '');
+        $status_esc = $this->conn->real_escape_string($status ?? '');
+        $prev = $this->conn->query("SELECT job_id, `status` AS old_st FROM transaction_list WHERE id = '{$id_esc}' LIMIT 1");
+        if(!$prev || $prev->num_rows === 0){
+            return json_encode(['status' => 'failed', 'error' => 'Transaction not found']);
+        }
+        $prow = $prev->fetch_assoc();
+        $job_id = $prow['job_id'];
+        $old_st = (int)$prow['old_st'];
+        $sql = "UPDATE `transaction_list` set `status` = '{$status_esc}'" . ($status_esc == 5 ? ", `date_completed` = NOW() " : "") . " where id = '{$id_esc}'";
+        if($this->conn->query($sql)){
+            $new_st = (int)$status_esc;
+            if($old_st !== $new_st){
+                $names = [0=>'Pending',1=>'On-Progress',2=>'Done',3=>'Paid',4=>'Cancelled',5=>'Delivered'];
+                $detail = 'Job ID: ' . $job_id . ', ' . ($names[$old_st] ?? (string)$old_st) . ' → ' . ($names[$new_st] ?? (string)$status_esc);
+                $this->log_activity('Transaction Status Changed', 'Transactions', $id_esc, $detail);
+            }
+            return json_encode(['status' => 'success', 'msg' => "Transaction Status successfully updated."]);
+        }
         return json_encode(['status' => 'failed', 'error' => $this->conn->error]);
     }
 
     function update_transaction_status(){
         extract($_POST);
-        $date_update = ($status == 5) ? ", date_completed = '".($date_completed ?? date('Y-m-d H:i:s'))."' " : "";
-        if($this->conn->query("UPDATE `transaction_list` set status = '{$status}' {$date_update} where id = '{$id}'")){
+        $id_esc = $this->conn->real_escape_string($id ?? '');
+        $status_esc = $this->conn->real_escape_string($status ?? '');
+        $prev = $this->conn->query("SELECT job_id, `status` AS old_st FROM transaction_list WHERE id = '{$id_esc}' LIMIT 1");
+        $prow = $prev && $prev->num_rows ? $prev->fetch_assoc() : null;
+        $date_update = ($status_esc == 5) ? ", date_completed = '".($date_completed ?? date('Y-m-d H:i:s'))."' " : "";
+        if($this->conn->query("UPDATE `transaction_list` set status = '{$status_esc}' {$date_update} where id = '{$id_esc}'")){
+            if($prow){
+                $old_st = (int)$prow['old_st'];
+                $new_st = (int)$status_esc;
+                if($old_st !== $new_st){
+                    $names = [0=>'Pending',1=>'On-Progress',2=>'Done',3=>'Paid',4=>'Cancelled',5=>'Delivered'];
+                    $detail = 'Job ID: ' . $prow['job_id'] . ', ' . ($names[$old_st] ?? (string)$old_st) . ' → ' . ($names[$new_st] ?? (string)$status_esc);
+                    $this->log_activity('Transaction Status Changed', 'Transactions', $id_esc, $detail);
+                }
+            }
             $this->settings->set_flashdata('success'," Transaction's Status successfully updated.");
             return json_encode(['status' => 'success']);
         }
@@ -206,6 +236,16 @@ trait SalesTrait {
                 $this->conn->query("INSERT INTO direct_sale_items (sale_id, product_id, qty, price) VALUES ('{$sid}', '{$product_id[$i]}', '{$qty[$i]}', '{$price[$i]}')");
             }
             $this->conn->query("UPDATE direct_sales SET total_amount = $total WHERE id = '{$sid}'");
+            $rowinfo = $this->conn->query("SELECT sale_code, total_amount FROM direct_sales WHERE id = '{$sid}' LIMIT 1");
+            $scode = '';
+            $totamt = $total;
+            if($rowinfo && $rowinfo->num_rows){
+                $ri = $rowinfo->fetch_assoc();
+                $scode = $ri['sale_code'] ?? '';
+                $totamt = $ri['total_amount'] ?? $total;
+            }
+            $was_new = empty($id);
+            $this->log_activity($was_new ? 'Created Direct Sale' : 'Updated Direct Sale', 'Direct Sales', $sid, 'Sale: ' . $scode . ', Total: ' . $totamt);
             $this->settings->set_flashdata('success','Direct Sale saved successfully.');
             return json_encode(['status' => 'success', 'id' => $sid]);
         }
@@ -214,8 +254,13 @@ trait SalesTrait {
 
     function delete_direct_sale(){
         extract($_POST);
-        $this->conn->query("DELETE FROM direct_sale_items WHERE sale_id = '{$id}'");
-        if($this->conn->query("DELETE FROM direct_sales WHERE id = '{$id}'")){
+        $id_esc = $this->conn->real_escape_string($id ?? '');
+        $scode = '';
+        $iq = $this->conn->query("SELECT sale_code FROM direct_sales WHERE id = '{$id_esc}' LIMIT 1");
+        if($iq && $iq->num_rows) $scode = $iq->fetch_assoc()['sale_code'] ?? '';
+        $this->conn->query("DELETE FROM direct_sale_items WHERE sale_id = '{$id_esc}'");
+        if($this->conn->query("DELETE FROM direct_sales WHERE id = '{$id_esc}'")){
+            $this->log_activity('Deleted Direct Sale', 'Direct Sales', $id_esc, $scode ? 'Sale: ' . $scode : '');
             $this->settings->set_flashdata('success','Direct Sale deleted successfully.');
             return json_encode(['status' => 'success']);
         }

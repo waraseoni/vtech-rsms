@@ -2,6 +2,18 @@
 <script>alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')</script>
 <?php endif;?>
 
+<?php
+/** Default date window: avoids loading every row + client aggregates into the browser (very slow). */
+$tx_show_all = isset($_GET['all']) && $_GET['all'] === '1';
+$date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
+$date_to = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
+$status = isset($_GET['status']) ? intval($_GET['status']) : null;
+if (!$tx_show_all && $date_from === '' && $date_to === '') {
+	$date_to = date('Y-m-d');
+	$date_from = date('Y-m-d', strtotime('-90 days'));
+}
+?>
+
 <style>
     /* View Toggle Styles */
     .view-toggle-wrapper .btn {
@@ -1063,15 +1075,16 @@
                             <div class="row align-items-end">
                                 <div class="col-md-3">
                                     <label>From Date</label>
-                                    <input type="date" name="date_from" value="<?= isset($_GET['date_from']) ? $_GET['date_from'] : '' ?>" class="form-control">
+                                    <input type="date" name="date_from" value="<?= htmlspecialchars($date_from) ?>" class="form-control">
                                 </div>
                                 <div class="col-md-3">
                                     <label>To Date</label>
-                                    <input type="date" name="date_to" value="<?= isset($_GET['date_to']) ? $_GET['date_to'] : '' ?>" class="form-control">
+                                    <input type="date" name="date_to" value="<?= htmlspecialchars($date_to) ?>" class="form-control">
                                 </div>
                                 <div class="col-md-6">
                                     <button type="submit" class="btn btn-primary"><i class="fa fa-filter"></i> Filter</button>
-                                    <a href="./?page=transactions" class="btn btn-default border">Reset</a>
+                                    <a href="./?page=transactions" class="btn btn-default border">Reset (90 days)</a>
+                                    <a href="./?page=transactions&amp;all=1" class="btn btn-outline-secondary border" title="Loads every job — can be slow">Show all dates</a>
                                     <!-- Previous / Next Day Buttons (Desktop) -->
                                     <button type="button" class="day-nav-btn" onclick="shiftDay(-1, '#filter-form')"><i class="fa fa-arrow-left"></i> Prev Day</button>
                                     <button type="button" class="day-nav-btn" onclick="shiftDay(1, '#filter-form')">Next Day <i class="fa fa-arrow-right"></i></button>
@@ -1125,14 +1138,13 @@
                         <?php 
                         $i = 1;
                         $where_cond = "";
-                        $date_from = isset($_GET['date_from']) ? $_GET['date_from'] : '';
-                        $date_to = isset($_GET['date_to']) ? $_GET['date_to'] : '';
-                        $status = isset($_GET['status']) ? intval($_GET['status']) : null;
 
                         $conditions = [];
 
                         if(!empty($date_from) && !empty($date_to)){
-                            $conditions[] = "date(t.date_created) BETWEEN '{$date_from}' AND '{$date_to}'";
+                            $df = $conn->real_escape_string($date_from);
+                            $dt = $conn->real_escape_string($date_to);
+                            $conditions[] = "date(t.date_created) BETWEEN '{$df}' AND '{$dt}'";
                         }
 
                         if($status !== null && in_array($status, [0,1,2,3,4,5])){
@@ -1153,12 +1165,21 @@
                                 c.opening_balance, c.id as client_tbl_id,
                                 COALESCE(cb.total_billed, 0) as total_billed,
                                 COALESCE(cp.total_paid, 0) as total_paid,
-                                COALESCE(ds.total_sale, 0) as total_sale
+                                COALESCE(ds.total_sale, 0) as total_sale,
+                                COALESCE(al.active_loan_balance, 0) as active_loan_balance
                             FROM `transaction_list` t 
                             INNER JOIN client_list c ON t.client_name = c.id 
                             LEFT JOIN (SELECT client_name, SUM(amount) as total_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) cb ON cb.client_name = c.id
-                            LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments GROUP BY client_id) cp ON cp.client_id = c.id
+                            LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments WHERE loan_id IS NULL GROUP BY client_id) cp ON cp.client_id = c.id
                             LEFT JOIN (SELECT client_id, SUM(total_amount) as total_sale FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
+                            LEFT JOIN (
+                                SELECT cl.client_id,
+                                    SUM(cl.total_payable) - SUM(IFNULL(paid.total, 0)) AS active_loan_balance
+                                FROM client_loans cl
+                                LEFT JOIN (SELECT loan_id, SUM(amount + discount) AS total FROM client_payments GROUP BY loan_id) paid ON cl.id = paid.loan_id
+                                WHERE cl.status = 1
+                                GROUP BY cl.client_id
+                            ) al ON al.client_id = c.id
                             {$where_cond} 
                             ORDER BY job_id DESC, date_created DESC
                             {$limit_cond}";
@@ -1171,7 +1192,9 @@
                                 $calc_billed = $row['total_billed'] ?? 0;
                                 $calc_paid = $row['total_paid'] ?? 0;
                                 $calc_opening = $row['opening_balance'] ?? 0;
-                                $row['current_balance'] = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid;
+                                $calc_loan = $row['active_loan_balance'] ?? 0;
+                                /* Same as clients/view_client.php net_balance: service payments only + active loan remainder */
+                                $row['current_balance'] = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid + $calc_loan;
                                 
                                 $transactions_data[] = $row;
                             }
@@ -1568,13 +1591,13 @@
                                 <div class="form-group">
                                     <label for="mobile_date_from">From Date</label>
                                     <input type="date" name="date_from" id="mobile_date_from" 
-                                           value="<?= isset($_GET['date_from']) ? $_GET['date_from'] : '' ?>" 
+                                           value="<?= htmlspecialchars($date_from) ?>" 
                                            class="form-control">
                                 </div>
                                 <div class="form-group">
                                     <label for="mobile_date_to">To Date</label>
                                     <input type="date" name="date_to" id="mobile_date_to" 
-                                           value="<?= isset($_GET['date_to']) ? $_GET['date_to'] : '' ?>" 
+                                           value="<?= htmlspecialchars($date_to) ?>" 
                                            class="form-control">
                                 </div>
                                 <!-- Mobile day navigation -->
