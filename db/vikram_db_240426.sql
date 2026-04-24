@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 19, 2026 at 12:19 AM
+-- Generation Time: Apr 24, 2026 at 06:04 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -36,6 +36,179 @@ CREATE TABLE `activity_logs` (
   `details` text DEFAULT NULL,
   `date_created` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `activity_logs`
+--
+
+INSERT INTO `activity_logs` (`id`, `user_id`, `action`, `module`, `meta_id`, `details`, `date_created`) VALUES
+(0, 3, 'Added Client', 'Clients', '325', 'Client Name: Monu  Gwarighat', '2026-04-19 12:24:23'),
+(0, 3, 'Updated Transaction', 'Transactions', '1276', 'Job ID: 28389, Amount: 0.00', '2026-04-19 12:25:48'),
+(0, 1, 'Updated Client', 'Clients', '203', 'Client Name: Raja Sidhi', '2026-04-19 13:52:23'),
+(0, 1, 'Updated Client', 'Clients', '203', 'Client Name: Raja Sidhi', '2026-04-19 13:54:48'),
+(0, 1, 'Updated Client', 'Clients', '203', 'Client Name: Raja Sidhi', '2026-04-19 13:56:13'),
+(0, 1, 'Updated Client', 'Clients', '203', 'Client Name: Raja Sidhi', '2026-04-19 13:56:44'),
+(0, 1, 'Updated Client', 'Clients', '204', 'Client Name: yaseen master eng and polymer', '2026-04-19 14:02:46'),
+(0, 1, 'Updated Client', 'Clients', '205', 'Client Name: Ajay Gadarwara', '2026-04-19 14:03:37'),
+(0, 1, 'Updated Client', 'Clients', '280', 'Client Name: Pratham Seoni', '2026-04-19 14:04:16'),
+(0, 3, 'Updated Transaction', 'Transactions', '1176', 'Job ID: 28289, Amount: 0.00', '2026-04-19 14:17:59'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1176', 'Job ID: 28289, Pending → Delivered', '2026-04-19 14:18:04'),
+(0, 3, 'Updated Transaction', 'Transactions', '1172', 'Job ID: 28285, Amount: 0.00', '2026-04-19 14:18:24'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1172', 'Job ID: 28285, Pending → Delivered', '2026-04-19 14:18:27'),
+(0, 3, 'Updated Transaction', 'Transactions', '1187', 'Job ID: 28300, Amount: 0.00', '2026-04-19 14:18:47'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1187', 'Job ID: 28300, Pending → Delivered', '2026-04-19 14:18:50'),
+(0, 3, 'Updated Transaction', 'Transactions', '1173', 'Job ID: 28286, Amount: 0.00', '2026-04-19 14:19:15'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1173', 'Job ID: 28286, Pending → Delivered', '2026-04-19 14:19:18'),
+(0, 3, 'Updated Transaction', 'Transactions', '1171', 'Job ID: 28284, Amount: 300.00', '2026-04-19 14:19:52'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1171', 'Job ID: 28284, Done → Delivered', '2026-04-19 14:19:55'),
+(0, 3, 'Updated Transaction', 'Transactions', '1167', 'Job ID: 28280, Amount: 350.00', '2026-04-19 14:20:07'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1167', 'Job ID: 28280, Done → Delivered', '2026-04-19 14:20:09'),
+(0, 3, 'Updated Transaction', 'Transactions', '1175', 'Job ID: 28288, Amount: 300.00', '2026-04-19 14:20:22'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1175', 'Job ID: 28288, Done → Delivered', '2026-04-19 14:20:27'),
+(0, 3, 'Updated Transaction', 'Transactions', '1174', 'Job ID: 28287, Amount: 300.00', '2026-04-19 14:20:42'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1174', 'Job ID: 28287, Done → Delivered', '2026-04-19 14:20:45'),
+(0, 3, 'Updated Transaction', 'Transactions', '1181', 'Job ID: 28294, Amount: 300.00', '2026-04-19 14:34:56'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1181', 'Job ID: 28294, Done → Delivered', '2026-04-19 14:35:00'),
+(0, 3, 'Updated Transaction', 'Transactions', '1182', 'Job ID: 28295, Amount: 300.00', '2026-04-19 14:35:15'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1182', 'Job ID: 28295, Done → Delivered', '2026-04-19 14:35:19'),
+(0, 4, 'Updated Transaction', 'Transactions', '1257', 'Job ID: 28370, Amount: 800.00', '2026-04-19 14:48:25'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1257', 'Job ID: 28370, Pending → Delivered', '2026-04-19 14:48:32'),
+(0, 3, 'Updated Transaction', 'Transactions', '1170', 'Job ID: 28283, Amount: 300.00', '2026-04-19 15:21:07'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1170', 'Job ID: 28283, Pending → Delivered', '2026-04-19 15:21:10'),
+(0, 3, 'Updated Transaction', 'Transactions', '1178', 'Job ID: 28291, Amount: 300.00', '2026-04-19 15:21:30'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1178', 'Job ID: 28291, Pending → Delivered', '2026-04-19 15:21:33'),
+(0, 1, 'Created Transaction', 'Transactions', '1277', 'Job ID: 28390, Amount: 0.00', '2026-04-19 16:12:31'),
+(0, 1, 'Created Transaction', 'Transactions', '1278', 'Job ID: 28391, Amount: 0.00', '2026-04-19 16:14:18'),
+(0, 1, 'Created Transaction', 'Transactions', '1279', 'Job ID: 28392, Amount: 0.00', '2026-04-19 16:38:40'),
+(0, 1, 'Created Transaction', 'Transactions', '1280', 'Job ID: 28393, Amount: 0.00', '2026-04-19 16:39:23'),
+(0, 1, 'Created Transaction', 'Transactions', '1281', 'Job ID: 28394, Amount: 0.00', '2026-04-19 16:50:21'),
+(0, 1, 'Created Transaction', 'Transactions', '1282', 'Job ID: 28395, Amount: 0.00', '2026-04-19 16:51:04'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1278', 'Job ID: 28391, Pending → Done', '2026-04-19 18:13:35'),
+(0, 4, 'Updated Transaction', 'Transactions', '1278', 'Job ID: 28391, Amount: 850.00', '2026-04-19 18:14:25'),
+(0, 4, 'Updated Transaction', 'Transactions', '1277', 'Job ID: 28390, Amount: 4500.00', '2026-04-19 18:15:32'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1277', 'Job ID: 28390, Pending → Done', '2026-04-19 18:15:41'),
+(0, 4, 'Updated Transaction', 'Transactions', '1139', 'Job ID: 28252, Amount: 6400.00', '2026-04-19 18:17:17'),
+(0, 3, 'Updated Transaction', 'Transactions', '1281', 'Job ID: 28394, Amount: 500.00', '2026-04-19 19:44:46'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1281', 'Job ID: 28394, Pending → Done', '2026-04-19 19:44:51'),
+(0, 3, 'Updated Transaction', 'Transactions', '1282', 'Job ID: 28395, Amount: 0.00', '2026-04-19 19:45:24'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1282', 'Job ID: 28395, Pending → Delivered', '2026-04-19 19:45:29'),
+(0, 4, 'Added Client', 'Clients', '326', 'Client Name: Sahil Panagar', '2026-04-19 19:48:29'),
+(0, 4, 'Created Transaction', 'Transactions', '1283', 'Job ID: 28396, Amount: 0.00', '2026-04-19 21:16:27'),
+(0, 4, 'Updated Client', 'Clients', '326', 'Client Name: Sahil Panagar', '2026-04-19 21:16:52'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1139', 'Job ID: 28252, Done → Delivered', '2026-04-19 23:05:58'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1277', 'Job ID: 28390, Done → Delivered', '2026-04-19 23:06:08'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1278', 'Job ID: 28391, Done → Delivered', '2026-04-19 23:06:16'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1281', 'Job ID: 28394, Done → Delivered', '2026-04-19 23:06:23'),
+(0, 1, 'Updated Transaction', 'Transactions', '1260', 'Job ID: 28373, Amount: 3000.00', '2026-04-19 23:17:42'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1260', 'Job ID: 28373, Pending → Delivered', '2026-04-19 23:18:04'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1261', 'Job ID: 28374, Pending → Delivered', '2026-04-19 23:18:17'),
+(0, 1, 'Updated Transaction', 'Transactions', '1261', 'Job ID: 28374, Amount: 3800.00', '2026-04-19 23:19:43'),
+(0, 3, 'Added Client', 'Clients', '327', 'Client Name: Ritik  Katni', '2026-04-20 12:30:53'),
+(0, 3, 'Created Transaction', 'Transactions', '1284', 'Job ID: 28397, Amount: 0.00', '2026-04-20 12:31:48'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1284', 'Job ID: 28397, Pending → Delivered', '2026-04-20 12:54:08'),
+(0, 3, 'Updated Transaction', 'Transactions', '1284', 'Job ID: 28397, Amount: 1000.00', '2026-04-20 12:54:18'),
+(0, 1, 'Added Product', 'Inventory', '59', 'Product: 1024 stan mk2 motherboard', '2026-04-20 13:34:07'),
+(0, 1, 'Added Stock', 'Inventory', '89', 'Product ID: 59, Qty: 2', '2026-04-20 13:34:20'),
+(0, 1, 'Created Direct Sale', 'Direct Sales', '31', 'Sale: DS-20260420-5690, Total: 6000.00', '2026-04-20 13:34:42'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1217', 'Job ID: 28330, Done → Delivered', '2026-04-20 13:36:53'),
+(0, 4, 'Created Transaction', 'Transactions', '1285', 'Job ID: 28398, Amount: 0.00', '2026-04-20 14:08:18'),
+(0, 4, 'Added Client', 'Clients', '328', 'Client Name: Prashant Mandla', '2026-04-20 15:51:23'),
+(0, 4, 'Created Transaction', 'Transactions', '1288', 'Job ID: 28401, Amount: 0.00', '2026-04-20 15:53:40'),
+(0, 4, 'Updated Transaction', 'Transactions', '1286', 'Job ID: 28399, Amount: 1500.00', '2026-04-20 18:18:36'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1286', 'Job ID: 28399, Pending → Delivered', '2026-04-20 18:18:44'),
+(0, 4, 'Updated Transaction', 'Transactions', '1285', 'Job ID: 28398, Amount: 1500.00', '2026-04-20 18:21:32'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1285', 'Job ID: 28398, Pending → Delivered', '2026-04-20 18:21:41'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1043', 'Job ID: 28157, Done → Delivered', '2026-04-20 18:23:17'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1106', 'Job ID: 28220, Done → Delivered', '2026-04-20 18:24:06'),
+(0, 3, 'Updated Transaction', 'Transactions', '1288', 'Job ID: 28401, Amount: 0.00', '2026-04-20 18:56:03'),
+(0, 3, 'Updated Transaction', 'Transactions', '1288', 'Job ID: 28401, Amount: 500.00', '2026-04-20 18:56:11'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1288', 'Job ID: 28401, Pending → Delivered', '2026-04-20 18:56:16'),
+(0, 3, 'Updated Transaction', 'Transactions', '1290', 'Job ID: 28403, Amount: 850.00', '2026-04-21 13:47:34'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1290', 'Job ID: 28403, Pending → Done', '2026-04-21 13:47:41'),
+(0, 3, 'Updated Transaction', 'Transactions', '1241', 'Job ID: 28354, Amount: 300.00', '2026-04-21 15:00:34'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1241', 'Job ID: 28354, Pending → Done', '2026-04-21 15:00:39'),
+(0, 4, 'Added Client', 'Clients', '329', 'Client Name: Shreyensh belkhadu', '2026-04-21 19:14:40'),
+(0, 1, 'Created Transaction', 'Transactions', '1294', 'Job ID: 28407, Amount: 2100.00', '2026-04-21 19:36:11'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1294', 'Job ID: 28407, Pending → Delivered', '2026-04-21 19:36:55'),
+(0, 1, 'Created Direct Sale', 'Direct Sales', '32', 'Sale: DS-20260421-5214, Total: 3000.00', '2026-04-21 19:38:38'),
+(0, 1, 'Created Transaction', 'Transactions', '1295', 'Job ID: 28408, Amount: 0.00', '2026-04-21 19:41:06'),
+(0, 1, 'Updated Transaction', 'Transactions', '1295', 'Job ID: 28408, Amount: 200.00', '2026-04-21 19:41:55'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1295', 'Job ID: 28408, Pending → Delivered', '2026-04-21 19:42:05'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '697', 'Job ID: 27860, Done → Delivered', '2026-04-22 13:14:41'),
+(0, 3, 'Added Client', 'Clients', '330', 'Client Name: Gudda  Narsinghpur ', '2026-04-22 14:51:08'),
+(0, 3, 'Updated Transaction', 'Transactions', '1298', 'Job ID: 28411, Amount: 300.00', '2026-04-22 17:01:41'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1298', 'Job ID: 28411, Pending → Done', '2026-04-22 17:01:47'),
+(0, 3, 'Updated Transaction', 'Transactions', '1296', 'Job ID: 28409, Amount: 3300.00', '2026-04-22 17:02:41'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1296', 'Job ID: 28409, Pending → Done', '2026-04-22 17:02:44'),
+(0, 3, 'Updated Transaction', 'Transactions', '1298', 'Job ID: 28411, Amount: 300.00', '2026-04-22 17:11:48'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1298', 'Job ID: 28411, Done → Delivered', '2026-04-22 17:11:51'),
+(0, 3, 'Updated Transaction', 'Transactions', '1296', 'Job ID: 28409, Amount: 3300.00', '2026-04-22 17:12:14'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1296', 'Job ID: 28409, Done → Delivered', '2026-04-22 17:12:17'),
+(0, 3, 'Created Transaction', 'Transactions', '1299', 'Job ID: 28412, Amount: 0.00', '2026-04-22 18:28:56'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1299', 'Job ID: 28412, Pending → Delivered', '2026-04-22 18:28:59'),
+(0, 3, 'Updated Transaction', 'Transactions', '1117', 'Job ID: 28231, Amount: 0.00', '2026-04-22 19:32:40'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1117', 'Job ID: 28231, Pending → Delivered', '2026-04-22 19:32:44'),
+(0, 3, 'Updated Transaction', 'Transactions', '1116', 'Job ID: 28230, Amount: 0.00', '2026-04-22 19:32:54'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1116', 'Job ID: 28230, Pending → Delivered', '2026-04-22 19:32:58'),
+(0, 3, 'Updated Transaction', 'Transactions', '1115', 'Job ID: 28229, Amount: 0.00', '2026-04-22 19:33:11'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1115', 'Job ID: 28229, Pending → Delivered', '2026-04-22 19:33:15'),
+(0, 3, 'Updated Transaction', 'Transactions', '1114', 'Job ID: 28228, Amount: 0.00', '2026-04-22 19:33:24'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1114', 'Job ID: 28228, Pending → Delivered', '2026-04-22 19:33:27'),
+(0, 4, 'Added Client', 'Clients', '331', 'Client Name: Shabkar Bargi', '2026-04-23 12:41:55'),
+(0, 4, 'Created Transaction', 'Transactions', '1300', 'Job ID: 28413, Amount: 0.00', '2026-04-23 12:42:51'),
+(0, 4, 'Updated Client', 'Clients', '331', 'Client Name: Shankar Bargi', '2026-04-23 12:43:18'),
+(0, 4, 'Created Transaction', 'Transactions', '1301', 'Job ID: 28414, Amount: 0.00', '2026-04-23 12:44:20'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1300', 'Job ID: 28413, Pending → Done', '2026-04-23 14:09:14'),
+(0, 1, 'Updated Transaction', 'Transactions', '1300', 'Job ID: 28413, Amount: 1500.00', '2026-04-23 15:56:03'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1300', 'Job ID: 28413, Done → Delivered', '2026-04-23 15:56:18'),
+(0, 4, 'Added Client', 'Clients', '332', 'Client Name: Yugraj Majhgawan', '2026-04-23 16:05:20'),
+(0, 4, 'Created Transaction', 'Transactions', '1305', 'Job ID: 28418, Amount: 0.00', '2026-04-23 17:43:18'),
+(0, 4, 'Added Client', 'Clients', '333', 'Client Name: Anmol Kanchanpur', '2026-04-23 19:49:38'),
+(0, 4, 'Created Transaction', 'Transactions', '1306', 'Job ID: 28419, Amount: 0.00', '2026-04-23 19:53:05'),
+(0, 4, 'Added Client', 'Clients', '334', 'Client Name: Neelesh Damohnaka', '2026-04-23 21:23:23'),
+(0, 4, 'Created Transaction', 'Transactions', '1307', 'Job ID: 28420, Amount: 0.00', '2026-04-23 21:24:16'),
+(0, 4, 'Created Transaction', 'Transactions', '1308', 'Job ID: 28421, Amount: 0.00', '2026-04-24 09:20:51'),
+(0, 1, 'Updated Transaction', 'Transactions', '1308', 'Job ID: 28421, Amount: 800.00', '2026-04-24 10:39:11'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1308', 'Job ID: 28421, Pending → Delivered', '2026-04-24 10:39:16'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1305', 'Job ID: 28418, Pending → Delivered', '2026-04-24 10:39:43'),
+(0, 1, 'Updated Transaction', 'Transactions', '1305', 'Job ID: 28418, Amount: 0.00', '2026-04-24 10:40:07'),
+(0, 1, 'Updated Transaction', 'Transactions', '1304', 'Job ID: 28417, Amount: 3000.00', '2026-04-24 10:40:39'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1304', 'Job ID: 28417, Pending → Delivered', '2026-04-24 10:40:56'),
+(0, 1, 'Updated Transaction', 'Transactions', '1303', 'Job ID: 28416, Amount: 1500.00', '2026-04-24 10:41:40'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1303', 'Job ID: 28416, Pending → Delivered', '2026-04-24 10:41:55'),
+(0, 1, 'Updated Transaction', 'Transactions', '1302', 'Job ID: 28415, Amount: 3000.00', '2026-04-24 10:42:34'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1302', 'Job ID: 28415, Pending → Delivered', '2026-04-24 10:42:38'),
+(0, 1, 'Updated Transaction', 'Transactions', '1299', 'Job ID: 28412, Amount: 500.00', '2026-04-24 10:46:17'),
+(0, 1, 'Created Direct Sale', 'Direct Sales', '33', 'Sale: DS-20260424-9210, Total: 2300.00', '2026-04-24 10:58:20'),
+(0, 1, 'Created Transaction', 'Transactions', '1309', 'Job ID: 28422, Amount: 0.00', '2026-04-24 13:54:35'),
+(0, 1, 'Added Client', 'Clients', '335', 'Client Name: Dharmendra barela', '2026-04-24 13:58:10'),
+(0, 1, 'Created Transaction', 'Transactions', '1310', 'Job ID: 28423, Amount: 0.00', '2026-04-24 13:59:03'),
+(0, 1, 'Updated Transaction', 'Transactions', '1307', 'Job ID: 28420, Amount: 0.00', '2026-04-24 14:59:26'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1307', 'Job ID: 28420, Pending → Delivered', '2026-04-24 14:59:38'),
+(0, 1, 'Created Transaction', 'Transactions', '1311', 'Job ID: 28424, Amount: 0.00', '2026-04-24 15:45:25'),
+(0, 3, 'Updated Transaction', 'Transactions', '1237', 'Job ID: 28350, Amount: 400.00', '2026-04-24 15:57:12'),
+(0, 3, 'Transaction Status Changed', 'Transactions', '1237', 'Job ID: 28350, Pending → Done', '2026-04-24 15:57:17'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '1311', 'Job ID: 28424, Pending → Delivered', '2026-04-24 16:15:35'),
+(0, 4, 'Updated Transaction', 'Transactions', '1310', 'Job ID: 28423, Amount: 4650.00', '2026-04-24 16:37:47'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1310', 'Job ID: 28423, Pending → Done', '2026-04-24 16:37:58'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1310', 'Job ID: 28423, Done → Delivered', '2026-04-24 16:40:34'),
+(0, 4, 'Added Client', 'Clients', '336', 'Client Name: Ankit ranjhi', '2026-04-24 17:41:04'),
+(0, 4, 'Created Transaction', 'Transactions', '1312', 'Job ID: 28425, Amount: 0.00', '2026-04-24 17:42:14'),
+(0, 4, 'Added Client', 'Clients', '337', 'Client Name: Sourabh wedding Events', '2026-04-24 18:57:04'),
+(0, 4, 'Created Transaction', 'Transactions', '1315', 'Job ID: 28428, Amount: 0.00', '2026-04-24 18:58:19'),
+(0, 4, 'Updated Transaction', 'Transactions', '1315', 'Job ID: 28428, Amount: 0.00', '2026-04-24 18:59:41'),
+(0, 4, 'Updated Transaction', 'Transactions', '1312', 'Job ID: 28425, Amount: 500.00', '2026-04-24 20:18:37'),
+(0, 4, 'Transaction Status Changed', 'Transactions', '1312', 'Job ID: 28425, Pending → Delivered', '2026-04-24 20:18:50'),
+(0, 1, 'Created Direct Sale', 'Direct Sales', '34', 'Sale: DS-20260424-8175, Total: 5000.00', '2026-04-24 20:26:37'),
+(0, 1, 'Updated Direct Sale', 'Direct Sales', '34', 'Sale: DS-20260424-8175, Total: 5000.00', '2026-04-24 20:29:05'),
+(0, 1, 'Added Client', 'Clients', '338', 'Client Name: Ateesh Narsingpur', '2026-04-24 20:33:40'),
+(0, 1, 'Updated Client', 'Clients', '338', 'Client Name: Ateesh Narsingpur', '2026-04-24 20:34:31'),
+(0, 1, 'Updated Client', 'Clients', '338', 'Client Name: Ateesh Narsingpur', '2026-04-24 20:38:06'),
+(0, 1, 'Updated Client', 'Clients', '338', 'Client Name: Ateesh Narsingpur', '2026-04-24 20:42:29'),
+(0, 1, 'Transaction Status Changed', 'Transactions', '671', 'Job ID: 27838, Done → Delivered', '2026-04-24 21:15:10'),
+(0, 1, 'Updated Transaction', 'Transactions', '1263', 'Job ID: 28376, Amount: 2000.00', '2026-04-24 21:22:06'),
+(0, 1, 'Updated Transaction', 'Transactions', '1296', 'Job ID: 28409, Amount: 3300.00', '2026-04-24 21:26:55'),
+(0, 1, 'Updated Transaction', 'Transactions', '1296', 'Job ID: 28409, Amount: 3300.00', '2026-04-24 21:29:19');
 
 -- --------------------------------------------------------
 
@@ -173,7 +346,8 @@ INSERT INTO `advance_payments` (`id`, `mechanic_id`, `amount`, `date_paid`, `rea
 (126, 2, 1000.00, '2026-03-18', '', '2026-03-19 14:04:26'),
 (127, 2, 1000.00, '2026-03-21', 'cash', '2026-03-21 18:12:47'),
 (128, 2, 1000.00, '2026-04-01', 'mobile recharge', '2026-04-02 00:44:39'),
-(129, 2, 5000.00, '2026-04-13', '', '2026-04-13 21:49:40');
+(129, 2, 5000.00, '2026-04-13', '', '2026-04-13 21:49:40'),
+(130, 2, 5000.00, '2026-04-23', '', '2026-04-24 10:54:57');
 
 -- --------------------------------------------------------
 
@@ -870,7 +1044,28 @@ INSERT INTO `attendance_list` (`id`, `mechanic_id`, `status`, `curr_date`) VALUE
 (675, 1, 1, '2026-04-16'),
 (676, 2, 1, '2026-04-17'),
 (677, 3, 1, '2026-04-17'),
-(678, 1, 1, '2026-04-17');
+(678, 1, 1, '2026-04-17'),
+(679, 2, 1, '2026-04-18'),
+(680, 3, 1, '2026-04-18'),
+(681, 1, 1, '2026-04-18'),
+(682, 2, 1, '2026-04-19'),
+(683, 3, 1, '2026-04-19'),
+(684, 1, 1, '2026-04-19'),
+(685, 2, 1, '2026-04-20'),
+(686, 3, 1, '2026-04-20'),
+(687, 1, 1, '2026-04-20'),
+(688, 2, 2, '2026-04-23'),
+(689, 3, 1, '2026-04-23'),
+(690, 1, 1, '2026-04-23'),
+(691, 2, 1, '2026-04-21'),
+(692, 2, 1, '2026-04-22'),
+(693, 3, 1, '2026-04-21'),
+(694, 3, 2, '2026-04-22'),
+(695, 1, 1, '2026-04-21'),
+(696, 1, 2, '2026-04-22'),
+(697, 2, 1, '2026-04-24'),
+(698, 3, 1, '2026-04-24'),
+(699, 1, 1, '2026-04-24');
 
 -- --------------------------------------------------------
 
@@ -1221,7 +1416,21 @@ INSERT INTO `client_list` (`id`, `firstname`, `middlename`, `lastname`, `contact
 (321, 'Rahul', 'Patel', 'jabalpur', '9589771777', '7471171174', 'dj rahul bheda ghat jabalpur', NULL, 0.00, 0, '2026-04-17 18:35:30', NULL),
 (322, 'Ajeet ', 'Singhroure', 'Mahakal Sound', '9685772110', '', 'Mahakal Sound, Iti, Jabalpur ', 'uploads/clients/client00322.jpg', 0.00, 0, '2026-04-17 20:50:45', NULL),
 (323, 'Rahul', 'Barman', 'Tilwara', '9992444422', '', 'Jabalpur', NULL, 0.00, 0, '2026-04-18 12:29:34', NULL),
-(324, 'Sagar', 'Mallah ', 'Sahpura bhitoni', '8319496744', '', 'Sahpura jabalpur', NULL, 0.00, 0, '2026-04-18 18:19:03', NULL);
+(324, 'Sagar', 'Mallah ', 'Sahpura bhitoni', '8319496744', '', 'Sahpura jabalpur', NULL, 0.00, 0, '2026-04-18 18:19:03', NULL),
+(325, 'Monu ', 'Mobile ', 'Gwarighat', '8889827343', '', 'Jabalpur', NULL, 0.00, 0, '2026-04-19 12:24:23', NULL),
+(326, 'Sahil', 'Patel', 'Panagar', '8103538144', '', 'SP Light, Panagar', 'uploads/clients/client00326.jpg', 0.00, 0, '2026-04-19 19:48:29', NULL),
+(327, 'Ritik ', 'Choudhary', 'Katni', '6268622422', '', 'Katni', NULL, 0.00, 0, '2026-04-20 12:30:53', NULL),
+(328, 'Prashant', 'Vishwakarma', 'Mandla', '9770430563', '', 'Vishwakarma Sound Service, Mandla', NULL, 0.00, 0, '2026-04-20 15:51:23', NULL),
+(329, 'Shreyensh', 'sahu', 'belkhadu', '7724004398', '', 'Belkhadu', NULL, 0.00, 0, '2026-04-21 19:14:40', NULL),
+(330, 'Gudda ', 'Dj ', 'Narsinghpur ', '9893775887', '', 'Narsinghpur', NULL, 0.00, 0, '2026-04-22 14:51:08', NULL),
+(331, 'Shankar', ' Rajak', 'Bargi', '9584318143', '', 'Shankar light, Bargi', NULL, 0.00, 0, '2026-04-23 12:41:55', NULL),
+(332, 'Yugraj', 'Kachhi', 'Majhgawan', '9098971775', '', 'Yugraj Sound and Light, Majhgawan', NULL, 0.00, 0, '2026-04-23 16:05:20', NULL),
+(333, 'Anmol', 'Yadav', 'Kanchanpur', '9131629772', '', 'Anmol Events', NULL, 0.00, 0, '2026-04-23 19:49:38', NULL),
+(334, 'Neelesh', 'Kosta', 'Damohnaka', '9827855897', '', 'NK Light, Damoh naka Jabalpur', NULL, 0.00, 0, '2026-04-23 21:23:23', NULL),
+(335, 'Dharmendra', 'patel', 'barela', '9340559646', '', 'Mohan dj barela jabalpur', NULL, 0.00, 0, '2026-04-24 13:58:10', NULL),
+(336, 'Ankit', 'Kushwaha', 'ranjhi', '9993306962', '', 'Nikhil Events', NULL, 0.00, 0, '2026-04-24 17:41:04', NULL),
+(337, 'Sourabh', 'Sahu', 'wedding Events', '9301111376', '', 'Ghamapur', NULL, 0.00, 0, '2026-04-24 18:57:04', NULL),
+(338, 'Ateesh', 'Mehra', 'Narsingpur', '9131209066', '', 'Elevan DJ, Narsingpur', 'uploads/clients/client00338.jpg', 7500.00, 0, '2026-04-24 20:33:40', NULL);
 
 -- --------------------------------------------------------
 
@@ -1662,7 +1871,36 @@ INSERT INTO `client_payments` (`id`, `client_id`, `job_id`, `loan_id`, `bill_no`
 (428, 323, NULL, NULL, NULL, '2026-04-18', 2000.00, 0.00, 'Cash', 'Full', '', '2026-04-18 13:01:17'),
 (429, 324, NULL, NULL, NULL, '2026-04-18', 1250.00, 0.00, 'Cash', 'Full', '', '2026-04-18 19:53:10'),
 (430, 171, NULL, NULL, NULL, '2026-04-18', 4000.00, 0.00, 'Cash', 'Full', '', '2026-04-18 21:52:57'),
-(431, 46, NULL, NULL, NULL, '2026-04-18', 1500.00, 0.00, 'Cash', 'Full', '', '2026-04-18 22:06:27');
+(431, 46, NULL, NULL, NULL, '2026-04-18', 1500.00, 0.00, 'Cash', 'Full', '', '2026-04-18 22:06:27'),
+(432, 138, NULL, NULL, NULL, '2026-04-19', 800.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-19 14:48:58'),
+(433, 91, NULL, NULL, NULL, '2026-04-19', 3000.00, 0.00, 'Cash', 'Full', '', '2026-04-19 18:38:38'),
+(434, 97, NULL, NULL, NULL, '2026-04-19', 1000.00, 0.00, 'Cash', 'Full', '', '2026-04-19 18:40:09'),
+(435, 326, NULL, NULL, NULL, '2026-04-19', 2000.00, 0.00, 'Cash', 'Full', '', '2026-04-19 21:17:27'),
+(436, 91, NULL, NULL, NULL, '2026-04-19', 4500.00, 0.00, 'Cash', 'Full', '', '2026-04-19 23:07:00'),
+(437, 91, NULL, NULL, NULL, '2026-04-19', 4500.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-19 23:07:07'),
+(438, 91, NULL, NULL, NULL, '2026-04-19', 0.00, 250.00, 'Cash', 'Full', '', '2026-04-19 23:07:14'),
+(439, 211, NULL, NULL, NULL, '2026-04-17', 500.00, 100.00, 'PhonePe/GPay', 'Full', '', '2026-04-19 23:20:56'),
+(440, 327, NULL, NULL, NULL, '2026-04-20', 1000.00, 0.00, 'Cash', 'Full', '', '2026-04-20 13:11:25'),
+(441, 6, NULL, NULL, NULL, '2026-04-20', 6000.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-20 13:35:02'),
+(442, 88, NULL, NULL, NULL, '2026-04-20', 1900.00, 0.00, 'Cash', 'Full', '', '2026-04-20 18:19:21'),
+(443, 132, NULL, NULL, NULL, '2026-04-20', 1500.00, 0.00, 'Cash', 'Full', '', '2026-04-20 18:22:02'),
+(444, 282, NULL, NULL, NULL, '2026-04-20', 1500.00, 0.00, 'Cash', 'Full', '', '2026-04-20 18:23:36'),
+(445, 295, NULL, NULL, NULL, '2026-04-20', 2000.00, 0.00, 'Cash', 'Full', '', '2026-04-20 18:24:29'),
+(446, 328, NULL, NULL, NULL, '2026-04-20', 500.00, 0.00, 'Cash', 'Full', '', '2026-04-20 19:29:22'),
+(447, 329, NULL, NULL, NULL, '2026-04-21', 2000.00, 100.00, 'Cash', 'Full', '', '2026-04-21 19:36:37'),
+(448, 132, NULL, NULL, NULL, '2026-04-21', 3000.00, 0.00, 'Cash', 'Full', '', '2026-04-21 19:38:55'),
+(449, 119, NULL, NULL, NULL, '2026-04-21', 200.00, 0.00, 'Cash', 'Full', '', '2026-04-21 19:42:19'),
+(450, 318, NULL, NULL, NULL, '2026-04-24', 800.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-24 10:39:25'),
+(451, 332, NULL, NULL, NULL, '2026-04-23', 7500.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-24 10:43:03'),
+(452, 330, NULL, NULL, NULL, '2026-04-22', 2000.00, 0.00, 'Cash', 'Full', '', '2026-04-24 10:43:46'),
+(453, 229, NULL, NULL, NULL, '2026-04-22', 500.00, 0.00, 'Cash', 'Full', '', '2026-04-24 10:46:28'),
+(454, 331, NULL, NULL, NULL, '2026-04-23', 1500.00, 0.00, 'Cash', 'Full', '', '2026-04-24 10:50:38'),
+(455, 221, NULL, NULL, NULL, '2026-04-23', 2000.00, 300.00, 'Cash', 'Full', '', '2026-04-24 10:58:54'),
+(456, 335, NULL, NULL, NULL, '2026-04-24', 4500.00, 150.00, 'Cash', 'Full', '', '2026-04-24 16:41:30'),
+(457, 336, NULL, NULL, NULL, '2026-04-24', 500.00, 0.00, 'Cash', 'Full', '', '2026-04-24 20:22:57'),
+(458, 218, NULL, NULL, NULL, '2026-04-24', 5000.00, 0.00, 'PhonePe/GPay', 'Full', '', '2026-04-24 20:26:58'),
+(459, 338, NULL, NULL, NULL, '2026-04-24', 4000.00, 0.00, 'Cash', 'Full', '2 x Stan 10r yellow sharpy delivered, 6150 pahle ke the, 1 lamp old, 1 handle new aur diya', '2026-04-24 20:36:30'),
+(460, 194, NULL, NULL, NULL, '2026-04-24', 4500.00, 0.00, 'Cash', 'Full', '5000 online diya aur 500rs cash mujhse le gaya hai', '2026-04-24 21:15:45');
 
 -- --------------------------------------------------------
 
@@ -1703,7 +1941,11 @@ INSERT INTO `direct_sales` (`id`, `sale_code`, `client_id`, `mechanic_id`, `tota
 (27, 'DS-20260307-2821', 171, 1, 600.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-03-07 21:37:30'),
 (28, 'DS-20260313-3897', 0, 1, 5400.00, 'Cash', '', NULL, NULL, NULL, '2026-03-13 18:41:16'),
 (29, 'DS-20260327-9175', 0, 1, 8400.00, 'Cash', '', NULL, NULL, NULL, '2026-03-27 22:23:34'),
-(30, 'DS-20260416-6206', 218, 1, 7500.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-04-16 17:05:30');
+(30, 'DS-20260416-6206', 218, 1, 7500.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-04-16 17:05:30'),
+(31, 'DS-20260420-5690', 6, 1, 6000.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-04-20 13:34:42'),
+(32, 'DS-20260421-5214', 132, 1, 3000.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-04-21 19:38:38'),
+(33, 'DS-20260424-9210', 221, 1, 2300.00, 'Credit to Client', '', NULL, NULL, NULL, '2026-04-24 10:58:20'),
+(34, 'DS-20260424-8175', 218, 1, 5000.00, 'Credit to Client', 'ek 300w philips ka igniter bhi diya hai par paisa nahi liya hai', 0, NULL, '2026-04-24 20:29:05', '2026-04-24 20:26:37');
 
 -- --------------------------------------------------------
 
@@ -1739,7 +1981,11 @@ INSERT INTO `direct_sale_items` (`id`, `sale_id`, `product_id`, `qty`, `price`) 
 (35, 28, 8, 2, 2700.00),
 (36, 29, 6, 2, 2300.00),
 (37, 29, 7, 2, 1900.00),
-(38, 30, 12, 2, 3750.00);
+(38, 30, 12, 2, 3750.00),
+(39, 31, 59, 1, 6000.00),
+(40, 32, 8, 1, 3000.00),
+(41, 33, 56, 1, 2300.00),
+(43, 34, 25, 1, 5000.00);
 
 -- --------------------------------------------------------
 
@@ -1820,7 +2066,8 @@ INSERT INTO `expense_list` (`id`, `category`, `amount`, `remarks`, `date_created
 (61, 'Spare Parts Purchase', 16092.00, 'for apna wala via cheque transfer from union bank', '2026-04-17 00:00:00'),
 (62, 'Spare Parts Purchase', 82553.00, 'via upi for apna wala delhi', '2026-04-17 00:00:00'),
 (63, 'Others', 1400.00, 'coriar dilhi wale ko', '2026-04-18 00:00:00'),
-(64, 'Others', 900.00, 'box keeper8 x 12\r\n', '2026-04-18 00:00:00');
+(64, 'Others', 900.00, 'box keeper8 x 12\r\n', '2026-04-18 00:00:00'),
+(65, 'Spare Parts Purchase', 3000.00, 'sumit ko diye for side lock', '2026-04-21 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -1917,7 +2164,8 @@ INSERT INTO `inventory_list` (`id`, `product_id`, `quantity`, `place`, `stock_da
 (85, 20, 3, '', '2026-04-05', '2026-04-05 20:34:57', '2026-04-05 20:34:57'),
 (86, 5, 3, '', '2026-04-05', '2026-04-05 20:47:23', '2026-04-05 20:47:23'),
 (87, 45, 0, '', '2026-04-13', '2026-04-13 18:53:33', '2026-04-13 18:53:33'),
-(88, 45, 1, '', '2026-04-13', '2026-04-13 20:39:49', '2026-04-13 20:39:49');
+(88, 45, 1, '', '2026-04-13', '2026-04-13 20:39:49', '2026-04-13 20:39:49'),
+(89, 59, 2, '', '2026-04-20', '2026-04-20 13:34:20', '2026-04-20 13:34:20');
 
 -- --------------------------------------------------------
 
@@ -1935,7 +2183,7 @@ CREATE TABLE `job_id_counter` (
 --
 
 INSERT INTO `job_id_counter` (`id`, `last_job_id`) VALUES
-(1, 28387);
+(1, 28428);
 
 -- --------------------------------------------------------
 
@@ -2196,7 +2444,8 @@ INSERT INTO `product_list` (`id`, `name`, `description`, `cost_price`, `price`, 
 (55, 'up smoke heater', '', 0.00, 3000.00, '', 1, 0, '2026-02-27 15:44:45', '2026-02-27 15:44:45'),
 (56, 'Lamp 280w', '', 0.00, 2300.00, '', 1, 0, '2026-03-07 10:54:47', '2026-03-07 10:54:47'),
 (57, 'fog remot rf', '', 0.00, 600.00, '', 1, 0, '2026-03-07 21:36:01', '2026-03-07 21:36:01'),
-(58, 'fog remote wire', '', 0.00, 450.00, '', 1, 0, '2026-03-07 21:36:21', '2026-03-07 21:36:21');
+(58, 'fog remote wire', '', 0.00, 450.00, '', 1, 0, '2026-03-07 21:36:21', '2026-03-07 21:36:21'),
+(59, '1024 stan mk2 motherboard', '', 0.00, 6000.00, '', 1, 0, '2026-04-20 13:34:07', '2026-04-20 13:34:07');
 
 -- --------------------------------------------------------
 
@@ -2932,7 +3181,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (668, 4, 2, '2026011904', '27835', '19', 'No Lamp', '27369 isme philips 300w lamp dala hai\r\n', 'Sharpy Saif', '', 3500.00, 0.00, 0.00, 0, 5, '2026-01-19 19:34:46', '2026-01-19 19:48:11', '2026-01-19 19:37:57'),
 (669, 4, 1, '2026012001', '27836', '51', 'error', '', 'spro sparkle ', '', 450.00, 0.00, 45.00, 0, 5, '2026-01-20 14:15:05', '2026-01-20 14:15:14', '2026-01-20 14:15:14'),
 (670, 3, 2, '2026012002', '27837', '61', 'Air kam jyada', 'Pot change', 'Smd mechanic 857w yellow blue colour ', 'B1', 300.00, 0.00, 0.00, 0, 5, '2026-01-20 17:00:12', '2026-02-19 12:15:14', '2026-02-16 12:15:00'),
-(671, 3, 1, '2026012003', '27838', '194', 'Display sofware issue ', '', 'Sharpy 10r axix v2', '', 5000.00, 0.00, 100.00, 0, 2, '2026-01-20 18:36:59', '2026-02-22 13:04:27', NULL),
+(671, 3, 1, '2026012003', '27838', '194', 'Display sofware issue ', '', 'Sharpy 10r axix v2', '', 5000.00, 0.00, 100.00, 0, 5, '2026-01-20 18:36:59', '2026-04-24 21:15:10', '2026-04-24 21:15:00'),
 (672, 4, 1, '2026012004', '27839', '17', 'jam x', 'Lock sahi kiya ', 'Sharpy Stan 12r', '', 1500.00, 0.00, 150.00, 0, 5, '2026-01-20 19:43:00', '2026-01-21 16:18:29', '2026-01-21 16:18:29'),
 (673, 4, 1, '2026012005', '27840', '17', 'belt jam Y', 'Belt 555 ,ancoder', 'Sharpy Stan 12r', '', 1500.00, 0.00, 150.00, 0, 5, '2026-01-20 19:44:50', '2026-01-21 16:18:18', '2026-01-21 16:18:18'),
 (674, 4, 2, '2026012006', '27841', '17', 'Dead', 'Power cable ', 'par log 007', '', 300.00, 0.00, 0.00, 0, 5, '2026-01-20 19:48:02', '2026-01-23 19:40:40', '2026-01-23 19:40:40'),
@@ -2957,7 +3206,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (694, 3, 2, '2026012305', '27857', '18', 'Dead ', '', 'Sparkle spro ', '', 0.00, 0.00, 0.00, 0, 0, '2026-01-23 18:58:10', '2026-01-23 19:32:36', NULL),
 (695, 3, 2, '2026012306', '27858', '18', 'Dead ', 'Board issue ', 'Sparkle s pro ', '', 1500.00, 0.00, 0.00, 0, 5, '2026-01-23 18:58:10', '2026-01-30 17:16:18', '2026-01-30 17:16:00'),
 (696, 3, 2, '2026012401', '27859', '200', 'Smoke nhi aa rha h ', 'pump change client hi pump la kar diye hte', 'Smoke 2000', '', 300.00, 0.00, 0.00, 0, 5, '2026-01-24 17:31:11', '2026-01-24 20:26:25', '2026-01-24 20:26:25'),
-(697, 4, 1, '2026012501', '27860', '113', 'no heat', 'Relay lga h ', 'seperator ', 'B1', 350.00, 0.00, 35.00, 0, 2, '2026-01-25 12:03:12', '2026-02-09 16:59:21', NULL),
+(697, 4, 1, '2026012501', '27860', '113', 'no heat', 'Relay lga h ', 'seperator ', 'B1', 350.00, 0.00, 35.00, 0, 5, '2026-01-25 12:03:12', '2026-04-22 13:14:41', '2026-04-22 13:14:00'),
 (698, 3, 2, '2026012502', '27861', '201', 'Communication ', 'Side card repair', '10r yellow ', '', 2000.00, 0.00, 0.00, 0, 5, '2026-01-25 15:33:32', '2026-01-26 19:34:13', '2026-01-26 19:34:00'),
 (699, 4, 1, '2026012601', '27862', '53', 'low Lamp', 'Gobo sensor failed', 'Sharpy 10r axis ', '', 1000.00, 0.00, 100.00, 0, 5, '2026-01-26 15:34:16', '2026-01-26 19:36:34', '2026-01-26 19:36:00'),
 (700, 3, 1, '2026012602', '27863', '202', 'Error 650', 'Sensor faulty and traic short', 'Sme sparkle ', '', 800.00, 0.00, 80.00, 0, 5, '2026-01-26 17:45:14', '2026-01-26 18:36:26', '2026-01-26 18:36:00'),
@@ -3303,7 +3552,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1040, 4, 1, '2026032003', '28154', '122', 'Dead', 'Dmx repair', 'Sparkle machine s pro v3', '', 1500.00, 0.00, 150.00, 0, 5, '2026-03-20 12:24:28', '2026-03-20 18:53:09', '2026-03-20 18:53:00'),
 (1041, 4, 1, '2026032004', '28155', '122', 'Dead', 'Dmx repair kiya', 'Sparkle machine s pro v3', '', 1500.00, 0.00, 150.00, 0, 5, '2026-03-20 12:24:28', '2026-03-20 18:53:21', '2026-03-20 18:53:00'),
 (1042, 4, 1, '2026032005', '28156', '122', 'Daed', 'mother board repair', 'Sparkle machine s pro v3', '', 1500.00, 0.00, 150.00, 0, 5, '2026-03-20 12:24:28', '2026-03-20 18:54:01', '2026-03-20 18:53:00'),
-(1043, 4, 1, '2026032006', '28157', '282', 'Dead', '', 'Sharpy 10r Yellow', '', 1800.00, 0.00, 180.00, 0, 2, '2026-03-20 13:09:51', '2026-03-20 20:20:27', NULL),
+(1043, 4, 1, '2026032006', '28157', '282', 'Dead', '', 'Sharpy 10r Yellow', '', 1800.00, 0.00, 180.00, 0, 5, '2026-03-20 13:09:51', '2026-04-20 18:23:17', '2026-04-20 18:23:00'),
 (1044, 4, 1, '2026032007', '28158', '282', 'Dead', '', 'moving display', '', 300.00, 0.00, 180.00, 0, 2, '2026-03-20 13:09:51', '2026-03-20 20:20:50', NULL),
 (1045, 4, 1, '2026032008', '28159', '56', 'Side screw missing', '', 'Sharpy Stan 12r', '', 1400.00, 0.00, 140.00, 0, 5, '2026-03-20 20:16:39', '2026-03-30 16:46:43', '2026-03-30 16:46:00'),
 (1046, 3, 1, '2026032101', '28160', '283', 'Temprater overlod', '', 'Sugon 858d smd ', '', 500.00, 0.00, 50.00, 0, 5, '2026-03-21 13:00:40', '2026-04-02 00:39:25', '2026-04-28 12:39:00'),
@@ -3366,7 +3615,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1103, 4, 1, '2026032601', '28217', '294', 'burnt', '', 'ssr sarika  2 channel', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-26 13:35:51', '2026-03-28 12:24:53', NULL),
 (1104, 4, 1, '2026032602', '28218', '294', 'burnt', '', 'sar sarika  2 channel', '', 500.00, 0.00, 50.00, 0, 5, '2026-03-26 13:35:51', '2026-03-28 12:25:10', '2026-03-27 22:28:00'),
 (1105, 4, 3, '2026032701', '28219', '295', 'dead', 'khuli aai', 'Sharpy 7r orange', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-27 12:22:57', '2026-03-27 12:22:57', NULL),
-(1106, 4, 3, '2026032702', '28220', '295', 'dead', 'khuli aai, SMPS REPAIR, NEW IGNITER', 'Sharpy 7r orange', '', 3800.00, 0.00, 0.00, 0, 2, '2026-03-27 12:22:57', '2026-03-28 16:10:27', NULL),
+(1106, 4, 3, '2026032702', '28220', '295', 'dead', 'khuli aai, SMPS REPAIR, NEW IGNITER', 'Sharpy 7r orange', '', 3800.00, 0.00, 0.00, 0, 5, '2026-03-27 12:22:57', '2026-04-20 18:24:06', '2026-04-20 18:24:00'),
 (1107, 4, 1, '2026032703', '28221', '180', 'Not warking', '', 'Fog BPro 2000', '', 250.00, 0.00, 25.00, 0, 5, '2026-03-27 18:04:25', '2026-03-27 22:20:46', '2026-03-27 22:20:00'),
 (1108, 4, 1, '2026032801', '28222', '297', 'Dead', '', 'par light deftech', '', 350.00, 0.00, 35.00, 0, 5, '2026-03-28 15:46:57', '2026-03-30 21:02:43', '2026-03-30 21:02:00'),
 (1109, 4, 1, '2026032802', '28223', '297', 'Dead', '', 'par light deftech', '', 350.00, 0.00, 35.00, 0, 5, '2026-03-28 15:46:57', '2026-03-30 21:01:32', '2026-03-30 21:01:00'),
@@ -3374,10 +3623,10 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1111, 3, 2, '2026032804', '28225', '2', 'Fan bnd h', 'Lamp k pass bale fan ke tar toote the ', 'Sharpy monster', '', 500.00, 0.00, 0.00, 0, 5, '2026-03-28 20:02:24', '2026-04-02 00:11:43', '2026-04-02 00:11:00'),
 (1112, 3, 2, '2026032805', '28226', '2', 'Dead', '', 'Par 001', '', 300.00, 0.00, 0.00, 0, 5, '2026-03-28 20:02:24', '2026-04-02 00:11:34', '2026-04-02 00:11:00'),
 (1113, 4, 1, '2026032901', '28227', '197', '2 point short', 'PCB repair', 'PLC DVP12S211T', '', 800.00, 0.00, 80.00, 0, 5, '2026-03-29 17:07:42', '2026-03-30 20:52:53', '2026-03-29 20:52:00'),
-(1114, 3, 2, '2026032902', '28228', '298', 'Heat nhi ho rhi h', '', 'Smd kt 8508D blue', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-29 19:28:50', '2026-03-29 19:28:50', NULL),
-(1115, 3, 2, '2026032903', '28229', '298', 'Dead', '', 'Smd balck Lk 850', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-29 19:28:50', '2026-03-29 19:28:50', NULL),
-(1116, 3, 2, '2026032904', '28230', '298', 'Dead', '', 'Smd quick 850A silver', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-29 19:28:50', '2026-03-29 19:28:50', NULL),
-(1117, 3, 2, '2026032905', '28231', '298', 'Dead', '', 'Seprater Jstech', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-29 19:28:50', '2026-03-29 19:28:50', NULL),
+(1114, 3, 2, '2026032902', '28228', '298', 'Heat nhi ho rhi h', '', 'Smd kt 8508D blue', '', 0.00, 0.00, 0.00, 0, 5, '2026-03-29 19:28:50', '2026-04-22 19:33:27', '2026-04-22 19:33:00'),
+(1115, 3, 2, '2026032903', '28229', '298', 'Dead', '', 'Smd balck Lk 850', '', 0.00, 0.00, 0.00, 0, 5, '2026-03-29 19:28:50', '2026-04-22 19:33:15', '2026-04-22 19:33:00'),
+(1116, 3, 2, '2026032904', '28230', '298', 'Dead', '', 'Smd quick 850A silver', '', 0.00, 0.00, 0.00, 0, 5, '2026-03-29 19:28:50', '2026-04-22 19:32:58', '2026-04-22 19:32:00'),
+(1117, 3, 2, '2026032905', '28231', '298', 'Dead', '', 'Seprater Jstech', '', 0.00, 0.00, 0.00, 0, 5, '2026-03-29 19:28:50', '2026-04-22 19:32:44', '2026-04-22 19:32:00'),
 (1118, 3, 2, '2026033001', '28232', '299', 'Dead', '', 'Smoke 700wt alpha  f80z', '', 300.00, 0.00, 0.00, 0, 5, '2026-03-30 14:39:55', '2026-03-30 20:51:58', '2026-03-30 20:51:00'),
 (1119, 3, 2, '2026033002', '28233', '19', 'Dead', '', 'Shaif sharpy', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-30 17:25:24', '2026-03-30 17:25:24', NULL),
 (1120, 3, 2, '2026033003', '28234', '19', 'Dead', '', 'Saif sharpy', '', 0.00, 0.00, 0.00, 0, 0, '2026-03-30 17:25:24', '2026-03-30 17:25:24', NULL),
@@ -3399,7 +3648,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1136, 4, 1, '2026040402', '28250', '2', 'Dead', '', 'fog thunder 2000 ibra', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-04 15:52:04', '2026-04-06 11:27:40', '2026-04-05 17:27:00'),
 (1137, 4, 1, '2026040403', '28251', '2', 'Dead', '', 'fog thunder 2000 ibra', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-04 15:52:04', '2026-04-06 11:27:20', '2026-04-05 17:27:00'),
 (1138, 4, 1, '2025091901', '27023', '2', 'dmx malfunction', 'new card by shubhank', 'Strobe money light', '', 150.00, 0.00, 15.00, 0, 2, '2025-09-19 16:24:00', '2026-04-04 16:26:01', NULL),
-(1139, 4, 1, '2026040404', '28252', '91', 'dead', 'new card, fan x2, blower fan and service', 'Sharpy Monster king 650', '', 7800.00, 0.00, 150.00, 0, 2, '2026-04-04 19:37:56', '2026-04-05 20:38:08', NULL),
+(1139, 4, 1, '2026040404', '28252', '91', 'dead', 'new card, fan x2, blower fan and service', 'Sharpy Monster king 650', '', 6400.00, 0.00, 150.00, 0, 5, '2026-04-04 19:37:56', '2026-04-19 23:05:58', '2026-04-19 23:05:00'),
 (1140, 4, 1, '2026040501', '28253', '259', 'Broken', 'new  lamp new igniter ner card x and y lock repair wire repair', 'Sharpy Stan 12r axis', '', 12000.00, 0.00, 150.00, 0, 5, '2026-04-05 12:25:22', '2026-04-06 00:27:46', '2026-04-05 20:27:00'),
 (1141, 4, 1, '2026040502', '28254', '305', 'Dead', '', 'Sparkle S pro', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-05 13:29:31', '2026-04-05 16:57:11', '2026-04-05 16:57:00'),
 (1142, 4, 1, '2026040503', '28255', '305', 'Dead', '', 'Sparkle S pro', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-05 13:29:31', '2026-04-05 16:59:42', '2026-04-05 16:59:00'),
@@ -3427,34 +3676,34 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1164, 3, 2, '2026040605', '28277', '122', 'Dead', '', '4 eyes s pro', '', 500.00, 0.00, 0.00, 0, 5, '2026-04-06 16:52:49', '2026-04-06 19:45:28', '2026-04-06 19:45:00'),
 (1165, 3, 2, '2026040606', '28278', '206', 'Dead  smps band h ', '', 'Strobe cospo ', '', 350.00, 0.00, 0.00, 0, 5, '2026-04-06 17:33:32', '2026-04-14 14:28:21', '2026-04-14 14:28:00'),
 (1166, 1, 1, '2026040607', '28279', '97', 'Dead', 'Smps repair service', 'Par 007-h', '', 350.00, 0.00, 35.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 16:52:46', NULL),
-(1167, 1, 1, '2026040608', '28280', '97', 'Dead', 'Led card button smps repair ', 'Par 007-h', '', 350.00, 0.00, 35.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 13:24:08', NULL),
+(1167, 1, 1, '2026040608', '28280', '97', 'Dead', 'Led card button smps repair ', 'Par 007-h', '', 350.00, 0.00, 35.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:20:09', '2026-04-19 14:20:00'),
 (1168, 1, 1, '2026040609', '28281', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 16:04:51', NULL),
 (1169, 1, 1, '2026040610', '28282', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1170, 1, 1, '2026040611', '28283', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1171, 1, 1, '2026040612', '28284', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 18:29:06', NULL),
-(1172, 1, 1, '2026040613', '28285', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1173, 1, 1, '2026040614', '28286', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1174, 1, 1, '2026040615', '28287', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 15:04:24', NULL),
-(1175, 1, 1, '2026040616', '28288', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 13:31:01', NULL),
-(1176, 1, 1, '2026040617', '28289', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
+(1170, 1, 1, '2026040611', '28283', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 15:21:10', '2026-04-19 15:21:00'),
+(1171, 1, 1, '2026040612', '28284', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:19:55', '2026-04-19 14:19:00'),
+(1172, 1, 1, '2026040613', '28285', '97', 'Dead', 'Tested okk ', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:18:27', '2026-04-19 14:18:00'),
+(1173, 1, 1, '2026040614', '28286', '97', 'Dead', 'Tested okk ', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:19:18', '2026-04-19 14:19:00'),
+(1174, 1, 1, '2026040615', '28287', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:20:45', '2026-04-19 14:20:00'),
+(1175, 1, 1, '2026040616', '28288', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:20:27', '2026-04-19 14:20:00'),
+(1176, 1, 1, '2026040617', '28289', '97', 'Dead', 'Tested okk ', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:18:04', '2026-04-19 14:18:00'),
 (1177, 1, 1, '2026040618', '28290', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1178, 1, 1, '2026040619', '28291', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
+(1178, 1, 1, '2026040619', '28291', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 15:21:33', '2026-04-19 15:21:00'),
 (1179, 1, 1, '2026040620', '28292', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
 (1180, 1, 1, '2026040621', '28293', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
-(1181, 1, 1, '2026040622', '28294', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 17:45:59', NULL),
-(1182, 1, 1, '2026040623', '28295', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 2, '2026-04-06 21:27:44', '2026-04-16 18:14:38', NULL),
+(1181, 1, 1, '2026040622', '28294', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:35:00', '2026-04-19 14:34:00'),
+(1182, 1, 1, '2026040623', '28295', '97', 'Dead', 'Service', 'Par 007-h', '', 300.00, 0.00, 30.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:35:19', '2026-04-19 14:35:00'),
 (1183, 1, 1, '2026040624', '28296', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
 (1184, 1, 1, '2026040625', '28297', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
 (1185, 1, 1, '2026040626', '28298', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
 (1186, 1, 1, '2026040627', '28299', '97', 'Dead', '1 led rgb', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 2, '2026-04-06 21:27:44', '2026-04-15 13:29:39', NULL),
-(1187, 1, 1, '2026040628', '28300', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
+(1187, 1, 1, '2026040628', '28300', '97', 'Dead', 'Tesed okk ', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-06 21:27:44', '2026-04-19 14:18:50', '2026-04-19 14:18:00'),
 (1188, 1, 1, '2026040629', '28301', '97', 'Dead', '', 'Par 007-h', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-06 21:27:44', '2026-04-06 21:27:44', NULL),
 (1189, 4, 1, '2026040701', '28302', '309', 'lamp issue', '', 'sharpy beam', '', 1800.00, 0.00, 150.00, 0, 5, '2026-04-07 11:27:59', '2026-04-07 20:11:27', '2026-04-07 20:11:00'),
-(1190, 1, 2, '2026040801', '28303', '119', 'side card Problem', 'card burnt due to reverse supply wiring mistake by customer', 'Sharpy 7r old', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-08 12:42:32', '2026-04-08 13:00:21', NULL),
+(1190, 1, 2, '2026040801', '28303', '119', 'side card Problem', 'card burnt due to reverse supply wiring mistake by customer', 'Sharpy 7r old', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-08 12:42:32', '2026-04-08 13:00:21', NULL);
+INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`, `client_name`, `fault`, `remark`, `item`, `uniq_id`, `amount`, `mechanic_amount`, `mechanic_commission_amount`, `del_status`, `status`, `date_created`, `date_updated`, `date_completed`) VALUES
 (1191, 4, 2, '2026040802', '28304', '167', 'dead', 'Wiring issue ', 'sharpy bisun', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-08 13:32:21', '2026-04-11 19:43:42', '2026-04-11 19:43:00'),
 (1192, 4, 2, '2026040803', '28305', '167', 'dead', 'Tested okk ', 'sharpy bisun', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-08 13:32:21', '2026-04-11 19:43:31', '2026-04-11 19:43:00'),
-(1193, 4, 2, '2026040804', '28306', '167', 'no smoke', '', 'fog notrox', '', 500.00, 0.00, 0.00, 0, 5, '2026-04-08 13:32:21', '2026-04-11 19:43:22', '2026-04-11 19:43:00');
-INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`, `client_name`, `fault`, `remark`, `item`, `uniq_id`, `amount`, `mechanic_amount`, `mechanic_commission_amount`, `del_status`, `status`, `date_created`, `date_updated`, `date_completed`) VALUES
+(1193, 4, 2, '2026040804', '28306', '167', 'no smoke', '', 'fog notrox', '', 500.00, 0.00, 0.00, 0, 5, '2026-04-08 13:32:21', '2026-04-11 19:43:22', '2026-04-11 19:43:00'),
 (1194, 3, 2, '2026040805', '28307', '310', 'Handle ', 'Handle change kiya handle laake diye h ', 'Smd kt ', '', 200.00, 0.00, 0.00, 0, 5, '2026-04-08 17:13:41', '2026-04-11 19:49:56', '2026-04-08 17:13:00'),
 (1195, 3, 2, '2026040806', '28308', '2', 'Button glt chl rhi h', '', 'Par q2', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-08 18:31:06', '2026-04-08 18:31:06', NULL),
 (1196, 3, 2, '2026040807', '28309', '2', 'Dead', '', '4 eyes', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-08 18:31:06', '2026-04-08 18:31:06', NULL),
@@ -3478,7 +3727,7 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1214, 4, 1, '2026041105', '28327', '64', 'dead', '', 'sparkle machine sf', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-11 11:39:25', '2026-04-11 19:45:17', '2026-04-11 19:45:00'),
 (1215, 4, 1, '2026041106', '28328', '313', 'no smoke', '', 'fog 1500', '', 400.00, 0.00, 40.00, 0, 5, '2026-04-11 15:00:10', '2026-04-11 15:56:15', '2026-04-11 15:56:00'),
 (1216, 4, 1, '2026041107', '28329', '8', 'X jammed', '', 'Sharpy 10r axis', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-11 17:37:48', '2026-04-11 18:36:22', '2026-04-11 18:36:00'),
-(1217, 1, 1, '2026041108', '28330', '314', 'liquid fek rahi hai', 'Head jammed', 'SSe bubble machion', '', 500.00, 0.00, 50.00, 0, 2, '2026-04-11 19:31:33', '2026-04-14 12:45:17', NULL),
+(1217, 1, 1, '2026041108', '28330', '314', 'liquid fek rahi hai', 'Head jammed', 'SSe bubble machion', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-11 19:31:33', '2026-04-20 13:36:53', '2026-04-15 13:36:00'),
 (1218, 4, 1, '2026041109', '28331', '315', 'dead', '', 'par 007', '', 350.00, 0.00, 35.00, 0, 5, '2026-04-11 21:02:45', '2026-04-17 21:21:36', '2026-04-17 21:21:00'),
 (1219, 4, 1, '2026041110', '28332', '315', 'dead', '', 'lpc 007', '', 350.00, 0.00, 35.00, 0, 5, '2026-04-11 21:02:45', '2026-04-17 21:20:50', '2026-04-17 21:20:00'),
 (1220, 4, 1, '2026041111', '28333', '315', 'slidr', '', 'stan 512, dmx', '', 900.00, 0.00, 20.00, 0, 5, '2026-04-11 21:02:45', '2026-04-17 21:20:20', '2026-04-17 21:20:00'),
@@ -3498,11 +3747,11 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1234, 1, 1, '2026041502', '28347', '99', 'Lamp issue', '', 'Sharpy 10R Axis', '', 2500.00, 0.00, 250.00, 0, 5, '2026-04-15 14:33:23', '2026-04-15 20:54:43', '2026-04-15 20:54:00'),
 (1235, 1, 1, '2026041503', '28348', '99', 'Lamp issue', 'test ok', 'Sharpy 10R Axis', '', 0.00, 0.00, 250.00, 0, 5, '2026-04-15 14:34:19', '2026-04-15 20:54:21', '2026-04-15 20:53:00'),
 (1236, 3, 2, '2026041504', '28349', '225', 'Dead 003', '', 'Stan  par', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
-(1237, 3, 2, '2026041505', '28350', '225', 'Dead', '', 'Par stan 003', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
+(1237, 3, 2, '2026041505', '28350', '225', 'Dead', 'Purani smps pgai h ', 'Par stan 003', '', 400.00, 0.00, 0.00, 0, 2, '2026-04-15 14:55:30', '2026-04-24 15:57:16', NULL),
 (1238, 3, 2, '2026041506', '28351', '225', 'Dead', '', 'Par 003', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
 (1239, 3, 2, '2026041507', '28352', '225', 'Dead', '', 'Par003', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
 (1240, 3, 2, '2026041508', '28353', '225', 'Dead', '', 'Par 003', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
-(1241, 3, 2, '2026041509', '28354', '225', 'Dead', '', 'Par003', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-15 14:55:30', '2026-04-15 14:55:30', NULL),
+(1241, 3, 2, '2026041509', '28354', '225', 'Dead', 'Service', 'Par003', '', 300.00, 0.00, 0.00, 0, 2, '2026-04-15 14:55:30', '2026-04-21 15:00:39', NULL),
 (1242, 4, 1, '2026041510', '28355', '154', 'low load', '', '5v 60a SMPS ', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-15 18:00:27', '2026-04-15 20:53:02', '2026-04-15 20:52:00'),
 (1243, 1, 1, '2026041601', '28356', '320', 'Atak rahi hai', '', 'Sharpy 12R Stan', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-16 19:52:14', '2026-04-16 21:01:54', '2026-04-16 21:00:00'),
 (1244, 1, 1, '2026041602', '28357', '10', 'Dead', '', 'Par Zenith', '', 250.00, 0.00, 25.00, 0, 5, '2026-04-16 20:07:07', '2026-04-18 01:54:36', '2026-04-18 01:54:00'),
@@ -3518,11 +3767,11 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1254, 1, 1, '2026041709', '28367', '321', 'programi problam', '', 'DMX 240', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-17 18:38:48', '2026-04-17 18:38:48', NULL),
 (1255, 4, 1, '2026041710', '28368', '17', 'x belt broken ', '', 'sharpy 12r axis ', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-17 19:47:15', '2026-04-17 20:25:28', '2026-04-17 20:25:00'),
 (1256, 4, 1, '2026041711', '28369', '322', 'low fog', '', 'Fog Z 2000 stan', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-17 20:54:11', '2026-04-17 22:13:58', '2026-04-17 22:13:00'),
-(1257, 1, 1, '2026041712', '28370', '138', 'Dead', '', 'DMX 1024 Stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-17 21:29:22', '2026-04-17 21:29:22', NULL),
+(1257, 1, 1, '2026041712', '28370', '138', 'Dead', '', 'DMX 1024 Stan', '', 800.00, 0.00, 80.00, 0, 5, '2026-04-17 21:29:22', '2026-04-19 14:48:32', '2026-04-19 14:48:00'),
 (1258, 1, 1, '2026041801', '28371', '10', 'dead', '', 'par zenith', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 01:56:11', '2026-04-18 01:56:11', NULL),
 (1259, 1, 1, '2026041802', '28372', '10', 'dead', '', 'par zenith', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 01:56:11', '2026-04-18 01:56:11', NULL),
-(1260, 1, 1, '2026041803', '28373', '2', 'No lamp ', 'Lamp burst', 'monster king 350', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 01:57:33', '2026-04-18 22:32:15', NULL),
-(1261, 1, 1, '2026041804', '28374', '2', 'dead', '', 'monster king 350', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 01:57:33', '2026-04-18 01:57:33', NULL),
+(1260, 1, 1, '2026041803', '28373', '2', 'No lamp ', 'Lamp burst', 'monster king 350', '', 3000.00, 0.00, 0.00, 0, 5, '2026-04-18 01:57:33', '2026-04-19 23:18:04', '2026-04-19 23:18:00'),
+(1261, 1, 1, '2026041804', '28374', '2', 'dead', 'new igniter, smps repair', 'monster king 350', '', 3800.00, 0.00, 80.00, 0, 5, '2026-04-18 01:57:33', '2026-04-19 23:19:43', '2026-04-19 23:18:00'),
 (1262, 1, 1, '2026041805', '28375', '2', 'fan issue', '', 'Haze Stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 01:57:33', '2026-04-18 01:57:33', NULL),
 (1263, 3, 2, '2026041806', '28376', '323', 'Dead', 'Thermostate and heater 2000wt', 'Stan z2000 smoke ', '', 2000.00, 0.00, 0.00, 0, 5, '2026-04-18 12:30:52', '2026-04-18 13:01:07', '2026-04-18 13:01:00'),
 (1264, 3, 2, '2026041807', '28377', '171', 'Dead', '', 'Sharpy bsm beast', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-18 15:32:02', '2026-04-18 15:32:02', NULL),
@@ -3535,7 +3784,48 @@ INSERT INTO `transaction_list` (`id`, `user_id`, `mechanic_id`, `code`, `job_id`
 (1271, 3, 2, '2026041814', '28384', '46', 'Lock', '', 'Sharpy 12 R', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-18 17:27:58', '2026-04-18 22:05:09', '2026-04-18 22:04:00'),
 (1272, 3, 2, '2026041815', '28385', '46', 'Disply', '', 'Dmx', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-18 17:27:58', '2026-04-18 22:04:45', '2026-04-18 22:04:00'),
 (1273, 3, 2, '2026041816', '28386', '324', 'X jammed', '', 'Stan 10r axis', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-18 18:19:28', '2026-04-18 19:52:48', '2026-04-18 19:52:00'),
-(1274, 4, 1, '2026041817', '28387', '73', '1 led band', '', 'retro fan', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-18 19:56:01', '2026-04-18 19:56:11', '2026-04-18 19:56:00');
+(1274, 4, 1, '2026041817', '28387', '73', '1 led band', '', 'retro fan', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-18 19:56:01', '2026-04-18 19:56:11', '2026-04-18 19:56:00'),
+(1275, 3, 2, '2026041901', '28388', '325', 'Dead', '', 'Smd quick 850', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-19 12:25:24', '2026-04-19 12:25:24', NULL),
+(1276, 3, 2, '2026041902', '28389', '325', 'Dead', '', 'Smd kt 850', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-19 12:25:24', '2026-04-19 12:25:48', NULL),
+(1277, 1, 1, '2026041903', '28390', '91', 'no lamp.x loose', '', 'Sharpy 12r axis', '', 4500.00, 0.00, 150.00, 0, 5, '2026-04-19 16:12:31', '2026-04-19 23:06:08', '2026-04-19 23:06:00'),
+(1278, 1, 1, '2026041904', '28391', '91', 'Dead', '', 'smps 12.36 380 v', '', 850.00, 0.00, 85.00, 0, 5, '2026-04-19 16:14:18', '2026-04-19 23:06:16', '2026-04-19 23:06:00'),
+(1279, 1, 1, '2026041905', '28392', '106', 'Dead', '', 'DMx 512', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-19 16:38:40', '2026-04-19 16:38:40', NULL),
+(1280, 1, 1, '2026041906', '28393', '106', 'Dead', '', 'DMx 512', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-19 16:39:23', '2026-04-19 16:39:23', NULL),
+(1281, 1, 1, '2026041907', '28394', '91', 'Dead', 'Pump repair kiye ', 'fog ste up smok', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-19 16:50:21', '2026-04-19 23:06:23', '2026-04-19 23:06:00'),
+(1282, 1, 1, '2026041908', '28395', '91', 'Dead', 'Return ni bnbani usko heater ki quile khrb h ', 'fog ste up smok', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-19 16:51:04', '2026-04-19 19:45:29', '2026-04-19 19:45:00'),
+(1283, 4, 1, '2026041909', '28396', '326', 'dead', 'Cord burnt', 'Monster king 600', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-19 21:16:27', '2026-04-19 21:16:27', NULL),
+(1284, 3, 1, '2026042001', '28397', '327', ' Ofset issue ', '', 'Sharpy axis smart ', '', 1000.00, 0.00, 100.00, 0, 5, '2026-04-20 12:31:48', '2026-04-20 12:54:18', '2026-04-20 12:54:00'),
+(1285, 4, 2, '2026042002', '28398', '132', 'broken', '', 'Sharpy BSM BEAST', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-20 14:08:18', '2026-04-20 18:21:41', '2026-04-20 18:21:00'),
+(1286, 4, 1, '2026042003', '28399', '88', 'side screw loose', '', 'Sharpy 10r axis', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-20 15:22:40', '2026-04-20 18:18:44', '2026-04-20 18:18:00'),
+(1287, 4, 1, '2026042004', '28400', '88', 'dead', '', 'Strobe stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-20 15:22:40', '2026-04-20 15:22:40', NULL),
+(1288, 4, 1, '2026042005', '28401', '328', 'dead', 'Side lock display wires ', 'Sharpy 10r axis', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-20 15:53:40', '2026-04-20 18:56:16', '2026-04-20 18:56:00'),
+(1289, 4, 1, '2026042101', '28402', '99', 'x janm side card burnt', '', 'sharpy 12r axis', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-21 11:23:20', '2026-04-21 11:23:20', NULL),
+(1290, 4, 1, '2026042102', '28403', '99', 'dead', '', '12/36/380 stan smps', '', 850.00, 0.00, 85.00, 0, 2, '2026-04-21 11:23:20', '2026-04-21 13:47:41', NULL),
+(1291, 4, 1, '2026042103', '28404', '99', 'dead', '', '12/36/380 Stan smps', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-21 11:23:20', '2026-04-21 11:23:20', NULL),
+(1292, 4, 1, '2026042104', '28405', '99', 'dead', '', 'igniter blue', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-21 11:23:20', '2026-04-21 11:23:20', NULL),
+(1293, 4, 1, '2026042105', '28406', '99', 'dead', '', 'igniter blue', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-21 11:23:20', '2026-04-21 11:23:20', NULL),
+(1294, 1, 1, '2026042106', '28407', '329', 'Dead', '', 'Sharpy 12r axis', '', 2100.00, 0.00, 50.00, 0, 5, '2026-04-21 19:36:11', '2026-04-21 19:36:55', '2026-04-21 19:36:00'),
+(1295, 1, 1, '2026042107', '28408', '119', 'Fader', '', 'DMX 1024 Stan', '', 200.00, 0.00, 10.00, 0, 5, '2026-04-21 19:41:06', '2026-04-21 19:42:05', '2026-04-21 19:41:00'),
+(1296, 3, 2, '2026042201', '28409', '330', 'Dead', 'Igniter 2 fan r n2000 hjr jama ', '7 r sharpy', '', 3300.00, 0.00, 0.00, 0, 5, '2026-04-22 14:51:55', '2026-04-24 21:29:19', '2026-04-22 17:12:00'),
+(1297, 3, 2, '2026042202', '28410', '330', 'Dead', '', '7r sharpy', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-22 14:51:55', '2026-04-22 14:51:55', NULL),
+(1298, 3, 2, '2026042203', '28411', '330', 'Dead', '', 'Mixer 512 black', '', 300.00, 0.00, 0.00, 0, 5, '2026-04-22 14:51:55', '2026-04-22 17:11:51', '2026-04-22 17:11:00'),
+(1299, 3, 2, '2026042204', '28412', '229', 'Pan error', '', 'Sharpy 10 r ', '', 500.00, 0.00, 0.00, 0, 5, '2026-04-22 18:28:56', '2026-04-24 10:46:17', '2026-04-22 18:28:00'),
+(1300, 4, 1, '2026042301', '28413', '331', 'dead', '', 'Sharpy 10r new black', '', 1500.00, 0.00, 150.00, 0, 5, '2026-04-23 12:42:51', '2026-04-23 15:56:18', '2026-04-23 15:56:00'),
+(1301, 4, 1, '2026042302', '28414', '240', 'dead', '', 'Mi bar stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-23 12:44:20', '2026-04-23 12:44:20', NULL),
+(1302, 4, 1, '2026042303', '28415', '332', 'lamp issue', 'new igniter', 'Sharpy 10r Axis', '', 3000.00, 0.00, 70.00, 0, 5, '2026-04-23 16:08:06', '2026-04-24 10:42:49', '2026-04-23 17:42:00'),
+(1303, 4, 1, '2026042304', '28416', '332', 'belt issue', '3 belt diye', 'Stan 10r old', '', 1500.00, 0.00, 0.00, 0, 5, '2026-04-23 16:08:06', '2026-04-24 10:41:55', '2026-04-23 17:41:00'),
+(1304, 4, 1, '2026042305', '28417', '332', 'Lamp issue', '', 'Sharpy jia', '', 3000.00, 0.00, 0.00, 0, 5, '2026-04-23 16:08:06', '2026-04-24 10:40:56', '2026-04-23 17:40:00'),
+(1305, 4, 1, '2026042306', '28418', '132', 'no lamp ', '300w lamp return and new igniter given', 'BSM panther ', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-23 17:43:18', '2026-04-24 10:50:08', '2026-04-23 22:39:00'),
+(1306, 4, 1, '2026042307', '28419', '333', 'dead', '', 'bubble machine super sfx', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-23 19:53:05', '2026-04-23 19:53:05', NULL),
+(1307, 4, 1, '2026042308', '28420', '334', 'malfunction', '', '1024 mk2 dmx', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-23 21:24:16', '2026-04-24 14:59:38', '2026-04-24 14:59:00'),
+(1308, 4, 1, '2026042401', '28421', '318', 'dead', '', '12/36/380 smps', '', 800.00, 0.00, 80.00, 0, 5, '2026-04-24 09:20:51', '2026-04-24 10:39:16', '2026-04-24 10:39:00'),
+(1309, 1, 1, '2026042402', '28422', '211', 'Dead', '', 'sharpy 12r axis', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-24 13:54:35', '2026-04-24 13:54:35', NULL),
+(1310, 1, 1, '2026042403', '28423', '335', 'Dead', '', 'Sharpy 12r axis', '', 4650.00, 0.00, 150.00, 0, 5, '2026-04-24 13:59:03', '2026-04-24 16:40:34', '2026-04-24 16:40:00'),
+(1311, 1, 1, '2026042404', '28424', '211', 'Dead', '', 'Sharpy 12r axis', '', 0.00, 0.00, 0.00, 0, 5, '2026-04-24 15:45:25', '2026-04-24 16:15:35', '2026-04-24 16:15:00'),
+(1312, 4, 1, '2026042405', '28425', '336', 'Liquid jyada fek rahi hai', '', 'Bubble S pro v1', '', 500.00, 0.00, 50.00, 0, 5, '2026-04-24 17:42:14', '2026-04-24 20:18:50', '2026-04-24 20:18:00'),
+(1313, 4, 1, '2026042406', '28426', '66', 'dead', '', 'Sparkle machine stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-24 18:41:55', '2026-04-24 18:41:55', NULL),
+(1314, 4, 1, '2026042407', '28427', '66', 'dead', '', 'Sparkle machine stan', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-24 18:41:55', '2026-04-24 18:41:55', NULL),
+(1315, 4, 1, '2026042408', '28428', '337', 'Dead dmx', '', 'Bazooka jet fog', '', 0.00, 0.00, 0.00, 0, 0, '2026-04-24 18:58:18', '2026-04-24 18:59:41', NULL);
 
 -- --------------------------------------------------------
 
@@ -3763,9 +4053,6 @@ INSERT INTO `transaction_products` (`transaction_id`, `product_id`, `product_nam
 (1125, 8, NULL, 1, 3000.00),
 (993, 41, NULL, 1, 4000.00),
 (995, 41, NULL, 1, 4000.00),
-(1139, 45, NULL, 1, 4500.00),
-(1139, 20, NULL, 1, 1500.00),
-(1139, 53, NULL, 2, 150.00),
 (1140, 8, NULL, 1, 3000.00),
 (1140, 45, NULL, 1, 4500.00),
 (1140, 5, NULL, 1, 3000.00),
@@ -3789,7 +4076,24 @@ INSERT INTO `transaction_products` (`transaction_id`, `product_id`, `product_nam
 (706, 41, NULL, 3, 900.00),
 (706, 18, NULL, 2, 400.00),
 (1250, 5, NULL, 1, 2300.00),
-(978, 32, NULL, 2, 100.00);
+(978, 32, NULL, 2, 100.00),
+(1277, 15, NULL, 1, 3000.00),
+(1139, 45, NULL, 1, 4500.00),
+(1139, 20, NULL, 1, 800.00),
+(1139, 53, NULL, 2, 150.00),
+(1260, 8, NULL, 1, 3000.00),
+(1261, 5, NULL, 1, 3000.00),
+(1294, 27, NULL, 1, 1600.00),
+(1295, 32, NULL, 1, 100.00),
+(1304, 8, NULL, 1, 3000.00),
+(1303, 41, NULL, 3, 500.00),
+(1302, 5, NULL, 1, 2300.00),
+(1310, 8, NULL, 1, 2700.00),
+(1310, 41, NULL, 1, 450.00),
+(1263, 42, NULL, 1, 1400.00),
+(1263, 17, NULL, 1, 350.00),
+(1296, 6, NULL, 1, 2300.00),
+(1296, 53, NULL, 2, 150.00);
 
 -- --------------------------------------------------------
 
@@ -4533,7 +4837,6 @@ INSERT INTO `transaction_services` (`transaction_id`, `service_id`, `service_nam
 (1136, 18, NULL, 1500.00),
 (1137, 18, NULL, 1500.00),
 (1154, 21, NULL, 500.00),
-(1139, 18, NULL, 1500.00),
 (1148, 21, NULL, 500.00),
 (1140, 18, NULL, 1500.00),
 (1164, 21, NULL, 500.00),
@@ -4580,14 +4883,8 @@ INSERT INTO `transaction_services` (`transaction_id`, `service_id`, `service_nam
 (1207, 17, NULL, 400.00),
 (1242, 21, NULL, 500.00),
 (1234, 25, NULL, 2500.00),
-(1167, 17, NULL, 350.00),
-(1175, 15, NULL, 300.00),
-(1174, 15, NULL, 300.00),
 (1168, 15, NULL, 300.00),
 (1166, 24, NULL, 350.00),
-(1181, 15, NULL, 300.00),
-(1182, 15, NULL, 300.00),
-(1171, 15, NULL, 300.00),
 (1243, 18, NULL, 1500.00),
 (1247, 22, NULL, 800.00),
 (1218, 17, NULL, 350.00),
@@ -4605,11 +4902,42 @@ INSERT INTO `transaction_services` (`transaction_id`, `service_id`, `service_nam
 (1256, 21, NULL, 500.00),
 (1245, 14, NULL, 250.00),
 (1244, 14, NULL, 250.00),
-(1263, 1, NULL, 2000.00),
 (1265, 18, NULL, 1500.00),
 (1271, 18, NULL, 1500.00),
 (1273, 18, NULL, 1500.00),
-(978, 11, NULL, 200.00);
+(978, 11, NULL, 200.00),
+(1171, 15, NULL, 300.00),
+(1167, 17, NULL, 350.00),
+(1175, 15, NULL, 300.00),
+(1174, 15, NULL, 300.00),
+(1181, 15, NULL, 300.00),
+(1182, 15, NULL, 300.00),
+(1257, 22, NULL, 800.00),
+(1170, 15, NULL, 300.00),
+(1178, 15, NULL, 300.00),
+(1278, 7, NULL, 850.00),
+(1277, 18, NULL, 1500.00),
+(1139, 18, NULL, 800.00),
+(1281, 21, NULL, 500.00),
+(1261, 8, NULL, 800.00),
+(1284, 22, NULL, 1000.00),
+(1286, 18, NULL, 1500.00),
+(1285, 18, NULL, 1500.00),
+(1288, 21, NULL, 500.00),
+(1290, 7, NULL, 850.00),
+(1241, 15, NULL, 300.00),
+(1294, 21, NULL, 500.00),
+(1295, 22, NULL, 100.00),
+(1298, 15, NULL, 300.00),
+(1300, 18, NULL, 1500.00),
+(1308, 4, NULL, 800.00),
+(1302, 19, NULL, 700.00),
+(1299, 21, NULL, 500.00),
+(1237, 21, NULL, 400.00),
+(1310, 18, NULL, 1500.00),
+(1312, 21, NULL, 500.00),
+(1263, 14, NULL, 250.00),
+(1296, 19, NULL, 700.00);
 
 -- --------------------------------------------------------
 
@@ -4813,19 +5141,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `advance_payments`
 --
 ALTER TABLE `advance_payments`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=130;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=131;
 
 --
 -- AUTO_INCREMENT for table `attendance_list`
 --
 ALTER TABLE `attendance_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=679;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=700;
 
 --
 -- AUTO_INCREMENT for table `client_list`
 --
 ALTER TABLE `client_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=325;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=339;
 
 --
 -- AUTO_INCREMENT for table `client_loans`
@@ -4837,31 +5165,31 @@ ALTER TABLE `client_loans`
 -- AUTO_INCREMENT for table `client_payments`
 --
 ALTER TABLE `client_payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=432;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=461;
 
 --
 -- AUTO_INCREMENT for table `direct_sales`
 --
 ALTER TABLE `direct_sales`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `direct_sale_items`
 --
 ALTER TABLE `direct_sale_items`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `expense_list`
 --
 ALTER TABLE `expense_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT for table `inventory_list`
 --
 ALTER TABLE `inventory_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=89;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=90;
 
 --
 -- AUTO_INCREMENT for table `job_id_counter`
@@ -4909,7 +5237,7 @@ ALTER TABLE `message_list`
 -- AUTO_INCREMENT for table `product_list`
 --
 ALTER TABLE `product_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `service_list`
@@ -4933,7 +5261,7 @@ ALTER TABLE `transaction_images`
 -- AUTO_INCREMENT for table `transaction_list`
 --
 ALTER TABLE `transaction_list`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1275;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1316;
 
 --
 -- AUTO_INCREMENT for table `users`
