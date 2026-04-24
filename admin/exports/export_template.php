@@ -53,8 +53,6 @@ if($export == 'excel'){
         .table-content td { padding: 8px 8px; border: 1px solid #dee2e6; font-size: 14px; vertical-align: middle; border: 1px solid #ccc; }
         .table-content tr:nth-child(even) { background-color: #f9f9f9; }
         
-        /* Remove action columns and irrelevant data */
-        .table-content th:last-child, .table-content td:last-child { display: none; }
         .no-export { display: none !important; }
         
         /* Badges */

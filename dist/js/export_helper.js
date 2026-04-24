@@ -30,21 +30,25 @@ $(document).ready(function() {
         // Clean up table clone before sending
         $table.find('.no-print, .no-export, .dataTables_empty, .d-none, img, button, input, select, textarea').remove();
         
-        // Remove Action column completely
-        var actionColIndex = -1;
+        // Remove Action and no-export columns completely
+        var indicesToRemove = [];
         $table.find('thead th').each(function(idx) {
             var thText = $(this).text().toLowerCase().trim();
             if(thText === 'action' || thText === 'actions' || $(this).hasClass('no-export')) {
-                actionColIndex = idx;
-                $(this).remove();
+                indicesToRemove.push(idx);
             }
         });
         
-        if (actionColIndex > -1) {
+        // Sort indices in descending order to remove without affecting earlier indices
+        indicesToRemove.sort(function(a, b){ return b - a; });
+        
+        $.each(indicesToRemove, function(i, idx) {
+            $table.find('thead th').eq(idx).remove();
             $table.find('tbody tr').each(function() {
-                $(this).find('td').eq(actionColIndex).remove();
+                $(this).find('td').eq(idx).remove();
             });
-        }
+            $table.find('tfoot th, tfoot td').eq(idx).remove();
+        });
         
         // Convert all links to plain text
         $table.find('a').each(function() {
