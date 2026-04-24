@@ -14,16 +14,31 @@ $order_dir = isset($_GET['order'][0]['dir']) ? $_GET['order'][0]['dir'] : 'desc'
 // Custom filters from form
 $date_from = isset($_GET['date_from']) && !empty($_GET['date_from']) ? $_GET['date_from'] : '';
 $date_to = isset($_GET['date_to']) && !empty($_GET['date_to']) ? $_GET['date_to'] : '';
-$status = isset($_GET['status']) ? intval($_GET['status']) : null;
-$hide_delivered = isset($_GET['hide_delivered']) && $_GET['hide_delivered'] == 'true';
+$status = (isset($_GET['status']) && $_GET['status'] !== '') ? intval($_GET['status']) : null;
+$hide_delivered = isset($_GET['hide_delivered']) && ($_GET['hide_delivered'] == 'true' || $_GET['hide_delivered'] == '1');
+$show_all = isset($_GET['all']) && $_GET['all'] == '1';
+$is_default_dates = isset($_GET['is_default_dates']) && $_GET['is_default_dates'] == '1';
+
+// Default 90-day window if not showing all and no dates provided
+if (!$show_all && empty($date_from) && empty($date_to)) {
+    $date_to = date('Y-m-d');
+    $date_from = date('Y-m-d', strtotime('-90 days'));
+}
 
 $conditions = [];
-if(!empty($date_from) && !empty($date_to)){
-    $conditions[] = "date(t.date_created) BETWEEN '{$date_from}' AND '{$date_to}'";
-} elseif(!empty($date_from)) {
-    $conditions[] = "date(t.date_created) >= '{$date_from}'";
-} elseif(!empty($date_to)) {
-    $conditions[] = "date(t.date_created) <= '{$date_to}'";
+// Only apply date filters if NOT searching, or if the dates were explicitly/manually set
+if (empty($search) || !$is_default_dates) {
+    if(!empty($date_from) && !empty($date_to)){
+        $df = $conn->real_escape_string($date_from);
+        $dt = $conn->real_escape_string($date_to);
+        $conditions[] = "date(t.date_created) BETWEEN '{$df}' AND '{$dt}'";
+    } elseif(!empty($date_from)) {
+        $df = $conn->real_escape_string($date_from);
+        $conditions[] = "date(t.date_created) >= '{$df}'";
+    } elseif(!empty($date_to)) {
+        $dt = $conn->real_escape_string($date_to);
+        $conditions[] = "date(t.date_created) <= '{$dt}'";
+    }
 }
 
 if($status !== null && in_array($status, [0,1,2,3,4,5])){
@@ -68,7 +83,7 @@ $sql = "SELECT t.*,
 FROM `transaction_list` t 
 INNER JOIN client_list c ON t.client_name = c.id 
 LEFT JOIN (SELECT client_name, SUM(amount) as total_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) cb ON cb.client_name = c.id
-LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments WHERE loan_id IS NULL GROUP BY client_id) cp ON cp.client_id = c.id
+LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments WHERE loan_id IS NULL OR loan_id = 0 GROUP BY client_id) cp ON cp.client_id = c.id
 LEFT JOIN (SELECT client_id, SUM(total_amount) as total_sale FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
 LEFT JOIN (
     SELECT cl.client_id,
@@ -81,6 +96,17 @@ LEFT JOIN (
 " . ($where_sql ? $where_sql : "") . " 
 ORDER BY {$order_by}
 LIMIT {$length} OFFSET {$start}";
+
+// Calculate totals for filtered rows
+$totals_sql = "SELECT 
+    SUM(t.amount) as total_amount,
+    SUM(CASE WHEN t.status IN (3,5) THEN 1 ELSE 0 END) as total_completed,
+    SUM(CASE WHEN t.status = 0 THEN 1 ELSE 0 END) as total_pending
+FROM `transaction_list` t 
+INNER JOIN client_list c ON t.client_name = c.id
+" . ($where_sql ? $where_sql : "");
+$totals_qry = $conn->query($totals_sql);
+$totals = $totals_qry->fetch_assoc();
 
 $qry = $conn->query($sql);
 
@@ -112,10 +138,9 @@ while($row = $qry->fetch_assoc()) {
     }
     
     // Avatar
-    $avatar_html = '';
-    if($client_img && file_exists('../../'.$client_img)) {
-        $avatar_html = '<img src="../../'.$client_img.'" class="table-client-avatar">';
-    }
+    $img_src = validate_image($client_img);
+    $fallback_img = base_url . 'dist/img/no-image-available.png';
+    $avatar_html = '<img src="' . $img_src . '" class="table-client-avatar" onerror="this.src=\'' . $fallback_img . '\'" loading="lazy" alt="' . htmlspecialchars($fullname) . '">';
     
     $date_display = '<div class="d-flex flex-column" style="line-height:1.3;"><small class="text-muted"><i class="fa fa-calendar-alt mr-1 text-primary"></i>' . date("d M Y", strtotime($row['date_created'])) . '</small><small class="text-muted"><i class="fa fa-clock mr-1 text-info"></i>' . date("h:i A", strtotime($row['date_created'])) . '</small></div>';
     
@@ -141,7 +166,24 @@ while($row = $qry->fetch_assoc()) {
         6 => $locate_display,
         7 => $amount_display,
         8 => $status_display,
-        9 => $action_display
+        9 => $action_display,
+        // Raw data for mobile cards and JS rendering
+        'raw_id' => $row['id'],
+        'raw_job_id' => $row['job_id'],
+        'raw_code' => !empty($row['code']) ? $row['code'] : 'No Code',
+        'raw_date_created' => $row['date_created'],
+        'raw_date_completed' => $row['date_completed'],
+        'raw_status' => $row['status'],
+        'raw_item' => $row['item'],
+        'raw_fault' => $row['fault'],
+        'raw_uniq_id' => $row['uniq_id'],
+        'raw_amount' => $row['amount'],
+        'raw_fullname' => $fullname,
+        'raw_client_id' => $row['client_name'],
+        'raw_client_img' => $client_img,
+        'raw_resolved_img' => $img_src,
+        'raw_contact' => $contact,
+        'raw_current_balance' => $current_balance
     ];
 }
 
@@ -149,5 +191,8 @@ echo json_encode([
     'draw' => $draw,
     'recordsTotal' => $total_records,
     'recordsFiltered' => $filtered_records,
-    'data' => $data
+    'data' => $data,
+    'total_amount' => $totals['total_amount'] ?? 0,
+    'total_completed' => $totals['total_completed'] ?? 0,
+    'total_pending' => $totals['total_pending'] ?? 0
 ]);

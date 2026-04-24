@@ -8,9 +8,11 @@ $tx_show_all = isset($_GET['all']) && $_GET['all'] === '1';
 $date_from = isset($_GET['date_from']) ? trim($_GET['date_from']) : '';
 $date_to = isset($_GET['date_to']) ? trim($_GET['date_to']) : '';
 $status = isset($_GET['status']) ? intval($_GET['status']) : null;
+$is_default_dates = false;
 if (!$tx_show_all && $date_from === '' && $date_to === '') {
 	$date_to = date('Y-m-d');
 	$date_from = date('Y-m-d', strtotime('-90 days'));
+    $is_default_dates = true;
 }
 ?>
 
@@ -1135,226 +1137,7 @@ if (!$tx_show_all && $date_from === '' && $date_to === '') {
                          </tr>
                     </thead>
                     <tbody>
-                        <?php 
-                        $i = 1;
-                        $where_cond = "";
-
-                        $conditions = [];
-
-                        if(!empty($date_from) && !empty($date_to)){
-                            $df = $conn->real_escape_string($date_from);
-                            $dt = $conn->real_escape_string($date_to);
-                            $conditions[] = "date(t.date_created) BETWEEN '{$df}' AND '{$dt}'";
-                        }
-
-                        if($status !== null && in_array($status, [0,1,2,3,4,5])){
-                            $conditions[] = "t.status = '{$status}'";
-                        }
-
-                        if(!empty($conditions)){
-                            $where_cond = " WHERE " . implode(" AND ", $conditions);
-                        }
-
-                        // Optimization: Fetch data with aggregate joins instead of row-level subqueries
-                        if (!isset($transactions_data)) {
-                            $limit_cond = "";
-
-                            $transactions_data = [];
-                            $qry_str = "SELECT t.*, 
-                                c.firstname, c.middlename, c.lastname, c.contact, c.image_path as client_img, 
-                                c.opening_balance, c.id as client_tbl_id,
-                                COALESCE(cb.total_billed, 0) as total_billed,
-                                COALESCE(cp.total_paid, 0) as total_paid,
-                                COALESCE(ds.total_sale, 0) as total_sale,
-                                COALESCE(al.active_loan_balance, 0) as active_loan_balance
-                            FROM `transaction_list` t 
-                            INNER JOIN client_list c ON t.client_name = c.id 
-                            LEFT JOIN (SELECT client_name, SUM(amount) as total_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) cb ON cb.client_name = c.id
-                            LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments WHERE loan_id IS NULL GROUP BY client_id) cp ON cp.client_id = c.id
-                            LEFT JOIN (SELECT client_id, SUM(total_amount) as total_sale FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
-                            LEFT JOIN (
-                                SELECT cl.client_id,
-                                    SUM(cl.total_payable) - SUM(IFNULL(paid.total, 0)) AS active_loan_balance
-                                FROM client_loans cl
-                                LEFT JOIN (SELECT loan_id, SUM(amount + discount) AS total FROM client_payments GROUP BY loan_id) paid ON cl.id = paid.loan_id
-                                WHERE cl.status = 1
-                                GROUP BY cl.client_id
-                            ) al ON al.client_id = c.id
-                            {$where_cond} 
-                            ORDER BY job_id DESC, date_created DESC
-                            {$limit_cond}";
-                            
-                            $qry = $conn->query($qry_str);
-
-                            while($row = $qry->fetch_assoc()){
-                                // Pre-calculate balance to avoid repeating in both loops
-                                $calc_sale = $row['total_sale'] ?? 0;
-                                $calc_billed = $row['total_billed'] ?? 0;
-                                $calc_paid = $row['total_paid'] ?? 0;
-                                $calc_opening = $row['opening_balance'] ?? 0;
-                                $calc_loan = $row['active_loan_balance'] ?? 0;
-                                /* Same as clients/view_client.php net_balance: service payments only + active loan remainder */
-                                $row['current_balance'] = ($calc_opening + $calc_billed + $calc_sale) - $calc_paid + $calc_loan;
-                                
-                                $transactions_data[] = $row;
-                            }
-                        }
-
-                        $total_amount = 0;
-                        $total_pending = 0;
-                        $total_completed = 0;
-
-                        foreach($transactions_data as $row):
-                            $fullname = trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
-                            $date_created = $row['date_created'];
-                            $job_id = $row['job_id'];
-                            $code = !empty($row['code']) ? $row['code'] : 'No Code';
-                            $contact = $row['contact'];
-                            $item = $row['item'];
-                            $fault = $row['fault'];
-                            $locate = $row['uniq_id'];
-                            $amount = $row['amount'];
-                            $status_val = $row['status'];
-                            $client_img = $row['client_img'];
-                            
-                            $current_balance = $row['current_balance'];
-                            
-                            // Balance Text formatting
-                            if($current_balance > 0){
-                                $bal_display = '<span class="badge badge-danger ml-1" style="font-size:0.7rem">Due: ₹' . number_format($current_balance, 2) . '</span>';
-                            } elseif($current_balance < 0) {
-                                $bal_display = '<span class="badge badge-success ml-1" style="font-size:0.7rem">Adv: ₹' . number_format(abs($current_balance), 2) . '</span>';
-                            } else {
-                                $bal_display = '<span class="badge badge-secondary ml-1" style="font-size:0.7rem">Bal: ₹0.00</span>';
-                            }
-                            
-                            // Stats calculation
-                            $total_amount += $amount;
-                            if(in_array($status_val, [3,5])) $total_completed++;
-                            if($status_val == 0) $total_pending++;
-                            
-                            $status_text = '';
-                            switch($status_val){
-                                case 0: $status_text = 'Pending'; break;
-                                case 1: $status_text = 'On-Progress'; break;
-                                case 2: $status_text = 'Done'; break;
-                                case 3: $status_text = 'Paid'; break;
-                                case 4: $status_text = 'Cancelled'; break;
-                                case 5: $status_text = 'Delivered'; break;
-                            }
-                        ?> 
-                         <tr>
-                            <td class="text-center"><?php echo $i++; ?></td>
-                            <td class="py-2" data-order="<?= date("YmdHis", strtotime($date_created)) ?>">
-                                <div class="d-flex flex-column" style="line-height: 1.3;">
-                                    <small class="text-muted">
-                                        <i class="fa fa-calendar-alt mr-1 text-primary"></i>
-                                        <?= date("d M Y", strtotime($date_created)) ?>
-                                    </small>
-                                    <small class="text-muted">
-                                        <i class="fa fa-clock mr-1 text-info"></i>
-                                        <?= date("h:i A", strtotime($date_created)) ?>
-                                    </small>
-                                </div>
-                            </td>
-                            <td class="py-2">
-                                <div class="d-flex flex-column" style="line-height: 1.3;">
-                                    <a href="./?page=transactions/view_details&id=<?= $row['id'] ?>" class="text-decoration-none">
-                                        <small class="text-primary font-weight-bold">
-                                            <i class="fa fa-tag mr-1"></i><?= $job_id ?>
-                                        </small>
-                                    </a>
-                                    
-                                    <a href="./?page=transactions/view_details&id=<?= $row['id'] ?>" class="text-decoration-none">
-                                        <small class="text-danger">
-                                            <i class="fa fa-barcode mr-1"></i><?= $code ?>
-                                        </small>
-                                    </a>
-                                </div>
-                            </td>
-                            <!-- Update the client cell HTML in the desktop table -->
-<td class="align-middle">
-    <div class="client-cell">
-        <img src="<?php echo validate_image($row['client_img']) ?>" 
-            class="table-client-avatar" 
-            onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'"
-            loading="lazy"
-            alt="<?= htmlspecialchars($fullname) ?>">
-
-        <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
-            <!-- Client Name - Smaller -->
-            <a href="./?page=clients/view_client&id=<?php echo $row['client_name'] ?>" 
-               style="color: inherit; text-decoration: none; line-height: 1.1; margin-bottom: 2px; display: block;">
-                <span class="font-weight-bold text-primary" style="font-size: 0.85rem;">
-                    <?= $fullname ?>
-                </span>
-            </a>
-
-            <!-- Balance - Smaller -->
-            <div class="mt-1" style="margin-bottom: 2px !important;">
-                <?= $bal_display ?>
-            </div>
-
-            <!-- WhatsApp - Smaller -->
-            <small class="text-success" style="font-size: 0.75rem;">
-                <?php if(!empty($contact)): ?>
-                    <a href="https://wa.me/91<?= preg_replace('/\D/', '', $contact) ?>" 
-                       target="_blank" 
-                       class="text-success font-weight-bold"
-                       style="font-size: 0.75rem; text-decoration: none;">
-                        <i class="fab fa-whatsapp mr-1" style="font-size: 0.7rem;"></i>
-                        <?= $contact ?>
-                    </a>
-                <?php else: ?>
-                    <span class="text-muted" style="font-size: 0.7rem;">No Contact</span>
-                <?php endif; ?>
-            </small>
-        </div>
-    </div>
-</td>
-                            <td class="py-3"><?= $item ?></td>
-                            <td class="py-3"><?= $fault ?></td>
-                            <td class="py-3"><?= $locate ?></td>
-                            <td class="text-right" data-order="<?= (float)$row['amount'] ?>">
-                                ₹ <?= number_format($row['amount'], 2) ?>
-                            </td>
-                            <td class="py-3 text-center">
-                                <?php 
-                                switch($status_val){
-                                    case 0: echo '<span class="badge badge-secondary px-3">Pending</span>'; break;
-                                    case 1: echo '<span class="badge badge-primary px-3">On-Progress</span>'; break;
-                                    case 2: echo '<span class="badge badge-info px-3">Done</span>'; break;
-                                    case 3: echo '<span class="badge badge-success px-3">Paid</span>'; break;
-                                    case 4: echo '<span class="badge badge-danger px-3">Cancelled</span>'; break;
-                                    case 5: 
-                                        echo '<span class="badge badge-warning px-3">Delivered</span>'; 
-                                        if(!empty($row['date_completed'])){
-                                            echo '<br><small class="text-muted" style="font-size:0.75rem;"><i class="fa fa-clock"></i> '.date("d M, h:i A", strtotime($row['date_completed'])).'</small>';
-                                        }
-                                        break;
-                                }
-                                ?>
-                            </td>
-                            <td class="py-3 text-center">
-                                <button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">Action</button>
-                                <div class="dropdown-menu" role="menu">
-                                    <a class="dropdown-item" href="./?page=transactions/view_details&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> View</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="javascript:void(0)" onclick="sendWA('<?php echo $job_id ?>', '<?php echo $contact ?>', '<?php echo $amount ?>', '<?php echo $fullname ?>', '<?php echo $code ?>', '<?php echo addslashes($item) ?>', '<?php echo $status_val ?>')">
-                                        <span class="fab fa-whatsapp text-success"></span> WhatsApp
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="../pdf/bill_template.php?job_id=<?php echo $job_id ?>" target="_blank"><span class="fa fa-print text-info"></span> Print Bill</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item edit_data" href="./?page=transactions/manage_transaction&id=<?php echo $row['id'] ?>"><span class="fa fa-edit text-info"></span> Edit</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item edit_data" href="./?page=transactions/manage_transaction_old&id=<?php echo $row['id'] ?>"><span class="fa fa-edit text-info"></span> Old Edit</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Delete</a>
-                                </div>
-                            </td>
-                         </tr>
-                        <?php endforeach; ?>
+                        <!-- Data will be loaded via AJAX Server-Side Processing -->
                     </tbody>
                 </table>
             </div>
@@ -1405,175 +1188,7 @@ if (!$tx_show_all && $date_from === '' && $date_to === '') {
 
                 <!-- Transaction Cards Container -->
                 <div id="transactionCardsContainer">
-                    <?php 
-                    $mobile_i = 1;
-                    foreach($transactions_data as $row):
-                        $fullname = trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
-                        $mobile_client_img = $row['client_img'];
-                        
-                        $status_search_text = '';
-                        switch($row['status']){
-                            case 0: $status_search_text = 'pending'; break;
-                            case 1: $status_search_text = 'on-progress progress repairing'; break;
-                            case 2: $status_search_text = 'done complete ready'; break;
-                            case 3: $status_search_text = 'paid billing'; break;
-                            case 4: $status_search_text = 'cancelled rejected'; break;
-                            case 5: $status_search_text = 'delivered success'; break;
-                        }
-
-                        $search_data = strtolower($row['job_id'] . ' ' . $fullname . ' ' . $row['item'] . ' ' . $row['fault'] . ' ' . $row['code'] . ' ' . $row['uniq_id'] . ' ' . $status_search_text);
-                        
-                        $mobile_job_id = $row['job_id'];
-                        $mobile_code = !empty($row['code']) ? $row['code'] : 'No Code';
-                        $mobile_contact = $row['contact'];
-                        $mobile_item = $row['item'];
-                        $mobile_fault = $row['fault'];
-                        $mobile_locate = $row['uniq_id'];
-                        $mobile_amount = $row['amount'];
-                        $mobile_status = $row['status'];
-                        $mobile_id = $row['id'];
-                        
-                        // Balance Calculation
-                        $current_balance = $row['current_balance'];
-
-                        // Balance Text formatting
-                        if($current_balance > 0){
-                            $bal_display = '<span class="badge badge-danger" style="font-size:0.75rem; background:#fc8181; padding:3px 8px; border-radius:10px">Due: ₹' . number_format($current_balance, 2) . '</span>';
-                        } elseif($current_balance < 0) {
-                            $bal_display = '<span class="badge badge-success" style="font-size:0.75rem; background:#68d391; padding:3px 8px; border-radius:10px">Adv: ₹' . number_format(abs($current_balance), 2) . '</span>';
-                        } else {
-                            $bal_display = '<span class="badge badge-secondary" style="font-size:0.75rem; background:#a0aec0; padding:3px 8px; border-radius:10px">Bal: ₹0.00</span>';
-                        }
-                    ?>
-                    <div class="mobile-transaction-card status-border-<?= $mobile_status ?>" data-search="<?php echo htmlspecialchars($search_data) ?>" data-status="<?= $mobile_status ?>">
-                        <!-- Card Top Section -->
-                        <div class="card-top">
-                            <div class="job-info">
-                                <h3>
-                                    <a href="./?page=transactions/view_details&id=<?= $mobile_id ?>">
-                                        Job #<?= $mobile_job_id ?>
-                                    </a>
-                                </h3>
-                                <div class="job-meta">
-                                    <span class="job-code"><?= $mobile_code ?></span>
-                                    <span class="job-date">
-                                        <i class="far fa-calendar-alt"></i>
-                                        <?= date("d M", strtotime($row['date_created'])) ?>
-                                    </span>
-                                </div>
-                                <?php if($mobile_status == 5 && !empty($row['date_completed'])): ?>
-                                <div class="date-completed">
-                                    <i class="fas fa-check-circle text-success"></i>
-                                    Delivered: <?= date("d M, h:i A", strtotime($row['date_completed'])) ?>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                            <span class="status-badge-mobile status-<?= $mobile_status ?>">
-                                <?php 
-                                switch($mobile_status){
-                                    case 0: echo 'Pending'; break;
-                                    case 1: echo 'Progress'; break;
-                                    case 2: echo 'Done'; break;
-                                    case 3: echo 'Paid'; break;
-                                    case 4: echo 'Cancelled'; break;
-                                    case 5: echo 'Delivered'; break;
-                                }
-                                ?>
-                            </span>
-                        </div>
-
-                        <!-- Client Info -->
-                        <div class="card-client">
-                            <img src="<?php echo validate_image($mobile_client_img) ?>" 
-                                 class="client-avatar"
-                                 loading="lazy"
-                                 onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
-                            <div class="client-details">
-                                <div class="client-name">
-                                    <a href="./?page=clients/view_client&id=<?= $row['client_name'] ?>" class="text-dark">
-                                        <?= $fullname ?>
-                                    </a>
-                                </div>
-                                <?php if(!empty($mobile_contact)): ?>
-                                <div class="client-phone">
-                                    <i class="fab fa-whatsapp"></i>
-                                    <a href="https://wa.me/91<?= preg_replace('/\D/', '', $mobile_contact) ?>" target="_blank">
-                                        <?= $mobile_contact ?>
-                                    </a>
-                                </div>
-                                <?php endif; ?>
-                                <div class="client-balance">
-                                    <?= $bal_display ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Transaction Details - More Informative -->
-                        <div class="card-details">
-                            <div class="detail-row">
-                                <div class="detail-label">Item/Model</div>
-                                <div class="detail-value item-model"><?= $mobile_item ?></div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Fault/Issue</div>
-                                <div class="detail-value fault-text"><?= $mobile_fault ?></div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Location ID</div>
-                                <div class="detail-value"><?= $mobile_locate ?></div>
-                            </div>
-                            <div class="detail-row">
-                                <div class="detail-label">Bill Amount</div>
-                                <div class="detail-value amount-display">₹<?= number_format($mobile_amount, 2) ?></div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="card-extra-info">
-                            <div class="extra-info-row">
-                                <span class="extra-label">Created:</span>
-                                <span class="extra-value"><?= date("d M Y, h:i A", strtotime($row['date_created'])) ?></span>
-                            </div>
-                            <?php if(!empty($row['date_updated']) && $row['date_updated'] != $row['date_created']): ?>
-                            <div class="extra-info-row">
-                                <span class="extra-label">Last Updated:</span>
-                                <span class="extra-value"><?= date("d M Y, h:i A", strtotime($row['date_updated'])) ?></span>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <!-- Action Buttons - ALL 6 BUTTONS -->
-                        <div class="card-actions">
-                            <a href="./?page=transactions/view_details&id=<?= $mobile_id ?>" class="action-btn btn-view">
-                                <i class="fas fa-eye"></i>
-                                <span>View</span>
-                            </a>
-                            <a href="javascript:void(0)" onclick="sendWA('<?= $mobile_job_id ?>', '<?= $mobile_contact ?>', '<?= $mobile_amount ?>', '<?= $fullname ?>', '<?= $mobile_code ?>', '<?= addslashes($mobile_item) ?>', '<?= $mobile_status ?>')" class="action-btn btn-whatsapp">
-                                <i class="fab fa-whatsapp"></i>
-                                <span>WhatsApp</span>
-                            </a>
-                            <a href="../pdf/bill_template.php?job_id=<?= $mobile_job_id ?>" target="_blank" class="action-btn btn-print">
-                                <i class="fas fa-print"></i>
-                                <span>Print Bill</span>
-                            </a>
-                            <a href="./?page=transactions/manage_transaction_old&id=<?= $mobile_id ?>" class="action-btn btn-old-edit">
-                                <i class="fas fa-history"></i>
-                                <span>Old Edit</span>
-                            </a>
-                            <a href="./?page=transactions/manage_transaction&id=<?= $mobile_id ?>" class="action-btn btn-edit">
-                                <i class="fas fa-edit"></i>
-                                <span>Edit</span>
-                            </a>
-                            <a href="javascript:void(0)" class="action-btn btn-delete delete_data" data-id="<?= $mobile_id ?>">
-                                <i class="fas fa-trash"></i>
-                                <span>Delete</span>
-                            </a>
-                        </div>
-                    </div>
-                    <?php 
-                    $mobile_i++;
-                    endforeach; 
-                    ?>
+                    <!-- Data will be loaded via AJAX Server-Side Processing -->
                 </div>
 
                 <!-- Filter Modal -->
@@ -1785,18 +1400,33 @@ function shiftDayMobile(direction) {
 }
 
 $(document).ready(function(){
-    // Desktop DataTable
+    // Desktop DataTable - SERVER SIDE
     var table = $('#transaction-list').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "transactions/transaction_api_all.php",
+            "type": "GET",
+            "data": function(d) {
+                // Pass custom filters
+                d.date_from = $('input[name="date_from"]').val();
+                d.date_to = $('input[name="date_to"]').val();
+                d.status = $('#mobile_status').val();
+                d.hide_delivered = $('#toggleDeliveredDesktop').is(':checked');
+                d.all = "<?php echo isset($_GET['all']) ? $_GET['all'] : '' ?>";
+                d.is_default_dates = "<?php echo $is_default_dates ? '1' : '0' ?>";
+            }
+        },
         "pageLength": 50,
-        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-        "order": [[0, "asc"]],
+        "lengthMenu": [ [10, 25, 50, 100, 500], [10, 25, 50, 100, 500] ],
+        "order": [[1, "desc"]], // Sort by date_created by default
         "language": {
-            "search": "Search Table:",
+            "search": "Search:",
             "lengthMenu": "Show _MENU_ entries"
         },
         "autoWidth": false,
         "columnDefs": [
-            { "width": "4%", "targets": 0 },
+            { "width": "4%", "targets": 0, "orderable": false },
             { "width": "9%", "targets": 1 },
             { "width": "10%", "targets": 2 },
             { "width": "25%", "targets": 3 },
@@ -1805,89 +1435,136 @@ $(document).ready(function(){
             { "width": "5%", "targets": 6 },
             { "width": "8%", "targets": 7 },
             { "width": "8%", "targets": 8 },
-            { "width": "9%", "targets": 9 }
-        ]
-    });
+            { "width": "9%", "targets": 9, "orderable": false }
+        ],
+        "drawCallback": function(settings) {
+            var api = this.api();
+            var json = api.ajax.json();
+            if(!json || !json.data) return;
 
-    // Hide Delivered Filter for DataTable
-    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-        var hideDelivered = $('#toggleDeliveredDesktop').is(':checked');
-        if (!hideDelivered) return true;
-        var status = data[8] || '';
-        if (status.indexOf('Delivered') !== -1) {
-            return false;
-        }
-        return true;
-    });
-
-    // Redraw table when desktop checkbox changes
-    $('#toggleDeliveredDesktop').on('change', function() {
-        table.draw();
-        $('#toggleDeliveredMobile').prop('checked', $(this).is(':checked'));
-        applyMobileFilters();
-    });
-
-    // ==================== MOBILE FILTERING ====================
-    function applyMobileFilters() {
-        var searchTerm = $('#mobileSearchInput').val().toLowerCase().trim();
-        var hideDelivered = $('#toggleDeliveredMobile').is(':checked');
-        var visibleCount = 0;
-
-        $('.mobile-transaction-card').each(function() {
-            var $card = $(this);
-            var searchData = $card.attr('data-search').toLowerCase();
-            var status = $card.attr('data-status');
-
-            var matchesSearch = (searchTerm === "" || searchData.indexOf(searchTerm) > -1);
-            var isDelivered = (status == '5');
-            var shouldShow = matchesSearch && (!hideDelivered || !isDelivered);
-
-            if (shouldShow) {
-                $card.show();
-                visibleCount++;
-            } else {
-                $card.hide();
+            // Update mobile search count
+            if($('#mobileSearchInput').val() !== "") {
+                $('#mobileResultsCount').text(json.recordsFiltered);
             }
-        });
 
-        if (searchTerm !== "") {
-            $('#mobileResultsCount').text(visibleCount);
-            $('#searchResultsIndicator').show();
-        } else {
-            $('#searchResultsIndicator').hide();
+            // Generate Mobile Cards Dynamically
+            var container = $('#transactionCardsContainer');
+            container.empty();
+            
+            if(json.data.length === 0) {
+                $('#mobileEmptyState').show();
+            } else {
+                $('#mobileEmptyState').hide();
+                var cardsHTML = '';
+                var statArr = ["Pending", "Progress", "Done", "Paid", "Cancelled", "Delivered"];
+                
+                $.each(json.data, function(i, row) {
+                    var m_status = parseInt(row.raw_status);
+                    var m_id = row.raw_id;
+                    var m_job_id = row.raw_job_id;
+                    var m_code = row.raw_code;
+                    var m_amount = parseFloat(row.raw_amount).toFixed(2);
+                    var m_item = row.raw_item;
+                    var m_fullname = row.raw_fullname;
+                    var m_contact = row.raw_contact || '';
+                    var d_created = new Date(row.raw_date_created);
+                    var formatted_date = d_created.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
+                    var full_date = d_created.toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'}) + ', ' + d_created.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+                    
+                    var bal = parseFloat(row.raw_current_balance);
+                    var bal_display = '';
+                    if(bal > 0) {
+                        bal_display = '<span class="badge badge-danger" style="font-size:0.75rem; background:#fc8181; padding:3px 8px; border-radius:10px">Due: ₹' + bal.toFixed(2) + '</span>';
+                    } else if(bal < 0) {
+                        bal_display = '<span class="badge badge-success" style="font-size:0.75rem; background:#68d391; padding:3px 8px; border-radius:10px">Adv: ₹' + Math.abs(bal).toFixed(2) + '</span>';
+                    } else {
+                        bal_display = '<span class="badge badge-secondary" style="font-size:0.75rem; background:#a0aec0; padding:3px 8px; border-radius:10px">Bal: ₹0.00</span>';
+                    }
+                    
+                    var img_src = row.raw_resolved_img ? row.raw_resolved_img : '<?php echo base_url ?>dist/img/no-image-available.png';
+                    
+                    var w_app_url = "javascript:void(0)";
+                    var w_app_click = "sendWA('" + m_job_id + "', '" + m_contact + "', '" + m_amount + "', '" + m_fullname.replace(/'/g, "\\'") + "', '" + m_code + "', '" + m_item.replace(/'/g, "\\'") + "', '" + m_status + "')";
+                    
+                    var completed_html = '';
+                    if(m_status == 5 && row.raw_date_completed) {
+                        var d_comp = new Date(row.raw_date_completed);
+                        completed_html = '<div class="date-completed"><i class="fas fa-check-circle text-success"></i> Delivered: ' + d_comp.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'}) + ', ' + d_comp.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) + '</div>';
+                    }
+                    
+                    cardsHTML += `
+                    <div class="mobile-transaction-card status-border-${m_status}" data-status="${m_status}">
+                        <div class="card-top">
+                            <div class="job-info">
+                                <h3><a href="./?page=transactions/view_details&id=${m_id}">Job #${m_job_id}</a></h3>
+                                <div class="job-meta">
+                                    <span class="job-code">${m_code}</span>
+                                    <span class="job-date"><i class="far fa-calendar-alt"></i> ${formatted_date}</span>
+                                </div>
+                                ${completed_html}
+                            </div>
+                            <span class="status-badge-mobile status-${m_status}">${statArr[m_status] || ''}</span>
+                        </div>
+                        <div class="card-client">
+                            <img src="${img_src}" class="client-avatar" onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
+                            <div class="client-details">
+                                <div class="client-name"><a href="./?page=clients/view_client&id=${row.raw_client_id}" class="text-dark">${m_fullname}</a></div>
+                                ${m_contact ? '<div class="client-phone"><i class="fab fa-whatsapp"></i><a href="https://wa.me/91' + m_contact.replace(/\\D/g,'') + '" target="_blank">' + m_contact + '</a></div>' : ''}
+                                <div class="client-balance">${bal_display}</div>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <div class="detail-row"><div class="detail-label">Item/Model</div><div class="detail-value item-model">${m_item}</div></div>
+                            <div class="detail-row"><div class="detail-label">Fault/Issue</div><div class="detail-value fault-text">${row.raw_fault || ''}</div></div>
+                            <div class="detail-row"><div class="detail-label">Location ID</div><div class="detail-value">${row.raw_uniq_id || ''}</div></div>
+                            <div class="detail-row"><div class="detail-label">Bill Amount</div><div class="detail-value amount-display">₹${m_amount}</div></div>
+                        </div>
+                        <div class="card-extra-info">
+                            <div class="extra-info-row"><span class="extra-label">Created:</span><span class="extra-value">${full_date}</span></div>
+                        </div>
+                        <div class="card-actions">
+                            <a href="./?page=transactions/view_details&id=${m_id}" class="action-btn btn-view"><i class="fas fa-eye"></i><span>View</span></a>
+                            <a href="javascript:void(0)" onclick="${w_app_click}" class="action-btn btn-whatsapp"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+                            <a href="../pdf/bill_template.php?job_id=${m_job_id}" target="_blank" class="action-btn btn-print"><i class="fas fa-print"></i><span>Print Bill</span></a>
+                            <a href="./?page=transactions/manage_transaction_old&id=${m_id}" class="action-btn btn-old-edit"><i class="fas fa-history"></i><span>Old Edit</span></a>
+                            <a href="./?page=transactions/manage_transaction&id=${m_id}" class="action-btn btn-edit"><i class="fas fa-edit"></i><span>Edit</span></a>
+                            <a href="javascript:void(0)" class="action-btn btn-delete delete_data" data-id="${m_id}"><i class="fas fa-trash"></i><span>Delete</span></a>
+                        </div>
+                    </div>`;
+                });
+                container.html(cardsHTML);
+            }
         }
-
-        if (visibleCount === 0) {
-            $('#mobileEmptyState').show();
-        } else {
-            $('#mobileEmptyState').hide();
-        }
-    }
-
-    var searchTimeout;
-    $('#mobileSearchInput').on('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(applyMobileFilters, 300);
     });
 
-    $('#toggleDeliveredMobile').on('change', function() {
+    // Handle "Hide Delivered" change
+    $('#toggleDeliveredDesktop, #toggleDeliveredMobile').on('change', function() {
         var isChecked = $(this).is(':checked');
         $('#toggleDeliveredDesktop').prop('checked', isChecked);
-        table.draw();
-        applyMobileFilters();
+        $('#toggleDeliveredMobile').prop('checked', isChecked);
+        table.draw(); // This will trigger an AJAX reload
+    });
+
+    // Handle Mobile Search
+    var searchTimeout;
+    $('#mobileSearchInput').on('input', function() {
+        var val = $(this).val();
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            table.search(val).draw();
+            if(val !== "") {
+                $('#searchResultsIndicator').show();
+            } else {
+                $('#searchResultsIndicator').hide();
+            }
+        }, 400);
     });
 
     window.clearMobileSearch = function() {
         $('#mobileSearchInput').val('');
-        applyMobileFilters();
+        table.search('').draw();
+        $('#searchResultsIndicator').hide();
     };
-
-    // Initial sync and apply default hide delivered filter
-    $('#toggleDeliveredMobile').prop('checked', $('#toggleDeliveredDesktop').is(':checked'));
-    applyMobileFilters();
-    table.draw(); // apply initial DataTable filter (hide delivered)
-
-    // ==================== END MOBILE FILTERING ====================
 
     // FAB Menu
     window.toggleFabMenu = function() {

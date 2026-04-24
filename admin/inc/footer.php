@@ -111,3 +111,5 @@
      <script src="<?php echo base_url ?>plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
     <!-- AdminLTE App -->
     <script src="<?php echo base_url ?>dist/js/adminlte.js"></script>
+    <!-- Universal Export Helper -->
+    <script src="<?php echo base_url ?>dist/js/export_helper.js"></script>

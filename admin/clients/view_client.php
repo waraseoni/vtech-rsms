@@ -44,7 +44,7 @@ $direct_sales_billed = $stmt_sales->get_result()->fetch_assoc()['total'] ?? 0;
 $total_billed = $repair_billed + $direct_sales_billed;
 
 // C. Total Paid (Service Payments only – exclude loan repayments)
-$stmt_paid = $conn->prepare("SELECT SUM(amount + discount) as total FROM client_payments WHERE client_id = ? AND loan_id IS NULL");
+$stmt_paid = $conn->prepare("SELECT SUM(amount + discount) as total FROM client_payments WHERE client_id = ? AND (loan_id IS NULL OR loan_id = 0)");
 $stmt_paid->bind_param("i", $id);
 $stmt_paid->execute();
 $total_paid = $stmt_paid->get_result()->fetch_assoc()['total'] ?? 0;

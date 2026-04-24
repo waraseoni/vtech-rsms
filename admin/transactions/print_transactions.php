@@ -1,5 +1,5 @@
 <?php
-require_once('../config.php');
+require_once('../../config.php');
 
 $from = isset($_GET['from']) ? $_GET['from'] : null;
 $to = isset($_GET['to']) ? $_GET['to'] : null;
