@@ -24,14 +24,15 @@ if(!empty($search)) {
 
 $where_sql = "WHERE " . implode(" AND ", $conditions);
 
-// Subqueries for balance components
-$repair_billed_sq = "(SELECT SUM(amount) FROM transaction_list WHERE status = 5 AND client_name = c.id)";
-$direct_sales_sq = "(SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id)";
-$total_paid_sq = "(SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id)";
-$total_loan_given_sq = "(SELECT SUM(total_payable) FROM client_loans WHERE status = 1 AND client_id = c.id)";
-$balance_formula = "(c.opening_balance + COALESCE({$repair_billed_sq}, 0) + COALESCE({$direct_sales_sq}, 0) + COALESCE({$total_loan_given_sq}, 0) - COALESCE({$total_paid_sq}, 0))";
+// Performance-optimized LEFT JOIN query for balance components
+$join_sql = "LEFT JOIN (SELECT client_name, SUM(amount) as repair_billed, MAX(date_created) as last_txn_date FROM transaction_list WHERE status = 5 GROUP BY client_name) t ON t.client_name = c.id
+LEFT JOIN (SELECT client_id, SUM(total_amount) as direct_sales_billed FROM direct_sales GROUP BY client_id) d ON d.client_id = c.id
+LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments GROUP BY client_id) p ON p.client_id = c.id
+LEFT JOIN (SELECT client_id, SUM(total_payable) as total_loan_given FROM client_loans WHERE status = 1 GROUP BY client_id) l ON l.client_id = c.id";
 
-// Filter by balance if requested (this requires HAVING or a subquery/CTE because of aggregated fields)
+$balance_formula = "(c.opening_balance + COALESCE(t.repair_billed, 0) + COALESCE(d.direct_sales_billed, 0) + COALESCE(l.total_loan_given, 0) - COALESCE(p.total_paid, 0))";
+
+// Filter by balance if requested
 $having_sql = "";
 if ($min_balance !== null || $max_balance !== null) {
     $having_conds = [];
@@ -52,11 +53,12 @@ $columns = [
 $order_by = isset($columns[$order_col]) ? $columns[$order_col] : 'current_balance';
 $order_by .= " " . $order_dir;
 
-// Get filtered count - since we use HAVING, we need a wrap query for counts if balance filters are present
+// Get filtered count
 if ($having_sql != "") {
     $count_sql = "SELECT COUNT(*) as total FROM (
         SELECT {$balance_formula} as current_balance 
         FROM client_list c 
+        {$join_sql}
         {$where_sql} 
         {$having_sql}
     ) as filtered_count";
@@ -70,13 +72,14 @@ $total_records = (int)$conn->query("SELECT COUNT(*) as total FROM client_list WH
 
 // Final data query
 $sql = "SELECT c.*, 
-    COALESCE({$repair_billed_sq}, 0) as repair_billed,
-    COALESCE({$direct_sales_sq}, 0) as direct_sales_billed,
-    COALESCE({$total_paid_sq}, 0) as total_paid,
-    COALESCE({$total_loan_given_sq}, 0) as total_loan_given,
-    (SELECT MAX(date_created) FROM transaction_list WHERE client_name = c.id) as last_txn_date,
+    COALESCE(t.repair_billed, 0) as repair_billed,
+    COALESCE(d.direct_sales_billed, 0) as direct_sales_billed,
+    COALESCE(p.total_paid, 0) as total_paid,
+    COALESCE(l.total_loan_given, 0) as total_loan_given,
+    t.last_txn_date,
     {$balance_formula} as current_balance
 FROM `client_list` c 
+{$join_sql}
 {$where_sql} 
 {$having_sql}
 ORDER BY {$order_by}
@@ -187,13 +190,14 @@ while($row = $qry->fetch_assoc()){
     ];
 }
 
-// Summary totals (optional but good for consistency)
-$total_outstanding = 0;
-$summary_qry = $conn->query("SELECT 
-    SUM(c.opening_balance + COALESCE({$repair_billed_sq}, 0) + COALESCE({$direct_sales_sq}, 0) + COALESCE({$total_loan_given_sq}, 0) - COALESCE({$total_paid_sq}, 0)) as total_outstanding
-    FROM client_list c WHERE c.delete_flag = 0");
-$summary = $summary_qry->fetch_assoc();
-$total_outstanding = (float)$summary['total_outstanding'];
+// Summary totals (much faster calculation)
+$tot_ob = $conn->query("SELECT SUM(opening_balance) as tot FROM client_list WHERE delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+$tot_repair = $conn->query("SELECT SUM(t.amount) as tot FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE t.status = 5 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+$tot_ds = $conn->query("SELECT SUM(d.total_amount) as tot FROM direct_sales d INNER JOIN client_list c ON d.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+$tot_loans = $conn->query("SELECT SUM(l.total_payable) as tot FROM client_loans l INNER JOIN client_list c ON l.client_id = c.id WHERE l.status = 1 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+$tot_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+
+$total_outstanding = (float)($tot_ob + $tot_repair + $tot_ds + $tot_loans - $tot_paid);
 
 echo json_encode([
     'draw' => $draw,

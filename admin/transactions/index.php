@@ -1498,7 +1498,7 @@ $(document).ready(function(){
                             <div class="job-info">
                                 <h3><a href="./?page=transactions/view_details&id=${m_id}">Job #${m_job_id}</a></h3>
                                 <div class="job-meta">
-                                    <span class="job-code">${m_code}</span>
+                                    <span class="job-code"><a href="./?page=transactions/view_details&id=${m_id}" style="color: inherit; text-decoration: none;">${m_code}</a></span>
                                     <span class="job-date"><i class="far fa-calendar-alt"></i> ${formatted_date}</span>
                                 </div>
                                 ${completed_html}

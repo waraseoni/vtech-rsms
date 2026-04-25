@@ -368,19 +368,17 @@ try {
         <div class="container-fluid">
             <!-- Summary Cards (updated to include loan balances) -->
             <?php
-            // Fetch total clients and total outstanding (including active loans)
+            // Fetch total clients
             $total_clients = $conn->query("SELECT COUNT(*) as cnt FROM client_list WHERE delete_flag = 0")->fetch_assoc()['cnt'];
-            $total_outstanding = 0;
-            $balance_qry = $conn->query("SELECT 
-                COALESCE((SELECT SUM(amount) FROM transaction_list WHERE client_name = c.id AND status = 5), 0) as repair_billed,
-                COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE client_id = c.id), 0) as direct_sales_billed,
-                COALESCE((SELECT SUM(amount + discount) FROM client_payments WHERE client_id = c.id), 0) as total_paid,
-                COALESCE((SELECT SUM(total_payable) FROM client_loans WHERE client_id = c.id AND status = 1), 0) as total_loan_given,
-                c.opening_balance
-                FROM client_list c WHERE c.delete_flag = 0");
-            while($b = $balance_qry->fetch_assoc()) {
-                $total_outstanding += ($b['opening_balance'] + $b['repair_billed'] + $b['direct_sales_billed'] + $b['total_loan_given'] - $b['total_paid']);
-            }
+            
+            // FAST way to calculate total outstanding using independent sum queries
+            $tot_ob = $conn->query("SELECT SUM(opening_balance) as tot FROM client_list WHERE delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            $tot_repair = $conn->query("SELECT SUM(t.amount) as tot FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE t.status = 5 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            $tot_ds = $conn->query("SELECT SUM(d.total_amount) as tot FROM direct_sales d INNER JOIN client_list c ON d.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            $tot_loans = $conn->query("SELECT SUM(l.total_payable) as tot FROM client_loans l INNER JOIN client_list c ON l.client_id = c.id WHERE l.status = 1 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            $tot_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            
+            $total_outstanding = $tot_ob + $tot_repair + $tot_ds + $tot_loans - $tot_paid;
             ?>
             <div class="summary-cards">
                 <div class="summary-item">

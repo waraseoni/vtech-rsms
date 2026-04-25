@@ -460,9 +460,8 @@ $period_discount = $conn->query("SELECT SUM(discount) as total FROM client_payme
         
         .remark-column {
             max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            word-wrap: break-word;
+            white-space: normal;
         }
         
         .amount-column {
@@ -986,7 +985,7 @@ $period_discount = $conn->query("SELECT SUM(discount) as total FROM client_payme
                             <?php else: ?> - <?php endif; ?>
                         </td>
                         <td class="small text-muted italic remark-column" title="<?= htmlspecialchars($row['remark'] ?: '-') ?>">
-                            <?= mb_strimwidth($row['remark'] ?: '-', 0, 20, '...') ?>
+                            <?= nl2br(htmlspecialchars($row['remark'] ?: '-')) ?>
                         </td>
                         <td class="text-right text-danger amount-column">
                             <?php if($row['debit'] > 0): ?>

@@ -92,13 +92,13 @@
                             </td>
                             <td class="py-2">
                                 <div class="d-flex flex-column" style="line-height: 1.3;">
-                                    <small class="text-primary font-weight-bold"><i class="fa fa-tag mr-1"></i><?= $row['job_id'] ?></small>
-                                    <small class="text-danger"><i class="fa fa-barcode mr-1"></i><?= !empty($row['code']) ? $row['code'] : 'No Code' ?></small>
+                                    <small class="text-primary font-weight-bold"><i class="fa fa-tag mr-1"></i><a href="./?page=transactions/view_details&id=<?= $row['id'] ?>"><?= $row['job_id'] ?></a></small>
+                                    <small class="text-danger"><i class="fa fa-barcode mr-1"></i><a href="./?page=transactions/view_details&id=<?= $row['id'] ?>" class="text-danger"><?= !empty($row['code']) ? $row['code'] : 'No Code' ?></a></small>
                                 </div>
                             </td>
                             <td class="py-2">
                                 <div class="d-flex flex-column" style="line-height: 1.3;">
-                                    <span class="font-weight-bold"><?= trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']) ?></span>
+                                    <span class="font-weight-bold"><a href="./?page=clients/view_client&id=<?= $row['client_name'] ?>" class="text-dark"><?= trim($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']) ?></a></span>
                                     <small class="text-success">
                                         <?php if(!empty($row['contact'])): ?>
                                             <a href="https://wa.me/91<?= preg_replace('/\D/', '', $row['contact']) ?>" target="_blank" class="text-success">
