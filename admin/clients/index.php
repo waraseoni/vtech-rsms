@@ -428,130 +428,7 @@ try {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
-                        $i = 1;
-                        if (!isset($clients_data)) {
-                             $limit_cond = "";
-
-                             $clients_data = [];
-                             $qry_str = "SELECT c.*, 
-                                COALESCE(rb.repair_billed, 0) as repair_billed,
-                                COALESCE(ds.direct_sales_billed, 0) as direct_sales_billed,
-                                COALESCE(cp.total_paid, 0) as total_paid,
-                                COALESCE(cl.total_loan_given, 0) as total_loan_given,
-                                lt.last_txn_date
-                                FROM `client_list` c 
-                                LEFT JOIN (SELECT client_name, SUM(amount) as repair_billed FROM transaction_list WHERE status = 5 GROUP BY client_name) rb ON rb.client_name = c.id
-                                LEFT JOIN (SELECT client_id, SUM(total_amount) as direct_sales_billed FROM direct_sales GROUP BY client_id) ds ON ds.client_id = c.id
-                                LEFT JOIN (SELECT client_id, SUM(amount + discount) as total_paid FROM client_payments GROUP BY client_id) cp ON cp.client_id = c.id
-                                LEFT JOIN (SELECT client_id, SUM(total_payable) as total_loan_given FROM client_loans WHERE status = 1 GROUP BY client_id) cl ON cl.client_id = c.id
-                                LEFT JOIN (SELECT client_name, MAX(date_created) as last_txn_date FROM transaction_list GROUP BY client_name) lt ON lt.client_name = c.id
-                                WHERE c.delete_flag = 0 
-                                ORDER BY (c.opening_balance + COALESCE(rb.repair_billed, 0) + COALESCE(ds.direct_sales_billed, 0) + COALESCE(cl.total_loan_given, 0) - COALESCE(cp.total_paid, 0)) DESC
-                                {$limit_cond}";
-
-                             $qry = $conn->query($qry_str);
-
-                             while($row = $qry->fetch_assoc()){
-                                 // Pre-calculate to avoid redundant math
-                                 $row['current_balance'] = ($row['opening_balance'] + $row['repair_billed'] + $row['direct_sales_billed'] + $row['total_loan_given']) - $row['total_paid'];
-                                 $clients_data[] = $row;
-                             }
-                        }
-
-                        foreach($clients_data as $row):
-                            $current_balance = $row['current_balance'];
-                            $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
-
-                            $row_class = '';
-                            $balance_class = '';
-                            $wa_class = '';
-                            $wa_text = 'WhatsApp';
-
-                            if($current_balance > 0) {
-                                if($current_balance > 50000) { 
-                                    $row_class = 'very-high-balance'; 
-                                    $balance_class = 'balance-very-high'; 
-                                    $wa_class = 'whatsapp-reminder';
-                                    $wa_text = 'High Balance Reminder';
-                                } elseif($current_balance > 20000) { 
-                                    $row_class = 'high-balance'; 
-                                    $balance_class = 'balance-high'; 
-                                    $wa_class = 'whatsapp-reminder';
-                                    $wa_text = 'Balance Reminder';
-                                } else { 
-                                    $balance_class = 'balance-positive'; 
-                                    $wa_class = 'whatsapp-reminder';
-                                    $wa_text = 'Balance Reminder';
-                                }
-                            } else { 
-                                $balance_class = 'balance-negative'; 
-                                $wa_class = 'whatsapp-welcome';
-                                $wa_text = 'Welcome';
-                            }
-
-                            // Last transaction date for follow-up directly from tuned query
-                            $last_txn_date = $row['last_txn_date'];
-
-                            if($last_txn_date) {
-                                $days_diff = floor((time() - strtotime($last_txn_date)) / (60 * 60 * 24));
-                                if($days_diff > 30 && $current_balance <= 0) {
-                                    $wa_class = 'whatsapp-followup';
-                                    $wa_text = 'Follow-up';
-                                }
-                            }
-                        ?>
-                        <tr class="<?php echo $row_class ?>" data-balance="<?php echo $current_balance ?>" data-client-id="<?php echo $row['id'] ?>" data-search="<?php echo htmlspecialchars(strtolower($fullname . ' ' . $row['contact'] . ' ' . $row['email'] . ' ' . $row['address'])) ?>">
-                            <td class="text-center align-middle"><?php echo $i++; ?></td>
-
-                            <td class="align-middle">
-                                <div class="client-info-cell">
-                                    <img src="<?php echo validate_image($row['image_path']) ?>" 
-                                         class="desktop-avatar view_image_full" 
-                                         alt="Client"
-                                         loading="lazy"
-                                         data-src="<?php echo validate_image($row['image_path']) ?>"
-                                         onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
-                                    <div class="client-info-text">
-                                        <a href="./?page=clients/view_client&id=<?php echo $row['id'] ?>" class="text-decoration-none">
-                                            <h5 class="text-primary"><?php echo $fullname ?></h5>
-                                        </a>
-                                        <small class="text-muted">ID: <?php echo $row['id'] ?></small>
-                                    </div>
-                                </div>
-                            </td>
-
-                            <td class="align-middle">
-                                <div>
-                                    <div><i class="fa fa-phone-alt fa-fw text-primary"></i> <?php echo $row['contact'] ?></div>
-                                    <div class="mt-1"><i class="fa fa-envelope fa-fw text-danger"></i> <?php echo $row['email'] ?: 'No Email' ?></div>
-                                    <?php if(!empty($row['contact'])): ?>
-                                    <button type="button" class="whatsapp-badge mt-1 <?php echo $wa_class ?>" 
-                                            onclick="sendWhatsAppMessage(<?php echo $row['id'] ?>, '<?php echo addslashes($fullname) ?>', '<?php echo $row['contact'] ?>', <?php echo $current_balance ?>, '<?php echo $last_txn_date ?>')">
-                                        <i class="fab fa-whatsapp"></i> <?php echo $wa_text ?>
-                                    </button>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-
-                            <td class="address-text align-middle"><?php echo $row['address'] ?></td>
-
-                            <td class="text-right align-middle font-weight-bold <?php echo $balance_class ?>">₹ <?php echo number_format($current_balance, 2) ?></td>
-
-                            <td align="center" class="align-middle">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-flat btn-default btn-sm dropdown-toggle dropdown-icon" data-toggle="dropdown">Action</button>
-                                    <div class="dropdown-menu" role="menu">
-                                        <a class="dropdown-item" href="./?page=clients/view_client&id=<?php echo $row['id'] ?>"><span class="fa fa-eye text-primary"></span> View</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item edit_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-edit text-info"></span> Edit</a>
-                                        <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item delete_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><span class="fa fa-trash text-danger"></span> Delete</a>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <!-- Data will be loaded via AJAX -->
                     </tbody>
                     <tfoot>
                         <tr class="bg-light">
@@ -579,106 +456,8 @@ try {
                 </div>
 
                 <div id="clientCardsContainer">
-                <?php 
-                $i_mobile = 1;
-                foreach($clients_data as $row):
-                    $current_balance = $row['current_balance'];
-                    $fullname = ucwords($row['firstname'] . ' ' . $row['middlename'] . ' ' . $row['lastname']);
-
-                    $card_class = '';
-                    $balance_class = '';
-                    $wa_class = '';
-                    $wa_text = 'WhatsApp';
-
-                    if($current_balance > 0) {
-                        if($current_balance > 50000) { 
-                            $card_class = 'very-high-balance'; 
-                            $balance_class = 'balance-very-high'; 
-                            $wa_class = 'whatsapp-reminder';
-                            $wa_text = 'High Balance Reminder';
-                        } elseif($current_balance > 20000) { 
-                            $card_class = 'high-balance'; 
-                            $balance_class = 'balance-high'; 
-                            $wa_class = 'whatsapp-reminder';
-                            $wa_text = 'Balance Reminder';
-                        } else { 
-                            $balance_class = 'balance-positive'; 
-                            $wa_class = 'whatsapp-reminder';
-                            $wa_text = 'Balance Reminder';
-                        }
-                    } else { 
-                        $balance_class = 'balance-negative'; 
-                        $wa_class = 'whatsapp-welcome';
-                        $wa_text = 'Welcome';
-                    }
-
-                    $last_txn_date = $row['last_txn_date'];
-
-                    if($last_txn_date) {
-                        $days_diff = floor((time() - strtotime($last_txn_date)) / (60 * 60 * 24));
-                        if($days_diff > 30 && $current_balance <= 0) {
-                            $wa_class = 'whatsapp-followup';
-                            $wa_text = 'Follow-up';
-                        }
-                    }
-                ?>
-                <div class="client-card <?php echo $card_class ?>" 
-                     data-search="<?php echo htmlspecialchars(strtolower($fullname . ' ' . $row['contact'] . ' ' . $row['email'] . ' ' . $row['address'])) ?>"
-                     data-balance="<?php echo $current_balance ?>"
-                     data-client-id="<?php echo $row['id'] ?>">
-
-                    <div class="client-header">
-                        <div class="client-avatar">
-                            <img src="<?php echo validate_image($row['image_path']) ?>" 
-                                 alt="Client"
-                                 class="view_image_full"
-                                 loading="lazy"
-                                 data-src="<?php echo validate_image($row['image_path']) ?>"
-                                 onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
-                        </div>
-                        <div class="client-info">
-                            <a href="./?page=clients/view_client&id=<?php echo $row['id'] ?>" class="text-decoration-none">
-                                <div class="client-name text-primary"><?php echo $fullname ?></div>
-                            </a>
-                            <div class="client-id">ID: <?php echo $row['id'] ?> | #<?php echo $i_mobile++ ?></div>
-                        </div>
-                    </div>
-
-                    <div class="contact-info">
-                        <div class="contact-item"><i class="fa fa-phone-alt text-primary"></i><span><?php echo $row['contact'] ?></span></div>
-                        <div class="contact-item"><i class="fa fa-envelope text-danger"></i><span><?php echo $row['email'] ?: 'No Email' ?></span></div>
-                        <?php if(!empty($row['contact'])): ?>
-                        <button type="button" class="whatsapp-badge <?php echo $wa_class ?>" 
-                                onclick="sendWhatsAppMessage(<?php echo $row['id'] ?>, '<?php echo addslashes($fullname) ?>', '<?php echo $row['contact'] ?>', <?php echo $current_balance ?>, '<?php echo $last_txn_date ?>')">
-                            <i class="fab fa-whatsapp"></i> <?php echo $wa_text ?>
-                        </button>
-                        <?php endif; ?>
-                    </div>
-
-                    <div class="address-box">
-                        <strong><i class="fa fa-map-marker-alt text-info"></i> Address:</strong>
-                        <p class="mb-0 mt-1"><?php echo $row['address'] ?></p>
-                    </div>
-
-                    <div class="balance-info">
-                        <div>
-                            <small class="text-muted">Current Balance (incl. Loans)</small>
-                            <div class="balance-amount <?php echo $balance_class ?>">₹ <?php echo number_format($current_balance, 2) ?></div>
-                        </div>
-                        <?php if($current_balance > 20000): ?> <span class="badge badge-danger">Very High</span>
-                        <?php elseif($current_balance > 10000): ?> <span class="badge badge-warning">High</span>
-                        <?php elseif($current_balance > 0): ?> <span class="badge badge-info">Pending Balance</span>
-                        <?php else: ?> <span class="badge badge-success">Clear</span> <?php endif; ?>
-                    </div>
-
-                    <div class="card-actions">
-                        <div class="btn-action-group">
-                            <a href="./?page=clients/view_client&id=<?php echo $row['id'] ?>" class="btn btn-sm btn-info"><i class="far fa-eye"></i> View</a>
-                            <a class="btn btn-sm btn-warning edit_data" href="javascript:void(0)" data-id="<?php echo $row['id'] ?>"><i class="fa fa-edit"></i> Edit</a>
-                        </div>
-                    </div>
+                <!-- Cards will be loaded via AJAX -->
                 </div>
-                <?php endforeach; ?>
                 </div>
             </div>
         </div>
@@ -924,97 +703,141 @@ function delete_client($id){
 
 // Document ready - all initializations and event bindings
 $(document).ready(function(){
-    // Initialize DataTable
+    // Initialize DataTable - SERVER SIDE
     var table = $('#client-list-main').DataTable({
-        "pageLength": 25,
-        "order": [[4, "desc"]],
-        "responsive": false,
-        "columnDefs": [
-            { "orderable": false, "targets": [5] },
-            { 
-                "type": "num", 
-                "targets": 4,
-                "render": function(data, type, row) {
-                    var balance = data.replace('₹', '').replace(/,/g, '').trim();
-                    return type === 'sort' ? parseFloat(balance) : data;
-                }
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            "url": "clients/client_api.php",
+            "type": "GET",
+            "data": function(d) {
+                d.min_balance = $('#minBalance').val();
+                d.max_balance = $('#maxBalance').val();
             }
-        ]
+        },
+        "pageLength": 25,
+        "lengthMenu": [ [10, 25, 50, 100, 500], [10, 25, 50, 100, 500] ],
+        "order": [[4, "desc"]], // Default sort by balance
+        "autoWidth": false,
+        "columnDefs": [
+            { "orderable": false, "targets": [0, 5] },
+            { "className": "align-middle", "targets": "_all" }
+        ],
+        "drawCallback": function(settings) {
+            var api = this.api();
+            var json = api.ajax.json();
+            if(!json || !json.data) return;
+
+            // Update summary cards dynamically from API
+            if(json.summary) {
+                $('.summary-cards .summary-item:eq(0) .value').text(json.summary.total_clients);
+                $('.summary-cards .summary-item:eq(1) .value, .summary-cards .summary-item:eq(2) .value').text('₹ ' + parseFloat(json.summary.total_outstanding).toLocaleString('en-IN', {minimumFractionDigits: 2}));
+            }
+
+            // Update Mobile Cards
+            var container = $('#clientCardsContainer');
+            container.empty();
+            
+            if(json.data.length === 0) {
+                $('#noResults').show();
+            } else {
+                $('#noResults').hide();
+                var cardsHTML = '';
+                var i_mobile = api.page.info().start + 1;
+                
+                $.each(json.data, function(i, row) {
+                    var current_balance = row.raw_current_balance;
+                    var balance_class = row.raw_balance_class;
+                    var wa_class = row.raw_wa_class;
+                    var wa_text = row.raw_wa_text;
+                    var fullname = row.raw_fullname;
+                    
+                    var badge_html = '';
+                    if(current_balance > 20000) badge_html = '<span class="badge badge-danger">Very High</span>';
+                    else if(current_balance > 10000) badge_html = '<span class="badge badge-warning">High</span>';
+                    else if(current_balance > 0) badge_html = '<span class="badge badge-info">Pending</span>';
+                    else badge_html = '<span class="badge badge-success">Clear</span>';
+
+                    cardsHTML += `
+                        <div class="client-card ${row.raw_current_balance > 50000 ? 'very-high-balance' : (row.raw_current_balance > 20000 ? 'high-balance' : '')}" 
+                             data-search="${row.raw_fullname.toLowerCase()} ${row.raw_contact} ${row.raw_email} ${row.raw_address.toLowerCase()}"
+                             data-balance="${row.raw_current_balance}"
+                             data-client-id="${row.raw_id}">
+                            <div class="client-header">
+                                <div class="client-avatar">
+                                    <img src="${row.raw_resolved_img}" 
+                                         alt="Client"
+                                         class="view_image_full"
+                                         loading="lazy"
+                                         data-src="${row.raw_resolved_img}"
+                                         onerror="this.src='<?php echo base_url ?>dist/img/no-image-available.png'">
+                                </div>
+                                <div class="client-info">
+                                    <a href="./?page=clients/view_client&id=${row.raw_id}" class="text-decoration-none">
+                                        <div class="client-name text-primary">${fullname}</div>
+                                    </a>
+                                    <div class="client-id">ID: ${row.raw_id} | #${i_mobile++}</div>
+                                </div>
+                            </div>
+                            <div class="contact-info">
+                                <div class="contact-item"><i class="fa fa-phone-alt text-primary"></i><span>${row.raw_contact}</span></div>
+                                <div class="contact-item"><i class="fa fa-envelope text-danger"></i><span>${row.raw_email || 'No Email'}</span></div>
+                                ${row.raw_contact ? `
+                                <button type="button" class="whatsapp-badge ${wa_class}" 
+                                        onclick="sendWhatsAppMessage(${row.raw_id}, '${fullname.replace(/'/g, "\\'")}', '${row.raw_contact}', ${current_balance}, ${row.raw_last_txn_date ? "'"+row.raw_last_txn_date+"'" : 'null'})">
+                                    <i class="fab fa-whatsapp"></i> ${wa_text}
+                                </button>` : ''}
+                            </div>
+                            <div class="address-box">
+                                <strong><i class="fa fa-map-marker-alt text-info"></i> Address:</strong>
+                                <p class="mb-0 mt-1">${row.raw_address}</p>
+                            </div>
+                            <div class="balance-info">
+                                <div>
+                                    <small class="text-muted">Current Balance (incl. Loans)</small>
+                                    <div class="balance-amount ${balance_class}">₹ ${parseFloat(current_balance).toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                                </div>
+                                ${badge_html}
+                            </div>
+                            <div class="card-actions">
+                                <div class="btn-action-group">
+                                    <a href="./?page=clients/view_client&id=${row.raw_id}" class="btn btn-sm btn-info"><i class="far fa-eye"></i> View</a>
+                                    <a class="btn btn-sm btn-warning edit_data" href="javascript:void(0)" data-id="${row.raw_id}"><i class="fa fa-edit"></i> Edit</a>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                container.html(cardsHTML);
+            }
+            
+            // Sync mobile search result count
+            if($('#searchAll').val() !== "" || $('#minBalance').val() !== "" || $('#maxBalance').val() !== "") {
+                $('#filterResultCount').show();
+                $('#filterCountValue, #countValue').text(json.recordsFiltered);
+            } else {
+                $('#filterResultCount').hide();
+            }
+        }
     });
 
-    // Custom filter for balance range – treat empty fields as no limit
-    $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-            var row = $(settings.aoData[dataIndex].nTr);
-            var balance = parseFloat(row.data('balance')) || 0;
-            var minVal = $('#minBalance').val();
-            var maxVal = $('#maxBalance').val();
-            // If field is empty, no bound
-            var minBal = minVal === '' ? -Infinity : parseFloat(minVal);
-            var maxBal = maxVal === '' ? Infinity : parseFloat(maxVal);
-            return (balance >= minBal && balance <= maxBal);
-        }
-    );
-
-    // Apply filters (text search + balance range)
+    // Apply filters
     function applyFilters() {
-        var searchTerm = $('#searchAll').val().toLowerCase().trim();
-        var minVal = $('#minBalance').val();
-        var maxVal = $('#maxBalance').val();
-
-        // DataTable global search (text across all columns)
-        table.search(searchTerm).draw();
-
-        // Also filter mobile cards
-        filterMobileCards(searchTerm, minVal, maxVal);
+        table.draw();
     }
 
-    // Filter mobile cards (separate from DataTable)
-    function filterMobileCards(searchTerm, minVal, maxVal) {
-        // Treat empty fields as no bound
-        var minBal = minVal === '' ? -Infinity : parseFloat(minVal);
-        var maxBal = maxVal === '' ? Infinity : parseFloat(maxVal);
-        var visibleCount = 0;
-
-        $('.client-card').each(function() {
-            var card = $(this);
-            var cardSearch = card.data('search') || '';
-            var balance = parseFloat(card.data('balance')) || 0;
-
-            var matchesSearch = searchTerm === '' || cardSearch.indexOf(searchTerm) !== -1;
-            var matchesMin = balance >= minBal;
-            var matchesMax = balance <= maxBal;
-
-            if (matchesSearch && matchesMin && matchesMax) {
-                card.removeClass('hidden');
-                visibleCount++;
-            } else {
-                card.addClass('hidden');
-            }
-        });
-
-        // Update result count for mobile
-        if (searchTerm !== '' || minVal !== '' || maxVal !== '') {
-            $('#filterResultCount').show();
-            $('#filterCountValue').text(visibleCount);
-        } else {
-            $('#filterResultCount').hide();
-        }
-
-        // Sync mobile search input
-        $('#mobileSearchInput').val(searchTerm);
-        if (searchTerm) $('#mobileSearchClear').show();
-        else $('#mobileSearchClear').hide();
-    }
-
-    // Event bindings for desktop filters
+    // Event bindings
     $('#applyFilter').click(applyFilters);
     $('#resetFilter').click(function() {
         $('#searchAll').val('');
         $('#minBalance').val('');
         $('#maxBalance').val('');
-        applyFilters();
+        table.search('').draw();
     });
+    $('#searchAll').on('input', function() {
+        table.search($(this).val()).draw();
+    });
+    $('#minBalance, #maxBalance').on('change', applyFilters);
+    
     $('#searchAll, #minBalance, #maxBalance').keypress(function(e) {
         if (e.which == 13) applyFilters();
     });
@@ -1023,99 +846,59 @@ $(document).ready(function(){
     $('#mobileSearchInput').on('input', function() {
         var term = $(this).val();
         $('#searchAll').val(term);
-        applyFilters();
+        table.search(term).draw();
+        if(term) $('#mobileSearchClear').show();
+        else $('#mobileSearchClear').hide();
     });
-    $('#mobileSearchBtn').click(applyFilters);
+    
     $('#mobileSearchClear').click(function() {
         $('#mobileSearchInput').val('').focus();
         $('#searchAll').val('');
-        applyFilters();
+        table.search('').draw();
+        $(this).hide();
     });
 
-    // Sort mobile cards by balance (desc) on page load
-    function sortMobileCards() {
-        var container = $('#clientCardsContainer');
-        var cards = container.find('.client-card').get();
-        cards.sort(function(a, b) {
-            return parseFloat($(b).data('balance')) - parseFloat($(a).data('balance'));
-        });
-        $.each(cards, function(idx, card) { container.append(card); });
-    }
-    if ($(window).width() <= 768) {
-        sortMobileCards();
-    }
-
-    // Create new client
+    // Create/Edit/Delete/Preview actions
     $('#create_new, #mobileCreateBtn').click(function(e){
         e.preventDefault();
         uni_modal("<i class='fa fa-plus'></i> Add New Client","clients/manage_client.php",'mid-large');
     });
 
-    // Edit client
     $(document).on('click', '.edit_data', function(e){
         e.preventDefault();
         uni_modal("<i class='fa fa-edit'></i> Update Client Details","clients/edit_client.php?id=" + $(this).attr('data-id'), 'mid-large');
     });
 
-    // Delete client
     $(document).on('click', '.delete_data', function(e){
         e.preventDefault();
         _conf("Are you sure to delete this client permanently?","delete_client",[$(this).attr('data-id')]);
     });
 
-    // Image preview functionality (re-added)
     $(document).on('click', '.view_image_full', function(){
         var imgPath = $(this).attr('data-src');
         $('#preview-img').attr('src', imgPath);
         $('#imagePreviewModal').modal('show');
     });
-});
 
-// View Toggle Functions
-function toggleView(viewType) {
-    // Update buttons
-    $('#btn-table-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'table' ? 'btn-primary' : 'btn-outline-secondary');
-    $('#btn-card-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'card' ? 'btn-primary' : 'btn-outline-secondary');
-    
-    // Toggle class on body
-    $('body').removeClass('show-table show-card').addClass('show-' + viewType);
-    
-    // Save preference
-    localStorage.setItem('clients_view', viewType);
-}
-
-$(document).ready(function() {
-    // Initial view set
+    // View Toggle Setup
     let savedView = localStorage.getItem('clients_view');
     let isMobile = window.innerWidth <= 768;
-    
-    if(!savedView){
-        savedView = isMobile ? 'card' : 'table';
-    }
+    if(!savedView) savedView = isMobile ? 'card' : 'table';
     toggleView(savedView);
-    
-    // Check view on resize
+
     $(window).on('resize', function(){
         if(window.innerWidth <= 768){
             $('.desktop-export-buttons').hide();
-            $('.view-toggle-wrapper').show();
         } else {
             $('.desktop-export-buttons').show();
-            $('.view-toggle-wrapper').show();
         }
     });
-
-    if($.fn.DataTable.isDataTable('#client-list-main')) {
-        $('#client-list-main').DataTable().destroy();
-    }
-
-    $('#client-list-main').DataTable({
-        "pageLength": 25,
-        "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-		columnDefs: [
-				{ orderable: false, targets: [4,5] }
-		],
-		order:[0,'asc']
-	});
 });
+
+function toggleView(viewType) {
+    $('#btn-table-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'table' ? 'btn-primary' : 'btn-outline-secondary');
+    $('#btn-card-view').removeClass('btn-primary btn-outline-secondary').addClass(viewType === 'card' ? 'btn-primary' : 'btn-outline-secondary');
+    $('body').removeClass('show-table show-card').addClass('show-' + viewType);
+    localStorage.setItem('clients_view', viewType);
+}
 </script>
