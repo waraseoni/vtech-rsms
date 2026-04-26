@@ -1620,6 +1620,14 @@ $(document).ready(function(){
         _conf("Are you sure to delete this transaction?","delete_transaction",[$(this).attr('data-id')])
     });
 
+    // Combined Invoice - open selection modal
+    $(document).on('click', '.combined-invoice-btn', function(){
+        var clientId = $(this).attr('data-client');
+        var txId     = $(this).attr('data-txid');
+        var url = 'transactions/combined_invoice_select.php?client_id=' + clientId + '&ids=' + txId;
+        uni_modal('🧾 Combined Invoice - Select Transactions', url, 'modal-lg');
+    });
+
     $('#filterModal').click(function(e) {
         if (e.target.id === 'filterModal') {
             closeFilterModal();
