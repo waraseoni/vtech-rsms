@@ -30,6 +30,15 @@ if(isset($_GET['id'])){
         $status_text = $status_arr[$status] ?? "Unknown Status";
         $color_arr = ["secondary", "primary", "info", "success", "danger", "warning"];
         $badge_color = $color_arr[$status] ?? "dark";
+        
+        // Fetch Previous and Next Transaction IDs
+        $tx_id = $conn->real_escape_string($_GET['id']);
+        $prev_qry = $conn->query("SELECT id FROM transaction_list WHERE id < '{$tx_id}' ORDER BY id DESC LIMIT 1");
+        $prev_id = $prev_qry->num_rows > 0 ? $prev_qry->fetch_assoc()['id'] : null;
+
+        $next_qry = $conn->query("SELECT id FROM transaction_list WHERE id > '{$tx_id}' ORDER BY id ASC LIMIT 1");
+        $next_id = $next_qry->num_rows > 0 ? $next_qry->fetch_assoc()['id'] : null;
+
     } else {
         echo '<script>alert("Transaction not found."); location.replace("./?page=transactions");</script>';
         exit;
@@ -145,8 +154,29 @@ if(isset($_GET['id'])){
                     <b> Transaction Details - <?= $job_id ?> (<?= $code ?>)</b>
                 </h3>
                 <div class="card-tools">
+                    <div class="btn-group mx-1">
+                        <?php if($prev_id): ?>
+                        <a href="./?page=transactions/view_details&id=<?= $prev_id ?>" class="btn btn-secondary btn-sm" title="Previous Transaction">
+                            <i class="fa fa-chevron-left"></i> Prev
+                        </a>
+                        <?php else: ?>
+                        <a href="javascript:void(0)" class="btn btn-secondary btn-sm disabled" title="No Previous Transaction">
+                            <i class="fa fa-chevron-left"></i> Prev
+                        </a>
+                        <?php endif; ?>
+                        
+                        <?php if($next_id): ?>
+                        <a href="./?page=transactions/view_details&id=<?= $next_id ?>" class="btn btn-secondary btn-sm" title="Next Transaction">
+                            Next <i class="fa fa-chevron-right"></i>
+                        </a>
+                        <?php else: ?>
+                        <a href="javascript:void(0)" class="btn btn-secondary btn-sm disabled" title="No Next Transaction">
+                            Next <i class="fa fa-chevron-right"></i>
+                        </a>
+                        <?php endif; ?>
+                    </div>
                     <a href="./?page=clients/view_client&id=<?= $client_id ?>" class="btn btn-info btn-sm">
-                        <i class="fa fa-user"></i> View Client
+                        <i class="fa fa-user"></i> Client
                     </a>
                     <a href="../pdf/gst_bill.php?type=transaction&id=<?= $id ?>" target="_blank" class="btn btn-success btn-sm mx-1">
                         <i class="fa fa-file-invoice"></i> GST Bill
