@@ -1,10 +1,4 @@
 <?php
-//session_start();
-require_once('../config.php'); // आपका database connection
-
-$title = 'V-Tech Accounting Dashboard';
-//require_once('header.php');
-
 // डेट रेंज सेट करें
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
@@ -346,164 +340,61 @@ $trading_account = getTradingAccount($conn, $start_date, $end_date);
 $balance_sheet = getBalanceSheet($conn, $end_date);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V-Tech Accounting Dashboard</title>
-    <style>
-        body {
-            font-family: 'Arial', 'Segoe UI', sans-serif;
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .filter-form {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .report-section {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .income-box {
-            border-left: 5px solid #28a745;
-            background: #f8fff9;
-        }
-        .expense-box {
-            border-left: 5px solid #dc3545;
-            background: #fff8f8;
-        }
-        .profit-box {
-            border-left: 5px solid #ffc107;
-            background: #fffdf2;
-        }
-        .amount {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .positive {
-            color: #28a745;
-        }
-        .negative {
-            color: #dc3545;
-        }
-        .summary-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-        .table th {
-            background-color: #f1f3f5;
-            font-weight: 600;
-        }
-        .nav-tabs .nav-link {
-            font-weight: 600;
-            color: #495057;
-        }
-        .nav-tabs .nav-link.active {
-            background-color: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        @media print {
-            .no-print {
-                display: none;
-            }
-            .report-section {
-                box-shadow: none;
-                border: 1px solid #dee2e6;
-            }
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-    </style>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-</head>
-<body>
-    <div class="container">
-        <!-- हेडर -->
-        <div class="header text-center">
-            <h1><i class="bi bi-calculator"></i> V-Tech Accounting Dashboard</h1>
-            <p class="mb-0">Business Financial Management</p>
-        </div>
+<style>
+    .income-box { border-left: 5px solid #28a745; background: #f8fff9; }
+    .expense-box { border-left: 5px solid #dc3545; background: #fff8f8; }
+    .profit-box { border-left: 5px solid #ffc107; background: #fffdf2; }
+    .amount { font-size: 1.5rem; font-weight: bold; }
+    .positive { color: #28a745; }
+    .negative { color: #dc3545; }
+    .summary-card { background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    @media print { .no-print { display: none; } .report-section { box-shadow: none; border: 1px solid #dee2e6; } }
+</style>
 
+<div class="card card-outline card-navy shadow rounded-0">
+    <div class="card-header">
+        <h3 class="card-title font-weight-bold text-navy"><i class="bi bi-calculator"></i> Accounting Dashboard</h3>
+    </div>
+    <div class="card-body">
         <!-- फिल्टर फॉर्म -->
-        <div class="filter-form no-print">
+        <div class="filter-form no-print mb-4">
             <form method="GET" action="" class="row g-3">
-                <!-- Current page parameter -->
                 <input type="hidden" name="page" value="reports/accounting_dashboard">
-                
                 <div class="col-md-3">
-                    <label class="form-label">Report Type</label>
-                    <select name="report_type" class="form-select" id="reportType">
+                    <label class="form-label small">Report Type</label>
+                    <select name="report_type" class="form-control form-control-sm" id="reportType">
                         <option value="cash_flow" <?= $report_type == 'cash_flow' ? 'selected' : '' ?>>Cash Flow</option>
                         <option value="trading_account" <?= $report_type == 'trading_account' ? 'selected' : '' ?>>Trading Account</option>
                         <option value="balance_sheet" <?= $report_type == 'balance_sheet' ? 'selected' : '' ?>>Balance Sheet</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Start Date</label>
-                    <input type="date" name="start_date" class="form-control" id="startDate" value="<?= $start_date ?>" required>
+                    <label class="form-label small">Start Date</label>
+                    <input type="date" name="start_date" class="form-control form-control-sm" value="<?= $start_date ?>" required>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">End Date</label>
-                    <input type="date" name="end_date" class="form-control" id="endDate" value="<?= $end_date ?>" required>
+                    <label class="form-label small">End Date</label>
+                    <input type="date" name="end_date" class="form-control form-control-sm" value="<?= $end_date ?>" required>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-navy btn-sm w-100 bg-gradient-navy text-white">
                         <i class="bi bi-search"></i> View Report
                     </button>
                 </div>
             </form>
-            <div class="btn-group">
-                <button onclick="window.print()" class="btn btn-outline-primary">
-                    <i class="bi bi-printer"></i> Print Report
-                </button>
-                <button onclick="downloadPDF()" class="btn btn-outline-success">
-                    <i class="bi bi-download"></i> Download PDF
-                </button>
-            </div>
         </div>
 
         <!-- रिपोर्ट सेक्शन -->
         <?php if($report_type == 'cash_flow'): ?>
-        <!-- कैश फ्लो रिपोर्ट -->
         <div class="report-section">
-            <h3 class="mb-4"><i class="bi bi-cash-stack text-primary"></i> Cash Flow Report</h3>
-            <p class="text-muted">Period: <?= $cash_flow_report['summary']['period'] ?></p>
+            <h4 class="mb-4 text-navy"><i class="bi bi-cash-stack"></i> Cash Flow Report</h4>
+            <p class="text-muted small">Period: <?= $cash_flow_report['summary']['period'] ?></p>
             
             <div class="row mb-4">
-                <!-- आय -->
                 <div class="col-md-6 mb-3">
-                    <div class="p-3 income-box">
+                    <div class="p-3 income-box card">
                         <h5 class="mb-3"><i class="bi bi-arrow-down-circle text-success"></i> Income</h5>
-                        <table class="table table-hover">
+                        <table class="table table-sm table-hover">
                             <?php foreach($cash_flow_report['income'] as $item): ?>
                             <tr>
                                 <td><?= $item['label'] ?></td>
@@ -522,11 +413,10 @@ $balance_sheet = getBalanceSheet($conn, $end_date);
                     </div>
                 </div>
                 
-                <!-- व्यय -->
                 <div class="col-md-6 mb-3">
-                    <div class="p-3 expense-box">
+                    <div class="p-3 expense-box card">
                         <h5 class="mb-3"><i class="bi bi-arrow-up-circle text-danger"></i> Expenses</h5>
-                        <table class="table table-hover">
+                        <table class="table table-sm table-hover">
                             <?php foreach($cash_flow_report['expenses'] as $item): ?>
                             <tr>
                                 <td><?= $item['label'] ?></td>
@@ -546,301 +436,84 @@ $balance_sheet = getBalanceSheet($conn, $end_date);
                 </div>
             </div>
             
-            <!-- सारांश -->
-            <div class="summary-card">
+            <div class="summary-card shadow">
                 <div class="row text-center">
                     <div class="col-md-4">
-                        <h6>Total Income</h6>
+                        <h6 class="small">Total Income</h6>
                         <h3 class="mb-0">₹<?= number_format($cash_flow_report['summary']['total_income'], 2) ?></h3>
                     </div>
                     <div class="col-md-4">
-                        <h6>Total Expenses</h6>
+                        <h6 class="small">Total Expenses</h6>
                         <h3 class="mb-0">₹<?= number_format($cash_flow_report['summary']['total_expenses'], 2) ?></h3>
                     </div>
                     <div class="col-md-4">
-                        <h6>Net Profit/Loss</h6>
-                        <h3 class="mb-0 <?= $cash_flow_report['summary']['net_profit'] >= 0 ? 'positive' : 'negative' ?>">
+                        <h6 class="small">Net Profit/Loss</h6>
+                        <h3 class="mb-0 <?= $cash_flow_report['summary']['net_profit'] >= 0 ? 'text-success' : 'text-danger' ?>">
                             ₹<?= number_format($cash_flow_report['summary']['net_profit'], 2) ?>
                         </h3>
                     </div>
                 </div>
             </div>
-            
-            <!-- विस्तृत जानकारी -->
-            <div class="mt-4">
-                <h5><i class="bi bi-info-circle"></i> Detailed Information</h5>
-                <div class="row">
-                    <?php foreach($cash_flow_report['income'] as $key => $item): ?>
-                    <?php if(!empty($item['details'])): ?>
-                    <div class="col-md-6 mb-2">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="card-title"><?= $item['label'] ?></h6>
-                                <?php foreach($item['details'] as $detail_key => $detail_value): ?>
-                                <p class="card-text mb-1">
-                                    <small><?= $detail_key ?>: 
-                                    <?php if(is_numeric($detail_value)): ?>
-                                        ₹<?= number_format($detail_value, 2) ?>
-                                    <?php else: ?>
-                                        <?= $detail_value ?>
-                                    <?php endif; ?>
-                                    </small>
-                                </p>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    <?php endforeach; ?>
-                </div>
-            </div>
         </div>
         
         <?php elseif($report_type == 'trading_account'): ?>
-        <!-- व्यापारिक खाता -->
         <div class="report-section">
-            <h3 class="mb-4"><i class="bi bi-graph-up text-primary"></i> Trading Account</h3>
-            <p class="text-muted">Period: <?= $start_date ?> to <?= $end_date ?></p>
-            
-            <div class="row">
-                <div class="col-md-8 mx-auto">
-                    <table class="table table-bordered">
-                        <tr class="table-secondary">
-                            <th colspan="2" class="text-center">Trading Account</th>
-                        </tr>
-                        <tr>
-                            <td>Opening Stock</td>
-                            <td class="text-end">₹<?= number_format($trading_account['opening_stock'], 2) ?></td>
-                        </tr>
-                        <tr>
-                            <td>Purchases</td>
-                            <td class="text-end">₹<?= number_format($trading_account['purchases'], 2) ?></td>
-                        </tr>
-                        <tr>
-                            <td>Goods Available</td>
-                            <td class="text-end">₹<?= number_format($trading_account['opening_stock'] + $trading_account['purchases'], 2) ?></td>
-                        </tr>
-                        <tr>
-                            <td>Closing Stock</td>
-                            <td class="text-end">₹<?= number_format($trading_account['closing_stock'], 2) ?></td>
-                        </tr>
-                        <tr>
-                            <td>Cost of Goods Sold (COGS)</td>
-                            <td class="text-end">₹<?= number_format($trading_account['opening_stock'] + $trading_account['purchases'] - $trading_account['closing_stock'], 2) ?></td>
-                        </tr>
-                        <tr class="table-light">
-                            <td><strong>Sales</strong></td>
-                            <td class="text-end"><strong>₹<?= number_format($cash_flow_report['summary']['total_income'], 2) ?></strong></td>
-                        </tr>
-                        <tr class="table-success">
-                            <td><strong>Gross Profit</strong></td>
-                            <td class="text-end">
-                                <strong class="positive">₹<?= number_format($trading_account['gross_profit'], 2) ?></strong>
-                            </td>
-                        </tr>
-                        <tr class="table-secondary">
-                            <th colspan="2">Expenses</th>
-                        </tr>
+            <h4 class="mb-4 text-navy"><i class="bi bi-graph-up"></i> Trading Account</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="bg-light">
+                        <tr><th colspan="2" class="text-center">Trading Account Details</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Opening Stock</td><td class="text-end">₹<?= number_format($trading_account['opening_stock'], 2) ?></td></tr>
+                        <tr><td>Purchases</td><td class="text-end">₹<?= number_format($trading_account['purchases'], 2) ?></td></tr>
+                        <tr><td>Closing Stock</td><td class="text-end text-success">₹<?= number_format($trading_account['closing_stock'], 2) ?></td></tr>
+                        <tr class="font-weight-bold bg-light"><td>Gross Profit</td><td class="text-end text-success">₹<?= number_format($trading_account['gross_profit'], 2) ?></td></tr>
+                        <tr class="bg-light"><td colspan="2">Expenses</td></tr>
                         <?php foreach($trading_account['expenses'] as $label => $amount): ?>
-                        <tr>
-                            <td><?= $label ?></td>
-                            <td class="text-end">₹<?= number_format($amount, 2) ?></td>
-                        </tr>
+                        <tr><td><?= $label ?></td><td class="text-end text-danger">₹<?= number_format($amount, 2) ?></td></tr>
                         <?php endforeach; ?>
-                        <tr class="table-light">
-                            <td><strong>Total Expenses</strong></td>
-                            <td class="text-end">
-                                <strong>₹<?= number_format(array_sum($trading_account['expenses']), 2) ?></strong>
-                            </td>
-                        </tr>
-                        <tr class="table-<?= $trading_account['net_profit'] >= 0 ? 'success' : 'danger' ?>">
-                            <td><strong>Net Profit/Loss</strong></td>
-                            <td class="text-end">
-                                <strong class="<?= $trading_account['net_profit'] >= 0 ? 'positive' : 'negative' ?>">
-                                    ₹<?= number_format($trading_account['net_profit'], 2) ?>
-                                </strong>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- सारांश -->
-            <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body text-center">
-                            <h6>Gross Profit</h6>
-                            <h3 class="<?= $trading_account['gross_profit'] >= 0 ? 'positive' : 'negative' ?>">
-                                ₹<?= number_format($trading_account['gross_profit'], 2) ?>
-                            </h3>
-                            <small>Sales - Cost of Goods Sold</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-light">
-                        <div class="card-body text-center">
-                            <h6>Total Expenses</h6>
-                            <h3 class="negative">
-                                ₹<?= number_format(array_sum($trading_account['expenses']), 2) ?>
-                            </h3>
-                            <small>Sum of all expenses</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card <?= $trading_account['net_profit'] >= 0 ? 'bg-success text-white' : 'bg-danger text-white' ?>">
-                        <div class="card-body text-center">
-                            <h6>Net Profit/Loss</h6>
-                            <h3 class="mb-0">
-                                ₹<?= number_format($trading_account['net_profit'], 2) ?>
-                            </h3>
-                            <small>Gross Profit - Total Expenses</small>
-                        </div>
-                    </div>
-                </div>
+                        <tr class="font-weight-bold bg-navy text-white"><td>Net Profit/Loss</td><td class="text-end">₹<?= number_format($trading_account['net_profit'], 2) ?></td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        
+
         <?php elseif($report_type == 'balance_sheet'): ?>
-        <!-- बैलेंस शीट -->
         <div class="report-section">
-            <h3 class="mb-4"><i class="bi bi-scale text-primary"></i> Balance Sheet</h3>
-            <p class="text-muted">As on: <?= $end_date ?></p>
-            
+            <h4 class="mb-4 text-navy"><i class="bi bi-scale"></i> Balance Sheet</h4>
             <div class="row">
-                <!-- Assets -->
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            <h5 class="mb-0"><i class="bi bi-wallet2"></i> Assets</h5>
-                        </div>
-                        <div class="card-body">
-                            <table class="table">
+                <div class="col-md-6">
+                    <div class="card card-success card-outline">
+                        <div class="card-header"><h5 class="card-title">Assets</h5></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm">
                                 <?php foreach($balance_sheet['assets'] as $asset): ?>
-                                <tr>
-                                    <td><?= $asset['label'] ?></td>
-                                    <td class="text-end">
-                                        <span class="amount positive">₹<?= number_format($asset['amount'], 2) ?></span>
-                                    </td>
-                                </tr>
+                                <tr><td><?= $asset['label'] ?></td><td class="text-end">₹<?= number_format($asset['amount'], 2) ?></td></tr>
                                 <?php endforeach; ?>
-                                <tr class="table-success">
-                                    <td><strong>Total Assets</strong></td>
-                                    <td class="text-end">
-                                        <strong class="amount">₹<?= number_format($balance_sheet['total_assets'], 2) ?></strong>
-                                    </td>
-                                </tr>
+                                <tr class="bg-success text-white"><td>Total Assets</td><td class="text-end">₹<?= number_format($balance_sheet['total_assets'], 2) ?></td></tr>
                             </table>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Liabilities & Equity -->
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-cash-coin"></i> Liabilities & Equity</h5>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="text-primary">Liabilities</h6>
-                            <table class="table">
+                <div class="col-md-6">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header"><h5 class="card-title">Liabilities & Equity</h5></div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm">
                                 <?php foreach($balance_sheet['liabilities'] as $liability): ?>
-                                <tr>
-                                    <td><?= $liability['label'] ?></td>
-                                    <td class="text-end">
-                                        <span class="amount negative">₹<?= number_format($liability['amount'], 2) ?></span>
-                                    </td>
-                                </tr>
+                                <tr><td><?= $liability['label'] ?></td><td class="text-end">₹<?= number_format($liability['amount'], 2) ?></td></tr>
                                 <?php endforeach; ?>
-                            </table>
-                            
-                            <h6 class="text-primary mt-4">Equity</h6>
-                            <table class="table">
                                 <?php foreach($balance_sheet['equity'] as $equity): ?>
-                                <tr>
-                                    <td><?= $equity['label'] ?></td>
-                                    <td class="text-end">
-                                        <span class="amount <?= $equity['amount'] >= 0 ? 'positive' : 'negative' ?>">
-                                            ₹<?= number_format($equity['amount'], 2) ?>
-                                        </span>
-                                    </td>
-                                </tr>
+                                <tr><td><?= $equity['label'] ?></td><td class="text-end">₹<?= number_format($equity['amount'], 2) ?></td></tr>
                                 <?php endforeach; ?>
-                                <tr class="table-primary">
-                                    <td><strong>Total Liabilities & Equity</strong></td>
-                                    <td class="text-end">
-                                        <strong class="amount">₹<?= number_format($balance_sheet['total_liabilities_equity'], 2) ?></strong>
-                                    </td>
-                                </tr>
+                                <tr class="bg-primary text-white"><td>Total Liab. & Equity</td><td class="text-end">₹<?= number_format($balance_sheet['total_liabilities_equity'], 2) ?></td></tr>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- बैलेंस शीट सारांश -->
-            <div class="row mt-4">
-                <div class="col-md-6">
-                    <div class="card bg-light">
-                        <div class="card-body text-center">
-                            <h6>Total Assets</h6>
-                            <h3 class="positive">₹<?= number_format($balance_sheet['total_assets'], 2) ?></h3>
-                            <small>All assets available to the company</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card bg-light">
-                        <div class="card-body text-center">
-                            <h6>Total Liabilities + Equity</h6>
-                            <h3 class="positive">₹<?= number_format($balance_sheet['total_liabilities_equity'], 2) ?></h3>
-                            <small>Assets = Liabilities + Equity</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- बैलेंस चेक -->
-            <div class="alert <?= abs($balance_sheet['total_assets'] - $balance_sheet['total_liabilities_equity']) < 1 ? 'alert-success' : 'alert-danger' ?> mt-4">
-                <h5><i class="bi bi-check-circle"></i> Balance Check</h5>
-                <p>
-                    Total Assets: ₹<?= number_format($balance_sheet['total_assets'], 2) ?><br>
-                    Total Liabilities + Equity: ₹<?= number_format($balance_sheet['total_liabilities_equity'], 2) ?><br>
-                    Difference: ₹<?= number_format($balance_sheet['total_assets'] - $balance_sheet['total_liabilities_equity'], 2) ?>
-                </p>
-                <?php if(abs($balance_sheet['total_assets'] - $balance_sheet['total_liabilities_equity']) < 1): ?>
-                <p class="mb-0"><strong>✅ Balance Sheet is correct (Assets = Liabilities + Equity)</strong></p>
-                <?php else: ?>
-                <p class="mb-0"><strong>❌ Balance Sheet is incorrect, please resolve the difference</strong></p>
-                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
-        
-        <!-- फुटर -->
-        <div class="text-center text-muted mt-5 no-print">
-            <p>V-Tech Technologies Repair Shop © <?= date('Y') ?> | Report Generated: <?= date('d/m/Y H:i:s') ?></p>
-        </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function downloadPDF() {
-            alert('To enable PDF download, please install jsPDF library');
-        }
-        
-        // Date validation
-        document.getElementById('endDate').addEventListener('change', function() {
-            const startDate = new Date(document.getElementById('startDate').value);
-            const endDate = new Date(this.value);
-            
-            if (startDate > endDate) {
-                alert('End date cannot be before start date');
-                this.value = document.getElementById('startDate').value;
-            }
-        });
-    </script>
-</body>
-</html>
+</div>

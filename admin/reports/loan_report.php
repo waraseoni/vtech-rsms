@@ -1,7 +1,4 @@
 <?php 
-require_once('../config.php'); 
-require_once('../classes/CsrfProtection.php');
-
 $month = isset($_GET['month']) ? $_GET['month'] : date("Y-m");
 ?>
 

@@ -85,23 +85,67 @@
                         <p>Reports <i class="right fas fa-angle-left"></i></p>
                     </a>
                     <ul class="nav nav-treeview">
-						<li class="nav-item">
-    <a href="<?php echo base_url ?>admin/?page=reports/delivered_report" class="nav-link">
-        <i class="nav-icon fas fa-truck-loading"></i>
-        <p>
-            Delivered Report
-        </p>
-    </a>
-</li>
-                        <li class="nav-item"><a href="./?page=reports/cash_flow_report" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><p>Cash Flow</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/ledger_report" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><p>Business Ledger</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/year_repo" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><p>Yearly Report</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/client_payment_report" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><p>Clients Payment</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/daily_sales_report" class="nav-link"><i class="nav-icon fas fa-rupee-sign text-purple"></i><p>Daily Sales Report</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/daily_service_report" class="nav-link"><i class="nav-icon fas fa-wrench text-teal"></i><p>Daily Service Report</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/custom_sales_report" class="nav-link"><i class="nav-icon fas fa-shopping-cart text-pink"></i><p>Custom Sales Report</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/custom_service_report" class="nav-link"><i class="nav-icon fas fa-file-alt text-indigo"></i><p>Custom Service Report</p></a></li>
-                        <li class="nav-item"><a href="./?page=reports/activity_log" class="nav-link"><i class="nav-icon fas fa-fingerprint text-danger"></i><p>Activity Log</p></a></li>
+                        <li class="nav-item"><a href="./?page=reports" class="nav-link nav-reports_index"><i class="nav-icon fas fa-th text-info"></i><p>Dashboard</p></a></li>
+                        
+                        <!-- Job Reports Group -->
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-tools text-warning"></i>
+                                <p>Job Reports <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="./?page=reports/pending_jobs" class="nav-link"><i class="nav-icon far fa-clock"></i><p>Pending Jobs</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/delivered_report" class="nav-link"><i class="nav-icon fas fa-truck"></i><p>Delivered Report</p></a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Finance & Accounts Group -->
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-file-invoice-dollar text-success"></i>
+                                <p>Finance & Accounts <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="./?page=reports/accounting_dashboard" class="nav-link"><i class="nav-icon fas fa-calculator"></i><p>Accounting Dashboard</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/balancesheet" class="nav-link"><i class="nav-icon fas fa-balance-scale"></i><p>Balance Sheet</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/ledger_report" class="nav-link"><i class="nav-icon fas fa-book"></i><p>Business Ledger</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/cash_flow_report" class="nav-link"><i class="nav-icon fas fa-money-bill-wave"></i><p>Cash Flow</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/daily_income" class="nav-link"><i class="nav-icon fas fa-coins"></i><p>Daily Income</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/financial_report" class="nav-link"><i class="nav-icon fas fa-file-alt"></i><p>Financial Report</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/month_profit" class="nav-link"><i class="nav-icon fas fa-percentage"></i><p>Monthly Profit</p></a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Sales & Services Group -->
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-shopping-cart text-primary"></i>
+                                <p>Sales & Services <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="./?page=reports/daily_sales_report" class="nav-link"><i class="nav-icon fas fa-calendar-day"></i><p>Daily Sales</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/monthly_sales_report" class="nav-link"><i class="nav-icon fas fa-calendar-alt"></i><p>Monthly Sales</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/year_repo" class="nav-link"><i class="nav-icon fas fa-chart-line"></i><p>Yearly Report</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/custom_sales_report" class="nav-link"><i class="nav-icon fas fa-filter"></i><p>Custom Sales</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/daily_service_report" class="nav-link"><i class="nav-icon fas fa-wrench"></i><p>Daily Service</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/custom_service_report" class="nav-link"><i class="nav-icon fas fa-cogs"></i><p>Custom Service</p></a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Other Reports Group -->
+                        <li class="nav-item has-treeview">
+                            <a href="#" class="nav-link">
+                                <i class="nav-icon fas fa-ellipsis-h text-muted"></i>
+                                <p>Other Reports <i class="right fas fa-angle-left"></i></p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item"><a href="./?page=reports/client_payment_report" class="nav-link"><i class="nav-icon fas fa-user-friends"></i><p>Client Payments</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/loan_report" class="nav-link"><i class="nav-icon fas fa-handshake"></i><p>Loan Report</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/business" class="nav-link"><i class="nav-icon fas fa-briefcase"></i><p>Business Summary</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/vyapar_darpan" class="nav-link"><i class="nav-icon fas fa-store"></i><p>Vyapar Darpan</p></a></li>
+                                <li class="nav-item"><a href="./?page=reports/activity_log" class="nav-link"><i class="nav-icon fas fa-fingerprint text-danger"></i><p>Activity Log</p></a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
                 
@@ -117,7 +161,8 @@
 						<li class="nav-item"><a href="<?php echo base_url ?>admin/?page=expenses/finance_report" class="nav-link"><i class="nav-icon fas fa-money-bill-wave"></i><p>Pay Outs</p></a></li>
                      <!--   <li class="nav-item"><a href="./?page=attendance/advance_ledger" class="nav-link"><i class="nav-icon fas fa-hand-holding-usd"></i><p>Advance</p></a></li>-->
                         <li class="nav-item"><a href="<?php echo base_url ?>admin/?page=salery/salary_management" class="nav-link"><i class="nav-icon fas fa-hand-holding-usd"></i><p>Salary</p></a></li>
-                        <li class="nav-item"><a href="<?php echo base_url ?>admin/?page=mechanics/commission_history" class="nav-link"><i class="nav-icon fas fa-coins"></i><p>Commission</p></a></li>
+                        <li class="nav-item"><a href="<?php echo base_url ?>admin/?page=mechanics/commission_master" class="nav-link"><i class="nav-icon fas fa-percentage"></i><p>Commission Master</p></a></li>
+                        <li class="nav-item"><a href="<?php echo base_url ?>admin/?page=mechanics/commission_history" class="nav-link"><i class="nav-icon fas fa-coins"></i><p>Commission History</p></a></li>
                         <li class="nav-item"><a href="./?page=services" class="nav-link"><i class="nav-icon fas fa-th-list"></i><p>Services</p></a></li>
                         <li class="nav-item"><a href="./?page=products" class="nav-link"><i class="nav-icon fas fa-cogs"></i><p>Products</p></a></li>
                         <li class="nav-item"><a href="./?page=mechanics" class="nav-link"><i class="nav-icon fas fa-user-friends"></i><p>Mechanics</p></a></li>

@@ -34,9 +34,11 @@ trait StaffTrait {
                 $data .= " `{$k}`='{$v}' ";
             }
         }
-        if(isset($commission_percent)){
-            $effective_date = date('Y-m-d');
-            $this->conn->query("INSERT INTO `mechanic_commission_history` set mechanic_id = '{$id}', commission_percent = '{$commission_percent}', effective_date = '{$effective_date}' ");
+        // Commission logic moved after save to get correct $mid for new records
+        $old_commission = 0;
+        if(!empty($id)){
+            $old_comm_row = $this->conn->query("SELECT commission_percent FROM mechanic_list where id = '{$id}'")->fetch_array();
+            $old_commission = $old_comm_row ? $old_comm_row['commission_percent'] : 0;
         }
         if(empty($id)){
             $sql = "INSERT INTO `mechanic_list` set {$data} ";
@@ -52,6 +54,11 @@ trait StaffTrait {
             if(empty($id) || (isset($old_salary) && isset($daily_salary) && $old_salary != $daily_salary)){
                 $effective_date = date('Y-m-d');
                 $this->conn->query("INSERT INTO `mechanic_salary_history` SET mechanic_id = '{$mid}', salary = '{$daily_salary}', effective_date = '{$effective_date}'");
+            }
+            // Log Commission History if changed
+            if(empty($id) || (isset($commission_percent) && $old_commission != $commission_percent)){
+                $effective_date = date('Y-m-d');
+                $this->conn->query("INSERT INTO `mechanic_commission_history` SET mechanic_id = '{$mid}', commission_percent = '{$commission_percent}', effective_date = '{$effective_date}'");
             }
             $this->log_activity(empty($id) ? "Added Mechanic" : "Updated Mechanic", "Mechanics", $mid, "Name: " . ($firstname . ' ' . $lastname));
             if(empty($id)) $this->settings->set_flashdata('success',"New Mechanic successfully saved.");
@@ -197,5 +204,100 @@ trait StaffTrait {
             return json_encode(array('status' => 'success'));
         }
         return json_encode(array('status' => 'failed'));
+    }
+
+    // =============================================
+    // COMMISSION RATE MASTER FUNCTIONS
+    // =============================================
+
+    /**
+     * Save a new commission rate for a mechanic.
+     * - Inserts a row into mechanic_commission_history with the effective_date.
+     * - Updates commission_percent in mechanic_list to the LATEST rate (by effective_date).
+     */
+    function update_commission_rate(){
+        extract($_POST);
+        if(empty($id) || !isset($new_rate) || empty($effective_date))
+            return json_encode(['status' => 'failed', 'msg' => 'Saari fields bhari honi chahiye.']);
+
+        $id             = $this->conn->real_escape_string($id);
+        $new_rate       = floatval($new_rate);
+        $effective_date = $this->conn->real_escape_string($effective_date);
+
+        // Insert into history
+        $ins = $this->conn->query("INSERT INTO `mechanic_commission_history` SET
+            mechanic_id       = '{$id}',
+            commission_percent = '{$new_rate}',
+            effective_date    = '{$effective_date}'");
+
+        if(!$ins)
+            return json_encode(['status' => 'failed', 'msg' => $this->conn->error]);
+
+        // Sync mechanic_list.commission_percent to the LATEST effective rate
+        $latest = $this->conn->query("SELECT commission_percent FROM `mechanic_commission_history`
+            WHERE mechanic_id = '{$id}'
+            ORDER BY effective_date DESC, id DESC LIMIT 1")->fetch_assoc();
+        if($latest)
+            $this->conn->query("UPDATE `mechanic_list` SET commission_percent = '{$latest['commission_percent']}' WHERE id = '{$id}'");
+
+        $this->log_activity("Updated Commission Rate", "Mechanics", $id, "New Rate: {$new_rate}% from {$effective_date}");
+        return json_encode(['status' => 'success']);
+    }
+
+    /**
+     * Edit an existing commission history row (rate + effective_date).
+     * After editing, syncs mechanic_list to the new latest rate.
+     */
+    function update_commission_history_entry(){
+        extract($_POST);
+        if(empty($h_id) || !isset($h_rate) || empty($h_date))
+            return json_encode(['status' => 'failed', 'msg' => 'Invalid data.']);
+
+        $h_id   = $this->conn->real_escape_string($h_id);
+        $h_rate = floatval($h_rate);
+        $h_date = $this->conn->real_escape_string($h_date);
+
+        if(!$this->conn->query("UPDATE `mechanic_commission_history` SET
+            commission_percent = '{$h_rate}',
+            effective_date     = '{$h_date}'
+            WHERE id = '{$h_id}'"))
+            return json_encode(['status' => 'failed', 'msg' => $this->conn->error]);
+
+        // Sync mechanic_list to the latest effective rate
+        $m_id = $this->conn->query("SELECT mechanic_id FROM `mechanic_commission_history` WHERE id = '{$h_id}'")->fetch_array()['mechanic_id'];
+        $latest = $this->conn->query("SELECT commission_percent FROM `mechanic_commission_history`
+            WHERE mechanic_id = '{$m_id}'
+            ORDER BY effective_date DESC, id DESC LIMIT 1")->fetch_assoc();
+        if($latest)
+            $this->conn->query("UPDATE `mechanic_list` SET commission_percent = '{$latest['commission_percent']}' WHERE id = '{$m_id}'");
+
+        return json_encode(['status' => 'success']);
+    }
+
+    /**
+     * Delete a single commission history record.
+     * After deletion, syncs mechanic_list to the new latest rate (or 0 if none left).
+     */
+    function delete_commission_history(){
+        extract($_POST);
+        if(empty($id)) return json_encode(['status' => 'failed', 'msg' => 'ID required.']);
+        $id = $this->conn->real_escape_string($id);
+
+        // Get mechanic_id before deletion
+        $row = $this->conn->query("SELECT mechanic_id FROM `mechanic_commission_history` WHERE id = '{$id}'")->fetch_assoc();
+        if(!$row) return json_encode(['status' => 'failed', 'msg' => 'Record not found.']);
+        $m_id = $row['mechanic_id'];
+
+        if(!$this->conn->query("DELETE FROM `mechanic_commission_history` WHERE id = '{$id}'"))
+            return json_encode(['status' => 'failed', 'msg' => $this->conn->error]);
+
+        // Sync mechanic_list to remaining latest rate
+        $latest = $this->conn->query("SELECT commission_percent FROM `mechanic_commission_history`
+            WHERE mechanic_id = '{$m_id}'
+            ORDER BY effective_date DESC, id DESC LIMIT 1")->fetch_assoc();
+        $sync_rate = $latest ? $latest['commission_percent'] : 0;
+        $this->conn->query("UPDATE `mechanic_list` SET commission_percent = '{$sync_rate}' WHERE id = '{$m_id}'");
+
+        return json_encode(['status' => 'success']);
     }
 }

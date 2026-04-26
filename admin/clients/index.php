@@ -323,6 +323,11 @@
 </style>
 
 <?php
+// Date range filter for period-specific stats
+$from = isset($_GET['from']) ? $_GET['from'] : '';
+$to = isset($_GET['to']) ? $_GET['to'] : '';
+$is_filtered = (!empty($from) && !empty($to));
+
 // Firm/shop details from settings
 $firm_name = "V-Technologies";
 $firm_phone = "9179105875";
@@ -371,7 +376,7 @@ try {
             // Fetch total clients
             $total_clients = $conn->query("SELECT COUNT(*) as cnt FROM client_list WHERE delete_flag = 0")->fetch_assoc()['cnt'];
             
-            // FAST way to calculate total outstanding using independent sum queries
+            // Lifetime totals
             $tot_ob = $conn->query("SELECT SUM(opening_balance) as tot FROM client_list WHERE delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
             $tot_repair = $conn->query("SELECT SUM(t.amount) as tot FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE t.status = 5 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
             $tot_ds = $conn->query("SELECT SUM(d.total_amount) as tot FROM direct_sales d INNER JOIN client_list c ON d.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
@@ -379,20 +384,70 @@ try {
             $tot_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
             
             $total_outstanding = $tot_ob + $tot_repair + $tot_ds + $tot_loans - $tot_paid;
+
+            // Period specific totals (if filtered)
+            $period_billed = 0;
+            $period_paid = 0;
+            if($is_filtered){
+                $p_repair = $conn->query("SELECT SUM(t.amount) as tot FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE t.status = 5 AND c.delete_flag = 0 AND DATE(t.date_completed) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $p_ds = $conn->query("SELECT SUM(d.total_amount) as tot FROM direct_sales d INNER JOIN client_list c ON d.client_id = c.id WHERE c.delete_flag = 0 AND DATE(d.date_created) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $p_loans = $conn->query("SELECT SUM(l.total_payable) as tot FROM client_loans l INNER JOIN client_list c ON l.client_id = c.id WHERE l.status = 1 AND c.delete_flag = 0 AND DATE(l.loan_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $period_billed = $p_repair + $p_ds + $p_loans;
+
+                $period_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND DATE(p.payment_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+            }
             ?>
+            
+            <div class="row no-print mb-3">
+                <div class="col-12">
+                    <form action="" method="GET" id="period-filter-form">
+                        <input type="hidden" name="page" value="clients">
+                        <div class="card bg-light border">
+                            <div class="card-body p-2">
+                                <div class="row align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold">From Date</label>
+                                        <input type="date" name="from" value="<?= $from ?>" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="small font-weight-bold">To Date</label>
+                                        <input type="date" name="to" value="<?= $to ?>" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-filter"></i> Period Filter</button>
+                                        <a href="./?page=clients" class="btn btn-sm btn-secondary"><i class="fa fa-undo"></i> Reset</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div class="summary-cards">
-                <div class="summary-item">
+                <div class="summary-item border-left-info">
                     <div class="label">Total Clients</div>
                     <div class="value"><?php echo $total_clients; ?></div>
                 </div>
                 <div class="summary-item">
-                    <div class="label">Total Outstanding (incl. Loans)</div>
+                    <div class="label">Total Outstanding (Lifetime)</div>
                     <div class="value text-danger">₹ <?php echo number_format($total_outstanding, 2); ?></div>
                 </div>
-                <div class="summary-item">
+                <?php if($is_filtered): ?>
+                <div class="summary-item border-left-success">
+                    <div class="label text-success">Billed in Period</div>
+                    <div class="value">₹ <?php echo number_format($period_billed, 2); ?></div>
+                </div>
+                <div class="summary-item border-left-primary">
+                    <div class="label text-primary">Received in Period</div>
+                    <div class="value">₹ <?php echo number_format($period_paid, 2); ?></div>
+                </div>
+                <?php else: ?>
+                <div class="summary-item border-left-primary">
                     <div class="label">Net Receivable</div>
                     <div class="value text-primary">₹ <?php echo number_format($total_outstanding, 2); ?></div>
                 </div>
+                <?php endif; ?>
             </div>
 
             <!-- Filter Bar (Desktop & Mobile) -->

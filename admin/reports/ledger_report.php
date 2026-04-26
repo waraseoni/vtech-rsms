@@ -1,7 +1,4 @@
 <?php 
-require_once('../config.php');
-require_once('../classes/CsrfProtection.php');
-
 $from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
 $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-d");
 ?>

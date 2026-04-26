@@ -5,10 +5,16 @@
 <?php endif;?>
 
 <?php 
+$from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
+$to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-d");
+
 $total_mechanics   = $conn->query("SELECT COUNT(*) FROM mechanic_list WHERE delete_flag = 0")->fetch_array()[0] ?? 0;
 $active_mechanics  = $conn->query("SELECT COUNT(*) FROM mechanic_list WHERE status = 1 AND delete_flag = 0")->fetch_array()[0] ?? 0;
 $inactive_mechanics= $conn->query("SELECT COUNT(*) FROM mechanic_list WHERE status = 0 AND delete_flag = 0")->fetch_array()[0] ?? 0;
-$total_salary      = $conn->query("SELECT SUM(daily_salary) FROM mechanic_list WHERE status = 1 AND delete_flag = 0")->fetch_array()[0] ?? 0;
+
+// Filtered Period Stats
+$period_svc = $conn->query("SELECT SUM(ts.price) FROM transaction_list tl INNER JOIN transaction_services ts ON ts.transaction_id = tl.id WHERE tl.status = 5 AND tl.date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'")->fetch_array()[0] ?? 0;
+$period_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE status = 5 AND date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'")->fetch_array()[0] ?? 0;
 ?>
 
 <!-- Summary Stats -->
@@ -33,8 +39,14 @@ $total_salary      = $conn->query("SELECT SUM(daily_salary) FROM mechanic_list W
     </div>
     <div class="col-lg-3 col-6">
         <div class="small-box bg-danger">
-            <div class="inner"><h3>₹<?= number_format($total_salary, 0) ?></h3><p>Daily Salary (Active)</p></div>
-            <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="inner"><h3>₹<?= number_format($period_svc, 0) ?></h3><p>Total Service (Period)</p></div>
+            <div class="icon"><i class="fas fa-tools"></i></div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-navy">
+            <div class="inner"><h3>₹<?= number_format($period_comm, 0) ?></h3><p>Total Commission (Period)</p></div>
+            <div class="icon"><i class="fas fa-coins"></i></div>
         </div>
     </div>
 </div>
@@ -43,13 +55,36 @@ $total_salary      = $conn->query("SELECT SUM(daily_salary) FROM mechanic_list W
 <div class="card card-outline card-primary shadow-sm">
     <div class="card-header">
         <h3 class="card-title"><b><i class="fas fa-hard-hat text-primary"></i> Mechanics Directory</b></h3>
-        <div class="card-tools">
+        <div class="card-tools d-flex">
+            <a href="./?page=mechanics/commission_master" class="btn btn-flat btn-sm btn-outline-navy mr-1"><i class="fas fa-percentage text-primary"></i> Commission Master</a>
+            <a href="./?page=mechanics/commission_history" class="btn btn-flat btn-sm btn-outline-navy mr-2"><i class="fas fa-coins text-warning"></i> Commission History</a>
             <a href="javascript:void(0)" id="create_new" class="btn btn-flat btn-sm btn-primary">
                 <i class="fas fa-user-plus"></i> Add New Mechanic
             </a>
         </div>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
+        <div class="row mb-3 align-items-end px-3">
+            <div class="col-md-10">
+                <form id="filter-form" action="" method="GET">
+                    <input type="hidden" name="page" value="mechanics">
+                    <div class="row align-items-end">
+                        <div class="form-group col-md-3 mb-0">
+                            <label for="from" class="control-label text-sm">From Date</label>
+                            <input type="date" name="from" id="from" class="form-control form-control-sm" value="<?= $from ?>" required>
+                        </div>
+                        <div class="form-group col-md-3 mb-0">
+                            <label for="to" class="control-label text-sm">To Date</label>
+                            <input type="date" name="to" id="to" class="form-control form-control-sm" value="<?= $to ?>" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-sm btn-primary btn-flat" type="submit"><i class="fa fa-filter"></i> Apply Filter</button>
+                            <a href="./?page=mechanics" class="btn btn-sm btn-secondary btn-flat"><i class="fa fa-redo"></i> Reset</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover table-striped table-bordered mb-0" id="list">
                 <thead class="bg-navy">
@@ -57,18 +92,41 @@ $total_salary      = $conn->query("SELECT SUM(daily_salary) FROM mechanic_list W
                         <th class="text-center" style="width:50px;">#</th>
                         <th class="text-center" style="width:70px;">Photo</th>
                         <th>Name / Contact</th>
-                        <th style="width:130px;">Designation</th>
-                        <th class="text-center" style="width:110px;">Daily Salary</th>
-                        <th class="text-center" style="width:110px;">Commission</th>
-                        <th class="text-center" style="width:120px;">Joined</th>
+                        <th style="width:120px;">Designation</th>
+                        <th class="text-center" style="width:100px;">Daily Salary</th>
+                        <th class="text-center" style="width:100px;">Comm. Rate</th>
+                        <th class="text-right" style="width:130px;">Svc Earned (P)</th>
+                        <th class="text-right" style="width:130px;">Commission (P)</th>
+                        <th class="text-center" style="width:100px;">Joined</th>
                         <th class="text-center" style="width:90px;">Status</th>
-                        <th class="text-center" style="width:110px;">Action</th>
+                        <th class="text-center" style="width:100px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
                     $i = 1;
-                    $qry = $conn->query("SELECT *, concat(firstname, ' ', coalesce(concat(middlename, ' '), ''), lastname) as `name` from `mechanic_list` where delete_flag = 0 order by `name` asc ");
+                    $qry = $conn->query("
+                        SELECT ml.*,
+                               concat(ml.firstname, ' ', coalesce(concat(ml.middlename, ' '), ''), ml.lastname) as `name`,
+                               COALESCE((
+                                   SELECT SUM(ts.price)
+                                   FROM transaction_list tl
+                                   INNER JOIN transaction_services ts ON ts.transaction_id = tl.id
+                                   WHERE tl.mechanic_id = ml.id 
+                                     AND tl.status = 5 
+                                     AND tl.date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'
+                               ), 0) as total_svc_earned,
+                               COALESCE((
+                                   SELECT SUM(tl2.mechanic_commission_amount)
+                                   FROM transaction_list tl2
+                                   WHERE tl2.mechanic_id = ml.id 
+                                     AND tl2.status = 5 
+                                     AND tl2.date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'
+                               ), 0) as total_commission_earned
+                        FROM `mechanic_list` ml
+                        WHERE ml.delete_flag = 0
+                        ORDER BY `name` ASC
+                    ");
                     while($row = $qry->fetch_assoc()):
                         $avatar = !empty($row['avatar']) ? $row['avatar'] : 'default-avatar.jpg';
                         $avatar_url = validate_image('uploads/avatars/'.$avatar); 
@@ -94,6 +152,12 @@ $total_salary      = $conn->query("SELECT SUM(daily_salary) FROM mechanic_list W
                         </td>
                         <td class="text-center align-middle">
                             <span class="badge badge-secondary"><?= $row['commission_percent'] ?? '0' ?>%</span>
+                        </td>
+                        <td class="text-right align-middle">
+                            <span class="font-weight-bold text-info">₹<?= number_format($row['total_svc_earned'], 2) ?></span>
+                        </td>
+                        <td class="text-right align-middle">
+                            <span class="font-weight-bold text-success">₹<?= number_format($row['total_commission_earned'], 2) ?></span>
                         </td>
                         <td class="text-center align-middle">
                             <small class="text-muted"><?= isset($row['date_added']) ? date("d M, Y", strtotime($row['date_added'])) : 'N/A' ?></small>
@@ -152,7 +216,7 @@ $(document).ready(function(){
         "order": [[2, "asc"]],
         "responsive": true,
         "columnDefs": [
-            { "orderable": false, "targets": [1, 8] }
+            { "orderable": false, "targets": [1, 10] }
         ],
         "language": {
             "emptyTable": "<i class='fas fa-hard-hat'></i> No mechanics found",

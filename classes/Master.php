@@ -81,6 +81,9 @@ switch ($action) {
 	case 'update_salary_rate': echo $Master->update_salary_rate(); break;
 	case 'delete_salary_history': echo $Master->delete_salary_history(); break;
 	case 'update_history_entry': echo $Master->update_history_entry(); break;
+	case 'update_commission_rate': echo $Master->update_commission_rate(); break;
+	case 'update_commission_history_entry': echo $Master->update_commission_history_entry(); break;
+	case 'delete_commission_history': echo $Master->delete_commission_history(); break;
 	case 'delete_transaction_image': echo $Master->delete_transaction_image(); break;
 	case 'save_lender': echo $Master->save_lender(); break;
 	case 'delete_lender': echo $Master->delete_lender(); break;

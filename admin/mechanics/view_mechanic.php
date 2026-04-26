@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once('../config.php');
 
 if(isset($_GET['id']) && $_GET['id'] > 0){
@@ -63,9 +63,13 @@ while($f_row = $f_att_qry->fetch_assoc()){
     $filtered_salary += ($f_row['status'] == 3) ? ($rate_c / 2) : $rate_c;
 }
 
-$filtered_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '{$id}' AND date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'")->fetch_array()[0] ?? 0;
+$filtered_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '{$id}' AND status = 5 AND date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'")->fetch_array()[0] ?? 0;
+$filtered_svc = $conn->query("SELECT SUM(ts.price) FROM transaction_list tl INNER JOIN transaction_services ts ON ts.transaction_id = tl.id WHERE tl.mechanic_id = '{$id}' AND tl.status = 5 AND tl.date_created BETWEEN '{$from} 00:00:00' AND '{$to} 23:59:59'")->fetch_array()[0] ?? 0;
 $filtered_earned = $filtered_salary + $filtered_comm;
 $filtered_paid = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE mechanic_id = '{$id}' AND date_paid BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
+
+// Lifetime totals
+$all_time_svc = $conn->query("SELECT SUM(ts.price) FROM transaction_list tl INNER JOIN transaction_services ts ON ts.transaction_id = tl.id WHERE tl.mechanic_id = '{$id}' AND tl.status = 5")->fetch_array()[0] ?? 0;
 
 // Calculate filtered balance
 $filtered_balance = $filtered_earned - $filtered_paid;
@@ -150,7 +154,7 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                 <div class="small-box bg-primary">
                     <div class="inner">
                         <h4>₹ <?= number_format($filtered_earned, 2) ?></h4>
-                        <p>Total Earned (Period)<br><small>Salary: ₹<?= number_format($filtered_salary,2) ?> | Comm: ₹<?= number_format($filtered_comm,2) ?></small></p>
+                        <p>Total Earned (Period)<br><small>Svc Vol: ₹<?= number_format($filtered_svc,2) ?> | Comm: ₹<?= number_format($filtered_comm,2) ?> | Sal: ₹<?= number_format($filtered_salary,2) ?></small></p>
                     </div>
                     <div class="icon"><i class="fas fa-wallet"></i></div>
                 </div>
@@ -177,7 +181,7 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                 <div class="small-box bg-success">
                     <div class="inner">
                         <h4>₹ <?= number_format($net_payable_overall, 2) ?></h4>
-                        <p>Overall Balance<br><small>Lifetime Pending</small></p>
+                        <p>Overall Balance<br><small>Lifetime Svc: ₹<?= number_format($all_time_svc, 2) ?></small></p>
                     </div>
                     <div class="icon"><i class="fas fa-money-check-alt"></i></div>
                 </div>
@@ -253,50 +257,78 @@ $filtered_balance = $filtered_earned - $filtered_paid;
                                                 <th class="py-2"><i class="fa fa-calendar mr-1"></i> Date</th>
                                                 <th class="py-2">Job ID</th>
                                                 <th class="py-2">Item/Service</th>
-                                                <th class="py-2">Commission</th>
+                                                <th class="py-2 text-right">Service Charge</th>
+                                                <th class="py-2 text-right">Commission</th>
                                                 <th class="py-2">Status</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php 
-                                            $jobs = $conn->query("SELECT * FROM transaction_list WHERE mechanic_id = '{$id}' AND status = 5 AND date_updated BETWEEN '{$from}' AND '{$to}' ORDER BY date_updated DESC");
+                                            $jobs = $conn->query("
+                                                SELECT t.*,
+                                                       COALESCE((SELECT SUM(ts.price) FROM transaction_services ts WHERE ts.transaction_id = t.id), 0) as svc_total
+                                                FROM transaction_list t
+                                                WHERE t.mechanic_id = '{$id}'
+                                                  AND t.status = 5
+                                                  AND t.date_updated BETWEEN '{$from}' AND '{$to}'
+                                                ORDER BY t.date_updated DESC
+                                            ");
+                                            $wh_total_svc  = 0;
+                                            $wh_total_comm = 0;
                                             while($row = $jobs->fetch_assoc()):
+                                                $wh_total_svc  += $row['svc_total'];
+                                                $wh_total_comm += $row['mechanic_commission_amount'];
                                             ?>
                                             <tr>
                                                 <td class="py-2">
                                                     <small><?= date("d M, Y", strtotime($row['date_updated'])) ?></small>
                                                 </td>
                                                 <td class="py-2">
-                                                    <a href="./?page=transactions/view_details&id=<?= $row['id'] ?>" class="text-primary">
+                                                    <a href="./?page=transactions/view_details&id=<?= $row['id'] ?>" class="text-primary font-weight-bold">
                                                         <?= $row['job_id'] ?>
                                                     </a>
                                                 </td>
                                                 <td class="py-2">
                                                     <small><?= htmlspecialchars($row['item']) ?></small>
                                                 </td>
-                                                <td class="py-2">
-                                                    <span class="badge badge-success">
+                                                <td class="py-2 text-right">
+                                                    <span class="badge badge-info" style="font-size:.85rem;">
+                                                        ₹<?= number_format($row['svc_total'], 2) ?>
+                                                    </span>
+                                                </td>
+                                                <td class="py-2 text-right">
+                                                    <span class="badge badge-success" style="font-size:.85rem;">
                                                         ₹<?= number_format($row['mechanic_commission_amount'], 2) ?>
                                                     </span>
                                                 </td>
                                                 <td class="py-2">
                                                     <span class="badge badge-success">
-                                                        <i class="fa fa-check"></i> Completed
+                                                        <i class="fa fa-check"></i> Delivered
                                                     </span>
                                                 </td>
                                             </tr>
                                             <?php endwhile; ?>
                                             <?php if($job_count == 0): ?>
                                             <tr>
-                                                <td colspan="5" class="text-center py-4">
+                                                <td colspan="6" class="text-center py-4">
                                                     <div class="text-muted">
                                                         <i class="fa fa-tools fa-2x mb-2"></i>
-                                                        <p>No work history found</p>
+                                                        <p>No work history found for this period</p>
                                                     </div>
                                                 </td>
                                             </tr>
                                             <?php endif; ?>
                                         </tbody>
+                                        <?php if($job_count > 0): ?>
+                                        <tfoot>
+                                            <tr class="bg-light font-weight-bold text-right">
+                                                <td colspan="3" class="text-right text-muted">Period Total (<?= $job_count ?> jobs):</td>
+                                                <td><span class="text-info">₹<?= number_format($wh_total_svc, 2) ?></span></td>
+                                                <td><span class="text-success">₹<?= number_format($wh_total_comm, 2) ?></span></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                        <?php endif; ?>
                                     </table>
                                 </div>
                             </div>
@@ -521,6 +553,7 @@ $(function(){
             "info": "Showing _START_ to _END_ of _TOTAL_ jobs",
             "search": "Search jobs..."
         },
+        "columnDefs": [{ "orderable": false, "targets": [5] }],
         "dom": '<"row"<"col-sm-6"l><"col-sm-6"f>><"row"<"col-sm-12"tr>><"row"<"col-sm-5"i><"col-sm-7"p>>'
     });
     

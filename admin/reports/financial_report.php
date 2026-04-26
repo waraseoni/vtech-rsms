@@ -1,7 +1,4 @@
 <?php 
-require_once('../config.php');
-require_once('../classes/CsrfProtection.php');
-
 $from = isset($_GET['from']) ? $_GET['from'] : date("Y-m-01");
 $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-t");
 ?>
@@ -53,13 +50,13 @@ $to = isset($_GET['to']) ? $_GET['to'] : date("Y-m-t");
                                          FROM transaction_services ts 
                                          INNER JOIN transaction_list t ON ts.transaction_id = t.id 
                                          WHERE t.status = 5 
-                                         AND date(t.date_created) BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;        
+                                         AND date(t.date_completed) BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;        
             // B. Parts Revenue (Sold in Repair)
             $parts_rev = $conn->query("SELECT SUM(tp.qty * tp.price) 
                                        FROM transaction_products tp 
                                        INNER JOIN transaction_list t ON tp.transaction_id = t.id 
                                        WHERE t.status = 5 
-                                       AND date(t.date_created) BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
+                                       AND date(t.date_completed) BETWEEN '{$from}' AND '{$to}'")->fetch_array()[0] ?? 0;
             // C. Direct Sales
             $direct_sales_rev = $conn->query("SELECT SUM(total_amount) 
                                               FROM direct_sales 

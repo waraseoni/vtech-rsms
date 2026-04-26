@@ -1,34 +1,14 @@
 <?php
-// business_reports_with_filters.php
-
-// Start session only if not already started
-if (session_status() == PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Database connection
-$host = '127.0.0.1';
-$dbname = 'vikram_db';
-$username = 'root';
-$password = '';
-
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
-}
-
 // Date Filter Handling
 $current_year = date('Y');
-$current_month = (int)date('m');  // Convert to integer
+$current_month = (int)date('m');
 $current_month_name = date('F');
 $current_date = date('Y-m-d');
 
 // Get filter parameters
 $filter_year = isset($_GET['year']) ? intval($_GET['year']) : $current_year;
-$filter_month = isset($_GET['month']) ? intval($_GET['month']) : $current_month;  // Force to integer
-$filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'monthly'; // monthly, yearly, custom
+$filter_month = isset($_GET['month']) ? intval($_GET['month']) : $current_month;
+$filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'monthly';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
 
@@ -36,7 +16,7 @@ $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
 if ($filter_month < 1 || $filter_month > 12) $filter_month = $current_month;
 if ($filter_year < 2020 || $filter_year > $current_year + 1) $filter_year = $current_year;
 
-// Calculate date ranges based on filter type
+// Calculate date ranges
 if ($filter_type == 'monthly') {
     $start_date = date("$filter_year-$filter_month-01");
     $end_date = date("$filter_year-$filter_month-t", strtotime($start_date));
@@ -45,54 +25,38 @@ if ($filter_type == 'monthly') {
     $end_date = date("$filter_year-12-31");
 }
 
-// Previous and next month navigation
-if (isset($_GET['nav']) && $_GET['nav'] == 'prev') {
-    if ($filter_type == 'monthly') {
-        $filter_month--;
-        if ($filter_month < 1) {
-            $filter_month = 12;
-            $filter_year--;
-        }
-    } elseif ($filter_type == 'yearly') {
-        $filter_year--;
+// Navigation handling
+if (isset($_GET['nav'])) {
+    if ($_GET['nav'] == 'prev') {
+        if ($filter_type == 'monthly') {
+            $filter_month--;
+            if ($filter_month < 1) { $filter_month = 12; $filter_year--; }
+        } elseif ($filter_type == 'yearly') { $filter_year--; }
+    } elseif ($_GET['nav'] == 'next') {
+        if ($filter_type == 'monthly') {
+            $filter_month++;
+            if ($filter_month > 12) { $filter_month = 1; $filter_year++; }
+        } elseif ($filter_type == 'yearly') { $filter_year++; }
     }
-    // Redirect with page parameter
-   echo "<script>window.location = '?page=reports/balancesheet&year=$filter_year&month=$filter_month&filter_type=$filter_type';</script>";
+    echo "<script>location.href = './?page=reports/balancesheet&year=$filter_year&month=$filter_month&filter_type=$filter_type';</script>";
     exit();
 }
 
-if (isset($_GET['nav']) && $_GET['nav'] == 'next') {
-    if ($filter_type == 'monthly') {
-        $filter_month++;
-        if ($filter_month > 12) {
-            $filter_month = 1;
-            $filter_year++;
-        }
-    } elseif ($filter_type == 'yearly') {
-        $filter_year++;
-    }
-    // Redirect with page parameter
-    echo "<script>window.location = '?page=reports/balancesheet&year=$filter_year&month=$filter_month&filter_type=$filter_type';</script>";
-    exit();
-}
-
-// Reset filter
 if (isset($_GET['reset'])) {
-    echo "<script>window.location = '?page=reports/balancesheet';</script>";
+    echo "<script>location.href = './?page=reports/balancesheet';</script>";
     exit();
 }
 
-// Function to execute query and fetch results
-function executeQuery($conn, $sql) {
-    try {
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
-        // Log error but continue
-        error_log("Query Error: " . $e->getMessage());
-        return [];
+// Function to execute query using system $conn (mysqli)
+function executeQuery($sql) {
+    global $conn;
+    $qry = $conn->query($sql);
+    if(!$qry) return [];
+    $data = [];
+    while($row = $qry->fetch_assoc()){
+        $data[] = $row;
     }
+    return $data;
 }
 
 // Get all reports with date filters
@@ -256,7 +220,7 @@ if (!empty($columnExists)) {
         ORDER BY total_repair_amount DESC
     ";
 }
-$reports['customer_ledger'] = executeQuery($conn, $customerLedgerSQL);
+$reports['customer_ledger'] = executeQuery($customerLedgerSQL);
 
 // Check for detailed ledger request
 if (isset($_GET['client_id'])) {
@@ -269,7 +233,7 @@ if (isset($_GET['client_id'])) {
         FROM client_list 
         WHERE id = $client_id
     ";
-    $client_data = executeQuery($conn, $clientSQL);
+    $client_data = executeQuery($clientSQL);
     if (!empty($client_data)) {
         $client_data = $client_data[0];
         $reports['client_name'] = $client_data['customer_name'];
@@ -301,7 +265,7 @@ if (isset($_GET['client_id'])) {
             ) as events
             ORDER BY event_date ASC
         ";
-        $detailed_entries = executeQuery($conn, $detailedLedgerSQL);
+        $detailed_entries = executeQuery($detailedLedgerSQL);
 
         // Prepare ledger with running balance
         $ledger = [];
@@ -379,7 +343,7 @@ $mechanicLedgerSQL = "
     WHERE m.delete_flag = 0
     HAVING (balance_amount != 0 OR days_worked_in_period > 0)
 ";
-$reports['mechanic_ledger'] = executeQuery($conn, $mechanicLedgerSQL);
+$reports['mechanic_ledger'] = executeQuery($mechanicLedgerSQL);
 
 // 3. Stock Inventory Summary (Corrected for repair products)
 $stockInventorySQL = "
@@ -427,7 +391,7 @@ $stockInventorySQL = "
     HAVING (sold_quantity > 0 OR total_stock_in > 0)
     ORDER BY sold_quantity DESC, total_stock_in DESC
 ";
-$reports['stock_inventory'] = executeQuery($conn, $stockInventorySQL);
+$reports['stock_inventory'] = executeQuery($stockInventorySQL);
 
 // 4. Income Summary - With Date Filter
 $incomeSQL = "
@@ -442,7 +406,7 @@ $incomeSQL = "
         COALESCE((SELECT SUM(total_amount) FROM direct_sales 
          WHERE date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'amount'
 ";
-$reports['income_summary'] = executeQuery($conn, $incomeSQL);
+$reports['income_summary'] = executeQuery($incomeSQL);
 
 // 5. Expense Summary - With Date Filter
 $expenseSQL = "
@@ -454,7 +418,7 @@ $expenseSQL = "
     GROUP BY category
     ORDER BY COALESCE(SUM(amount), 0) DESC
 ";
-$reports['expense_summary'] = executeQuery($conn, $expenseSQL);
+$reports['expense_summary'] = executeQuery($expenseSQL);
 
 // 6. Monthly Transaction Summary - With Date Filter (Added direct_income)
 $monthlySummarySQL = "
@@ -476,7 +440,7 @@ $monthlySummarySQL = "
     GROUP BY DATE_FORMAT(t.date_created, '%Y-%m')
     ORDER BY DATE_FORMAT(t.date_created, '%Y-%m') DESC
 ";
-$reports['monthly_summary'] = executeQuery($conn, $monthlySummarySQL);
+$reports['monthly_summary'] = executeQuery($monthlySummarySQL);
 
 // 7. Top Customers - With Date Filter (Updated with carry forward)
 // Check column existence again for this query
@@ -629,7 +593,7 @@ if (!empty($columnExists)) {
         LIMIT 10
     ";
 }
-$reports['top_customers'] = executeQuery($conn, $topCustomersSQL);
+$reports['top_customers'] = executeQuery($topCustomersSQL);
 
 // 8. Loan Ledger (Assuming this exists from original, if not, add your SQL here)
 $loanLedgerSQL = "
@@ -679,26 +643,15 @@ $loanLedgerSQL = "
     HAVING balance_amount > 0 OR paid_in_period > 0
     ORDER BY balance_amount DESC
 ";
-$reports['loan_ledger'] = executeQuery($conn, $loanLedgerSQL);
-
+$reports['loan_ledger'] = executeQuery($loanLedgerSQL);
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>व्यापार बैलेंस शीट</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
-    <style>
-        /* Add your styles here */
-        .report-card { border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-        .positive { color: green; font-weight: bold; }
-        .negative { color: red; font-weight: bold; }
-        .table-container { overflow-x: auto; max-height: 600px; }
-        .sticky-header th { position: sticky; top: 0; background: #f8f9fa; z-index: 10; }
+<style>
+    .report-card { border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+    .positive { color: green; font-weight: bold; }
+    .negative { color: red; font-weight: bold; }
+    .table-container { overflow-x: auto; max-height: 600px; }
+    .sticky-header th { position: sticky; top: 0; background: #f8f9fa; z-index: 10; }
+</style>9fa; z-index: 10; }
         /* More styles as in original */
     </style>
 </head>
@@ -820,30 +773,30 @@ $reports['loan_ledger'] = executeQuery($conn, $loanLedgerSQL);
         </div>
 
         <!-- Tabs -->
-        <ul class="nav nav-tabs mb-4" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#customer" type="button" role="tab"><i class="bi bi-people"></i> ग्राहक लेजर</button>
+        <ul class="nav nav-tabs mb-4" id="reportTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#customer" role="tab"><i class="bi bi-people"></i> ग्राहक लेजर</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#mechanic" type="button" role="tab"><i class="bi bi-tools"></i> मैकेनिक लेजर</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#mechanic" role="tab"><i class="bi bi-tools"></i> मैकेनिक लेजर</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#inventory" type="button" role="tab"><i class="bi bi-box-seam"></i> स्टॉक इन्वेंटरी</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#inventory" role="tab"><i class="bi bi-box-seam"></i> स्टॉक इन्वेंटरी</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#income" type="button" role="tab"><i class="bi bi-currency-rupee"></i> आय सारांश</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#income" role="tab"><i class="bi bi-currency-rupee"></i> आय सारांश</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#expense" type="button" role="tab"><i class="bi bi-wallet"></i> व्यय सारांश</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#expense" role="tab"><i class="bi bi-wallet"></i> व्यय सारांश</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#top_customers" type="button" role="tab"><i class="bi bi-star"></i> शीर्ष ग्राहक</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#top_customers" role="tab"><i class="bi bi-star"></i> शीर्ष ग्राहक</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#loan" type="button" role="tab"><i class="bi bi-bank"></i> लोन लेजर</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#loan" role="tab"><i class="bi bi-bank"></i> लोन लेजर</a>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#monthly" type="button" role="tab"><i class="bi bi-calendar-month"></i> मासिक सारांश</button>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#monthly" role="tab"><i class="bi bi-calendar-month"></i> मासिक सारांश</a>
             </li>
         </ul>
 
@@ -1683,41 +1636,21 @@ $reports['loan_ledger'] = executeQuery($conn, $loanLedgerSQL);
         });
 
         // Tab persistence
-        document.addEventListener('DOMContentLoaded', function() {
+        $(document).ready(function() {
             // Store active tab in localStorage
-            const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
-            tabEls.forEach(tab => {
-                tab.addEventListener('shown.bs.tab', function (event) {
-                    localStorage.setItem('activeTab', event.target.getAttribute('data-bs-target'));
-                });
+            $('.nav-tabs a').on('shown.bs.tab', function (e) {
+                localStorage.setItem('activeTab', $(e.target).attr('href'));
             });
 
             // Get active tab from localStorage
-            const activeTab = localStorage.getItem('activeTab');
+            var activeTab = localStorage.getItem('activeTab');
             if (activeTab) {
-                const tabTrigger = new bootstrap.Tab(document.querySelector(`[data-bs-target="${activeTab}"]`));
-                tabTrigger.show();
+                $('.nav-tabs a[href="' + activeTab + '"]').tab('show');
             }
-
-            // Update URL with tab hash
-            const tabButtons = document.querySelectorAll('.nav-tabs button');
-            tabButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const tabId = this.getAttribute('data-bs-target').substring(1);
-                    history.replaceState(null, null, '#' + tabId);
-                });
-            });
 
             // Check for hash in URL
             if (window.location.hash) {
-                const hash = window.location.hash;
-                const tabButton = document.querySelector(`[data-bs-target="${hash}"]`);
-                if (tabButton) {
-                    const tab = new bootstrap.Tab(tabButton);
-                    tab.show();
-                }
+                $('.nav-tabs a[href="' + window.location.hash + '"]').tab('show');
             }
         });
     </script>
-</body>
-</html>

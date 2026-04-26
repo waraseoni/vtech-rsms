@@ -68,14 +68,34 @@ trait SalesTrait {
             }
         }
 
-        $manual_comm = isset($_POST['mechanic_commission_amount']) ? (float)$_POST['mechanic_commission_amount'] : 0;
-        if($manual_comm <= 0){
-            $service_total = 0;
-            if(isset($_POST['service_price']) && is_array($_POST['service_price'])) foreach($_POST['service_price'] as $s_price) $service_total += (float)$s_price;
-            $m_id = isset($_POST['mechanic_id']) ? $_POST['mechanic_id'] : 0;
-            $comm_percent = (float)($this->conn->query("SELECT commission_percent FROM mechanic_list WHERE id = '{$m_id}'")->fetch_assoc()['commission_percent'] ?? 0);
-            $_POST['mechanic_commission_amount'] = ($service_total * $comm_percent) / 100;
+        // --- COMMISSION RECALCULATION ---
+        // Hamesha service_price[] array se fresh total calculate karo.
+        // Edit ke case mein bhi naye (updated) prices se commission banta hai.
+        $service_total = 0;
+        if(isset($_POST['service_price']) && is_array($_POST['service_price'])){
+            foreach($_POST['service_price'] as $s_price) $service_total += (float)$s_price;
         }
+        $m_id = isset($_POST['mechanic_id']) && is_numeric($_POST['mechanic_id']) ? (int)$_POST['mechanic_id'] : 0;
+        if($m_id > 0 && $service_total > 0){
+            // Job ki date ke hisaab se effective commission rate lo (history table se)
+            $job_date = !empty($id)
+                ? ($this->conn->query("SELECT DATE(date_created) as jd FROM transaction_list WHERE id = '{$id}'")->fetch_assoc()['jd'] ?? date('Y-m-d'))
+                : date('Y-m-d');
+            $rate_qry = $this->conn->query("SELECT commission_percent FROM mechanic_commission_history
+                WHERE mechanic_id = '{$m_id}' AND effective_date <= '{$job_date}'
+                ORDER BY effective_date DESC, id DESC LIMIT 1");
+            if($rate_qry && $rate_qry->num_rows > 0){
+                $comm_percent = (float)$rate_qry->fetch_assoc()['commission_percent'];
+            } else {
+                // Fallback: mechanic_list ki current rate
+                $comm_percent = (float)($this->conn->query("SELECT commission_percent FROM mechanic_list WHERE id = '{$m_id}'")->fetch_assoc()['commission_percent'] ?? 0);
+            }
+            $_POST['mechanic_commission_amount'] = round(($service_total * $comm_percent) / 100, 2);
+        } elseif($m_id == 0) {
+            // Koi mechanic assign nahi — commission 0
+            $_POST['mechanic_commission_amount'] = 0;
+        }
+        // Agar service_total == 0 hai to commission 0 hi rahega (services nahi hain)
 
         extract($_POST);
         $data = "";
