@@ -1525,7 +1525,7 @@ $(document).ready(function(){
                         <div class="card-actions">
                             <a href="./?page=transactions/view_details&id=${m_id}" class="action-btn btn-view"><i class="fas fa-eye"></i><span>View</span></a>
                             <a href="javascript:void(0)" onclick="${w_app_click}" class="action-btn btn-whatsapp"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
-                            <a href="../pdf/bill_template.php?job_id=${m_job_id}" target="_blank" class="action-btn btn-print"><i class="fas fa-print"></i><span>Print Bill</span></a>
+                            <a href="javascript:void(0)" class="action-btn btn-print combined-invoice-btn" data-client="${row.raw_client_id}" data-txid="${m_id}"><i class="fas fa-file-invoice"></i><span>Combined Invoice</span></a>
                             <a href="./?page=transactions/manage_transaction_old&id=${m_id}" class="action-btn btn-old-edit"><i class="fas fa-history"></i><span>Old Edit</span></a>
                             <a href="./?page=transactions/manage_transaction&id=${m_id}" class="action-btn btn-edit"><i class="fas fa-edit"></i><span>Edit</span></a>
                             <a href="javascript:void(0)" class="action-btn btn-delete delete_data" data-id="${m_id}"><i class="fas fa-trash"></i><span>Delete</span></a>
