@@ -106,7 +106,13 @@ $month_end   = date('Y-m-t', strtotime($month_start));
                         <td class="text-center" data-order="<?= strtotime($row['date_created']) ?>">
                             <?php echo date("d-M-Y", strtotime($row['date_created'])) ?>
                         </td>
-                        <td><b><?php echo $row['job_id'] ?></b> <br> <small><?php echo $row['code'] ?></small></td>
+                        <td>
+                            <a href="./?page=transactions/view_details&id=<?php echo $row['id'] ?>" class="text-navy font-weight-bold job-link">
+                                <?php echo $row['job_id'] ?>
+                            </a>
+                            <br>
+                            <small class="text-muted"><?php echo $row['code'] ?></small>
+                        </td>
                         <td><?php echo $row['m_name'] ?></td>
                         <td class="text-right">₹<?php echo number_format($s_total, 2) ?></td>
                         <td class="text-center">
@@ -166,5 +172,6 @@ $month_end   = date('Y-m-t', strtotime($month_start));
     .btn-outline-navy { color: #001f3f; border-color: #001f3f; }
     .btn-outline-navy:hover { background-color: #001f3f; color: #fff; }
     .bg-navy { background-color: #001f3f !important; color: #fff; }
-    @media print { .no-print { display: none !important; } }
+    .job-link:hover { text-decoration: underline; color: #0056b3 !important; }
+    @media print { .no-print { display: none !important; } .job-link { text-decoration: none !important; color: #000 !important; pointer-events: none; } }
 </style>

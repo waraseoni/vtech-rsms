@@ -126,7 +126,7 @@ while($row = $qry->fetch_assoc()){
                             </td>
                             <td class="align-middle small"><?= date("d M, Y", strtotime($row['date_created'])) ?></td>
                             <td class="align-middle">
-                                <div class="font-weight-bold"><?= $client_name ?></div>
+                                <div class="font-weight-bold"><a href="./?page=clients/view_client&id=<?= $row['client_name'] ?>"><?= $client_name ?></a></div>
                                 <div class="small"><i class="fa fa-phone-alt mr-1"></i> <?= $row['client_contact'] ?></div>
                             </td>
                             <td class="align-middle">

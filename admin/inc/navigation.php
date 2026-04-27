@@ -157,6 +157,7 @@
                         <p>Back Office <i class="right fas fa-angle-left"></i></p>
                     </a>
                     <ul class="nav nav-treeview">
+                        <li class="nav-item"><a href="./?page=back_office" class="nav-link nav-back_office_index"><i class="nav-icon fas fa-th text-lime"></i><p>Dashboard</p></a></li>
                         <!--<li class="nav-item"><a href="./?page=attendance/salary_report" class="nav-link"><i class="nav-icon fas fa-money-check-alt"></i><p>Salary</p></a></li>-->
 						<li class="nav-item"><a href="<?php echo base_url ?>admin/?page=expenses/finance_report" class="nav-link"><i class="nav-icon fas fa-money-bill-wave"></i><p>Pay Outs</p></a></li>
                      <!--   <li class="nav-item"><a href="./?page=attendance/advance_ledger" class="nav-link"><i class="nav-icon fas fa-hand-holding-usd"></i><p>Advance</p></a></li>-->

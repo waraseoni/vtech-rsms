@@ -82,7 +82,7 @@ $month = isset($_GET['month']) ? $_GET['month'] : date("Y-m");
                         ?>
                         <tr>
                             <td><?php echo $i++ ?></td>
-                            <td><?php echo $row['client'] ?></td>
+                            <td><a href="./?page=clients/view_client&id=<?php echo $row['client_id'] ?>"><?php echo $row['client'] ?></a></td>
                             <td class="text-right">₹<?php echo number_format($row['principal_amount'], 2) ?></td>
                             <td class="text-center"><?php echo $row['interest_rate'] ?>%</td>
                             <td class="text-right text-success">₹<?php echo number_format($interest_val, 2) ?></td>

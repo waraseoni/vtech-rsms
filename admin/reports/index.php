@@ -2,365 +2,344 @@
 <script>alert_toast("<?php echo $_settings->flashdata('success') ?>",'success')</script>
 <?php endif;?>
 
-<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
-        <h2><i class="fas fa-chart-bar me-2" style="color: var(--primary)"></i>Reports Dashboard</h2>
-        <p class="text-muted mb-0">Select a report to view detailed analytics</p>
-    </div>
-</div>
-
-<div class="row g-4 mt-3">
-    <!-- Transaction Reports -->
-    <div class="col-12">
-        <h5 class="mb-3"><i class="fas fa-clipboard-list me-2"></i>Transaction Reports</h5>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/delivered_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-truck text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Delivered Report</h6>
-                            <small class="text-muted">Jobs delivered within date range</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/pending_jobs" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-clock text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pending Jobs</h6>
-                            <small class="text-muted">All pending & in-progress jobs</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/financial_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-file-invoice-dollar text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Financial Report</h6>
-                            <small class="text-muted">Complete financial overview</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
+<div class="reports-container">
+    <div class="reports-header">
+        <div class="header-content">
+            <h1><i class="fas fa-chart-pie"></i> Reports Center</h1>
+            <p>All reports in one place. Quick access to your business data.</p>
+        </div>
+        <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="reportSearch" placeholder="Search reports..." onkeyup="filterReports()">
+        </div>
     </div>
 
-    <!-- Sales Reports -->
-    <div class="col-12 mt-4">
-        <h5 class="mb-3"><i class="fas fa-rupee-sign me-2"></i>Sales Reports</h5>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/daily_sales_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-calendar-day text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Daily Sales</h6>
-                            <small class="text-muted">Sales by day</small>
-                        </div>
-                    </div>
-                </div>
+    <div class="reports-grid-wrapper">
+        <!-- Job Reports -->
+        <div class="report-section" data-category="Job Reports">
+            <h5 class="section-title"><i class="fas fa-tools"></i> Job Reports</h5>
+            <div class="reports-grid">
+                <a href="?page=reports/pending_jobs" class="report-item" data-title="Pending Jobs">
+                    <div class="icon-box bg-warning"><i class="fas fa-clock"></i></div>
+                    <span class="report-name">Pending Jobs</span>
+                </a>
+                <a href="?page=reports/delivered_report" class="report-item" data-title="Delivered Report">
+                    <div class="icon-box bg-success"><i class="fas fa-truck"></i></div>
+                    <span class="report-name">Delivered Jobs</span>
+                </a>
             </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/monthly_sales_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #6610f2 0%, #8b5cf6 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-calendar-alt text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Monthly Sales</h6>
-                            <small class="text-muted">Sales by month</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/year_repo" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-chart-line text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Yearly Report</h6>
-                            <small class="text-muted">Annual overview</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/custom_sales_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #e83e8c 0%, #fd7e14 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-filter text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Custom Sales</h6>
-                            <small class="text-muted">Custom date range sales</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
+        </div>
 
-    <!-- Service Reports -->
-    <div class="col-12 mt-4">
-        <h5 class="mb-3"><i class="fas fa-wrench me-2"></i>Service Reports</h5>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/daily_service_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #20c997 0%, #198754 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-tools text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Daily Service</h6>
-                            <small class="text-muted">Services done today</small>
-                        </div>
-                    </div>
-                </div>
+        <!-- Finance & Accounts -->
+        <div class="report-section" data-category="Finance & Accounts">
+            <h5 class="section-title"><i class="fas fa-file-invoice-dollar"></i> Finance & Accounts</h5>
+            <div class="reports-grid">
+                <a href="?page=reports/accounting_dashboard" class="report-item" data-title="Accounting Dashboard">
+                    <div class="icon-box bg-purple"><i class="fas fa-calculator"></i></div>
+                    <span class="report-name">Accounting DB</span>
+                </a>
+                <a href="?page=reports/balancesheet" class="report-item" data-title="Balance Sheet">
+                    <div class="icon-box bg-danger"><i class="fas fa-balance-scale"></i></div>
+                    <span class="report-name">Balance Sheet</span>
+                </a>
+                <a href="?page=reports/ledger_report" class="report-item" data-title="Business Ledger">
+                    <div class="icon-box bg-info"><i class="fas fa-book"></i></div>
+                    <span class="report-name">Business Ledger</span>
+                </a>
+                <a href="?page=reports/cash_flow_report" class="report-item" data-title="Cash Flow">
+                    <div class="icon-box bg-teal"><i class="fas fa-money-bill-wave"></i></div>
+                    <span class="report-name">Cash Flow</span>
+                </a>
+                <a href="?page=reports/daily_income" class="report-item" data-title="Daily Income">
+                    <div class="icon-box bg-cyan"><i class="fas fa-coins"></i></div>
+                    <span class="report-name">Daily Income</span>
+                </a>
+                <a href="?page=reports/financial_report" class="report-item" data-title="Financial Report">
+                    <div class="icon-box bg-primary"><i class="fas fa-file-alt"></i></div>
+                    <span class="report-name">Financial Rep</span>
+                </a>
+                <a href="?page=reports/month_profit" class="report-item" data-title="Monthly Profit">
+                    <div class="icon-box bg-maroon"><i class="fas fa-percentage"></i></div>
+                    <span class="report-name">Month Profit</span>
+                </a>
             </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/custom_service_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #198754 0%, #0d6efd 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-cogs text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Custom Service</h6>
-                            <small class="text-muted">Custom date range services</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
+        </div>
 
-    <!-- Business Reports -->
-    <div class="col-12 mt-4">
-        <h5 class="mb-3"><i class="fas fa-briefcase me-2"></i>Business Reports</h5>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/cash_flow_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0dcaf0 0%, #6610f2 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-money-bill-wave text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Cash Flow</h6>
-                            <small class="text-muted">Income vs expenses</small>
-                        </div>
-                    </div>
-                </div>
+        <!-- Sales & Services -->
+        <div class="report-section" data-category="Sales & Services">
+            <h5 class="section-title"><i class="fas fa-shopping-cart"></i> Sales & Services</h5>
+            <div class="reports-grid">
+                <a href="?page=reports/daily_sales_report" class="report-item" data-title="Daily Sales">
+                    <div class="icon-box bg-blue"><i class="fas fa-calendar-day"></i></div>
+                    <span class="report-name">Daily Sales</span>
+                </a>
+                <a href="?page=reports/monthly_sales_report" class="report-item" data-title="Monthly Sales">
+                    <div class="icon-box bg-indigo"><i class="fas fa-calendar-alt"></i></div>
+                    <span class="report-name">Monthly Sales</span>
+                </a>
+                <a href="?page=reports/year_repo" class="report-item" data-title="Yearly Report">
+                    <div class="icon-box bg-navy"><i class="fas fa-chart-line"></i></div>
+                    <span class="report-name">Yearly Report</span>
+                </a>
+                <a href="?page=reports/custom_sales_report" class="report-item" data-title="Custom Sales">
+                    <div class="icon-box bg-orange"><i class="fas fa-filter"></i></div>
+                    <span class="report-name">Custom Sales</span>
+                </a>
+                <a href="?page=reports/daily_service_report" class="report-item" data-title="Daily Service">
+                    <div class="icon-box bg-olive"><i class="fas fa-wrench"></i></div>
+                    <span class="report-name">Daily Service</span>
+                </a>
+                <a href="?page=reports/custom_service_report" class="report-item" data-title="Custom Service">
+                    <div class="icon-box bg-lime"><i class="fas fa-cogs"></i></div>
+                    <span class="report-name">Custom Service</span>
+                </a>
             </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/ledger_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-book text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Business Ledger</h6>
-                            <small class="text-muted">Complete ledger</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/balancesheet" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #dc3545 0%, #6610f2 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-balance-scale text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Balance Sheet</h6>
-                            <small class="text-muted">Balance overview</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/business" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #198754 0%, #20c997 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-chart-pie text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Business Report</h6>
-                            <small class="text-muted">Business analytics</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
+        </div>
 
-    <!-- Client & Loan Reports -->
-    <div class="col-12 mt-4">
-        <h5 class="mb-3"><i class="fas fa-users me-2"></i>Client & Loan Reports</h5>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/client_payment_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0d6efd 0%, #198754 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-user-friends text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Client Payments</h6>
-                            <small class="text-muted">Client payment history</small>
-                        </div>
-                    </div>
-                </div>
+        <!-- Others -->
+        <div class="report-section" data-category="Other Reports">
+            <h5 class="section-title"><i class="fas fa-ellipsis-h"></i> Other Reports</h5>
+            <div class="reports-grid">
+                <a href="?page=reports/client_payment_report" class="report-item" data-title="Client Payments">
+                    <div class="icon-box bg-fuchsia"><i class="fas fa-user-friends"></i></div>
+                    <span class="report-name">Client Pmts</span>
+                </a>
+                <a href="?page=reports/loan_report" class="report-item" data-title="Loan Report">
+                    <div class="icon-box bg-gray-dark"><i class="fas fa-handshake"></i></div>
+                    <span class="report-name">Loan Report</span>
+                </a>
+                <a href="?page=reports/business" class="report-item" data-title="Business Summary">
+                    <div class="icon-box bg-lightblue"><i class="fas fa-briefcase"></i></div>
+                    <span class="report-name">Biz Summary</span>
+                </a>
+                <a href="?page=reports/vyapar_darpan" class="report-item" data-title="Vyapar Darpan">
+                    <div class="icon-box bg-gradient-navy"><i class="fas fa-store"></i></div>
+                    <span class="report-name">Vyapar Darpan</span>
+                </a>
+                <a href="?page=reports/activity_log" class="report-item" data-title="Activity Log">
+                    <div class="icon-box bg-danger"><i class="fas fa-fingerprint"></i></div>
+                    <span class="report-name">Activity Log</span>
+                </a>
             </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/loan_report" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #ffc107 0%, #dc3545 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-hand-holding-usd text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Loan Report</h6>
-                            <small class="text-muted">All loans & lenders</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/daily_income" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-coins text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Daily Income</h6>
-                            <small class="text-muted">Day-wise income</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <div class="col-lg-4 col-md-6">
-        <a href="?page=reports/accounting_dashboard" class="text-decoration-none">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="rounded-circle me-3" style="width: 50px; height: 50px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); display: flex; align-items: center; justify-content: center;">
-                            <i class="fas fa-calculator text-white"></i>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Accounting Dashboard</h6>
-                            <small class="text-muted">Complete accounting view</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
+        </div>
     </div>
 </div>
 
 <style>
-.card {
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --surface-card: #ffffff;
+    --text-main: #2d3748;
+    --text-muted: #718096;
 }
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+
+.reports-container {
+    padding: 15px;
+    background: #f8f9fc;
+    min-height: calc(100vh - 100px);
 }
-.card-body {
-    padding: 1.25rem;
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
-h5 {
-    color: #2c3e50;
+
+.header-content h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-content h1 i {
+    color: #4e73df;
+}
+
+.header-content p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.search-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+#reportSearch {
+    width: 100%;
+    padding: 8px 12px 8px 35px;
+    border-radius: 20px;
+    border: 1px solid #e3e6f0;
+    outline: none;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+#reportSearch:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
+.section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #4e73df;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid #eaecf4;
+    padding-bottom: 5px;
+}
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.report-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 10px;
+    background: var(--surface-card);
+    border-radius: 12px;
+    text-decoration: none !important;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid transparent;
+    text-align: center;
+}
+
+.report-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    border-color: #4e73df;
+}
+
+.icon-box {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.report-name {
+    font-size: 0.8rem;
     font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
-h6 {
-    color: #2c3e50;
-    font-weight: 600;
+
+/* Category Specific Colors if needed, using AdminLTE bg classes */
+.bg-purple { background-color: #6f42c1 !important; }
+.bg-maroon { background-color: #d81b60 !important; }
+
+/* Mobile Optimizations */
+@media (max-width: 576px) {
+    .reports-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+    
+    .report-item {
+        padding: 10px 5px;
+    }
+    
+    .icon-box {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+        margin-bottom: 5px;
+    }
+    
+    .report-name {
+        font-size: 0.7rem;
+    }
+    
+    .header-content h1 {
+        font-size: 1.2rem;
+    }
+    
+    .reports-header {
+        margin-bottom: 15px;
+    }
+}
+
+/* Extra Small Screens */
+@media (max-width: 360px) {
+    .reports-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 </style>
+
+<script>
+function filterReports() {
+    let input = document.getElementById('reportSearch');
+    let filter = input.value.toLowerCase();
+    let items = document.getElementsByClassName('report-item');
+    let sections = document.getElementsByClassName('report-section');
+
+    for (let i = 0; i < items.length; i++) {
+        let title = items[i].getAttribute('data-title').toLowerCase();
+        if (title.includes(filter)) {
+            items[i].style.display = "flex";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+
+    // Hide sections if no visible items
+    for (let j = 0; j < sections.length; j++) {
+        let visibleItems = sections[j].querySelectorAll('.report-item[style="display: flex;"]');
+        let allItems = sections[j].querySelectorAll('.report-item');
+        
+        // If filter is empty, show everything
+        if (filter === "") {
+            sections[j].style.display = "block";
+            for (let k = 0; k < allItems.length; k++) {
+                allItems[k].style.display = "flex";
+            }
+        } else {
+            if (visibleItems.length > 0) {
+                sections[j].style.display = "block";
+            } else {
+                sections[j].style.display = "none";
+            }
+        }
+    }
+}
+</script>

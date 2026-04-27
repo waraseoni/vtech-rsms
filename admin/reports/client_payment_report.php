@@ -145,7 +145,7 @@ $clients_list = $conn->query("SELECT id, concat(firstname, ' ', lastname) as nam
                 ?>
                 <tr>
                     <td><?= date("d-M-Y", strtotime($row['payment_date'])) ?></td>
-                    <td><b><?= $row['client_name'] ?></b></td>
+                    <td><b><a href="./?page=clients/view_client&id=<?= $row['client_id'] ?>"><?= $row['client_name'] ?></a></b></td>
                     <td><?= $row['payment_mode'] ?></td>
                     <td><small><?= htmlspecialchars($row['remarks']) ?></small></td>
                     <td class="text-right">₹ <?= number_format($row['amount'], 2) ?></td>

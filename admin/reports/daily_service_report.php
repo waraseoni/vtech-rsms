@@ -74,8 +74,8 @@ ORDER BY UNIX_TIMESTAMP(tl.date_updated) ASC");
 						<tr>
 							<td class="text-center"><?php echo $i++; ?></td>
 							<td><?= date("M d, Y H:i", strtotime($row['date_updated'])) ?></td>
-							<td><?= $row['code'] ?></td>
-							<td><?= $row['client_full_name'] ?></td>
+							<td><a href="./?page=transactions/view_details&id=<?= $row['transaction_id'] ?>"><?= $row['code'] ?></a></td>
+							<td><a href="./?page=clients/view_client&id=<?= $row['client_name'] ?>"><?= $row['client_full_name'] ?></a></td>
 							<td><?= $row['service'] ?></td>
 							<td class='text-right'><?= format_num($row['price']) ?></td>
 						</tr>

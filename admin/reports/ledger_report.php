@@ -359,8 +359,8 @@ $total_cash_outflow = $total_advance_given + $other_expenses + $total_emi_paid;
                                 $repair_commission_total += $row['mechanic_commission_amount'];
                         ?>
                         <tr>
-                            <td><?= $row['job_id'] ?></td>
-                            <td><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></td>
+                            <td><a href="./?page=transactions/view_details&id=<?= $row['id'] ?>"><?= $row['job_id'] ?></a></td>
+                            <td><a href="./?page=clients/view_client&id=<?= $row['client_name'] ?>"><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></a></td>
                             <td><?= $row['item'] ?></td>
                             <td><?= $row['mechanic_firstname'] . ' ' . $row['mechanic_lastname'] ?></td>
                             <td class="text-right text-success">₹ <?= number_format($row['amount'], 2) ?></td>
@@ -436,7 +436,7 @@ $total_cash_outflow = $total_advance_given + $other_expenses + $total_emi_paid;
                         ?>
                         <tr>
                             <td><?= $row['sale_code'] ?></td>
-                            <td><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></td>
+                            <td><a href="./?page=clients/view_client&id=<?= $row['client_id'] ?>"><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></a></td>
                             <td><?= $row['product_name'] ?? 'Multiple Items' ?></td>
                             <td><?= $row['quantity'] ?? 'N/A' ?></td>
                             <td class="text-right">₹ <?= number_format($row['unit_price'] ?? 0, 2) ?></td>
@@ -475,7 +475,7 @@ $total_cash_outflow = $total_advance_given + $other_expenses + $total_emi_paid;
                                 $net_received = $row['amount'] + $row['discount'];
                         ?>
                         <tr>
-                            <td><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></td>
+                            <td><a href="./?page=clients/view_client&id=<?= $row['client_id'] ?>"><?= $row['client_firstname'] . ' ' . $row['client_middlename'] . ' ' . $row['client_lastname'] ?></a></td>
                             <td><?= date("d-M-Y", strtotime($row['payment_date'])) ?></td>
                             <td class="text-right">₹ <?= number_format($row['amount'], 2) ?></td>
                             <td class="text-right text-danger">₹ <?= number_format($row['discount'], 2) ?></td>
@@ -515,7 +515,7 @@ $total_cash_outflow = $total_advance_given + $other_expenses + $total_emi_paid;
                                 $commission_percent = $row['amount'] > 0 ? ($row['mechanic_commission_amount'] / $row['amount']) * 100 : 0;
                         ?>
                         <tr>
-                            <td><?= $row['job_id'] ?></td>
+                            <td><a href="./?page=transactions/view_details&id=<?= $row['id'] ?>"><?= $row['job_id'] ?></a></td>
                             <td><?= $row['mechanic_firstname'] . ' ' . $row['mechanic_lastname'] ?></td>
                             <td class="text-right">₹ <?= number_format($row['amount'], 2) ?></td>
                             <td class="text-right text-warning">₹ <?= number_format($row['mechanic_commission_amount'], 2) ?></td>
@@ -555,7 +555,7 @@ $total_cash_outflow = $total_advance_given + $other_expenses + $total_emi_paid;
                                     $discount_percent = $row['amount'] > 0 ? ($row['discount'] / $row['amount']) * 100 : 0;
                         ?>
                         <tr>
-                            <td><?= $row['client_firstname'] . ' ' . $row['client_lastname'] ?></td>
+                            <td><a href="./?page=clients/view_client&id=<?= $row['client_id'] ?>"><?= $row['client_firstname'] . ' ' . $row['client_lastname'] ?></a></td>
                             <td><?= date("d-M-Y", strtotime($row['payment_date'])) ?></td>
                             <td class="text-right">₹ <?= number_format($row['amount'], 2) ?></td>
                             <td class="text-right text-danger">₹ <?= number_format($row['discount'], 2) ?></td>
@@ -770,7 +770,7 @@ $ledger_qry = $conn->query($query_string);
                             }
                             
                             if($row['category'] == 'Client Payment' && !empty($row['client_id'])) {
-                                $display_details = '<span class="text-dark">' . $row['client_fullname'] . '</span>';
+                                $display_details = '<a href="./?page=clients/view_client&id=' . $row['client_id'] . '" class="text-dark">' . $row['client_fullname'] . '</a>';
                                 if($row['discount_amount'] > 0)
                                     $display_details .= ' <small class="text-danger">(-₹' . number_format($row['discount_amount'], 0) . ')</small>';
                             } else {
