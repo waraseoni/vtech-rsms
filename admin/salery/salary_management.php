@@ -109,7 +109,7 @@ if($_settings->chk_flashdata('success')):
 											else $total_earned_till_prev += $rate;
 										}
 										
-										$prev_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND date_created <= '$prev_month_end 23:59:59'")->fetch_array()[0] ?? 0;
+										$prev_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND status = 5 AND date_created <= '$prev_month_end 23:59:59'")->fetch_array()[0] ?? 0;
 										$total_adv_till_prev = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE mechanic_id = '$mid' AND date_paid <= '$prev_month_end'")->fetch_array()[0] ?? 0;
 										
 										$old_balance = ($total_earned_till_prev + $prev_comm) - $total_adv_till_prev;
@@ -137,7 +137,7 @@ if($_settings->chk_flashdata('success')):
 										}
 
 										// --- 3. CURRENT MONTH COMMISSION ---
-										$current_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND date_created LIKE '{$month}%'")->fetch_array()[0] ?? 0;
+										$current_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND status = 5 AND date_created LIKE '{$month}%'")->fetch_array()[0] ?? 0;
 
 										// --- 4. CURRENT MONTH ADVANCE ---
 										$current_month_adv = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE mechanic_id = '$mid' AND date_paid LIKE '{$month}%'")->fetch_array()[0] ?? 0;
@@ -288,7 +288,7 @@ if($_settings->chk_flashdata('success')):
 					  "salery/manage_advance.php?mechanic_id=" + mid + "&amount=" + amt + "&reason=Salary for " + month);
 		})
 		$('#salary_month').change(function(){
-			location.href = "./?page=salary/salary_management&month=" + $(this).val();
+			location.href = "./?page=salery/salary_management&month=" + $(this).val();
 		});
 
 		$('.update_salary').click(function(){

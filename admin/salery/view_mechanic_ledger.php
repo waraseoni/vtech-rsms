@@ -29,11 +29,21 @@ while($h_row = $history_att->fetch_assoc()){
     $total_earned_prev += ($h_row['status'] == 3) ? ($rate / 2) : $rate;
 }
 
-$prev_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND date_created <= '$prev_date_limit 23:59:59'")->fetch_array()[0] ?? 0;
+// Commission only for DELIVERED (status 5) jobs in opening balance
+$prev_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND status = 5 AND date_created <= '$prev_date_limit 23:59:59'")->fetch_array()[0] ?? 0;
 $prev_adv = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE mechanic_id = '$mid' AND date_paid <= '$prev_date_limit'")->fetch_array()[0] ?? 0;
 
 $opening_balance = ($total_earned_prev + $prev_comm) - $prev_adv;
 $running_bal = $opening_balance;
+
+$status_arr = [
+    0 => "Pending",
+    1 => "On-Progress",
+    2 => "Done",
+    3 => "Paid",
+    4 => "Cancelled",
+    5 => "Delivered"
+];
 ?>
 
 <style>
@@ -41,6 +51,12 @@ $running_bal = $opening_balance;
     .filter-container { background: #f4f6f9; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
     .nav-arrow { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: #001f3f; color: white !important; border-radius: 50%; }
     .opening-bal-row { background-color: #fff3cd !important; font-weight: bold; }
+    .job-item { font-size: 0.85rem; padding: 2px 0; border-bottom: 1px dashed #eee; }
+    .job-item:last-child { border-bottom: none; }
+    .status-delivered { color: #28a745; font-weight: bold; }
+    .status-other { color: #6c757d; }
+    .payable-comm { color: #28a745; font-weight: bold; }
+    .generated-comm { color: #007bff; font-style: italic; font-size: 0.8rem; }
     @media print { .no-print { display: none !important; } .card { border: none !important; box-shadow: none !important; } }
 </style>
 
@@ -87,28 +103,38 @@ $running_bal = $opening_balance;
                 <h4><b>V-Tech RSMS - Mechanic Ledger</b></h4>
                 <p class="m-0">Staff: <b><?php echo $mechanic['name'] ?></b></p>
                 <p class="m-0">Period: <b><?php echo date("d M, Y", strtotime($from_date)) ?></b> to <b><?php echo date("d M, Y", strtotime($to_date)) ?></b></p>
+                <div class="small text-muted mt-1 no-print">
+                    <span class="mr-3"><i class="fa fa-circle text-primary"></i> Generated Commission (All Jobs)</span>
+                    <span><i class="fa fa-circle text-success"></i> Payable Commission (Delivered Only)</span>
+                </div>
             </div>
             
             <table class="table table-bordered table-sm" id="ledger-table">
                 <thead>
                     <tr class="bg-navy text-white text-center">
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Earned Wage</th>
-                        <th>Commission</th>
-                        <th>Advance/Paid</th>
-                        <th>Running Balance</th>
+                        <th width="10%">Date</th>
+                        <th width="12%">Att. Status</th>
+                        <th width="12%">Earned Wage</th>
+                        <th width="30%">Jobs & Status</th>
+                        <th width="12%">Commission (P|G)</th>
+                        <th width="12%">Advance/Paid</th>
+                        <th width="12%">Running Bal</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr class="opening-bal-row">
-                        <td colspan="5" class="text-right">Opening Balance (Old Balance):</td>
+                        <td colspan="6" class="text-right">Opening Balance (Old Balance - Delivered Only):</td>
                         <td class="text-right">₹<?php echo number_format($opening_balance, 2) ?></td>
                     </tr>
                     <?php 
                     $current_date = $from_date;
+                    $total_period_generated = 0;
+                    $total_period_payable = 0;
+                    
                     while (strtotime($current_date) <= strtotime($to_date)):
-                        $daily_earned = 0; $daily_comm = 0; $daily_adv = 0;
+                        $daily_earned = 0; $daily_comm_generated = 0; $daily_comm_payable = 0; $daily_adv = 0;
+                        
+                        // 1. Attendance
                         $att_qry = $conn->query("SELECT status FROM attendance_list WHERE mechanic_id = '$mid' AND curr_date = '$current_date'");
                         $att_status = "-"; $status_class = "text-muted";
                         
@@ -120,24 +146,64 @@ $running_bal = $opening_balance;
                             elseif($row_att['status'] == 3) { $att_status = "Half Day"; $status_class = "text-warning"; $daily_earned = ($rate / 2); }
                             else { $att_status = "Absent"; $status_class = "text-danger"; }
                         }
-                        $daily_comm = $conn->query("SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = '$mid' AND DATE(date_created) = '$current_date'")->fetch_array()[0] ?? 0;
+
+                        // 2. Transactions/Jobs
+                        $jobs_html = "";
+                        $jobs_qry = $conn->query("SELECT id, job_id, code, item, mechanic_commission_amount, status FROM transaction_list WHERE mechanic_id = '$mid' AND DATE(date_created) = '$current_date'");
+                        while($job = $jobs_qry->fetch_assoc()){
+                            $job_comm = (float)$job['mechanic_commission_amount'];
+                            $daily_comm_generated += $job_comm;
+                            $is_delivered = ($job['status'] == 5);
+                            if($is_delivered) $daily_comm_payable += $job_comm;
+
+                            $status_label = $status_arr[$job['status']] ?? "Unknown";
+                            $label_class = $is_delivered ? "status-delivered" : "status-other";
+                            
+                            $jobs_html .= "<div class='job-item'>
+                                <a href='./?page=transactions/view_details&id={$job['id']}' class='font-weight-bold'>{$job['job_id']}</a> 
+                                <span class='text-muted small'>({$job['item']})</span>: 
+                                <span class='{$label_class}'>{$status_label}</span> 
+                                <span class='float-right'>₹".number_format($job_comm,0)."</span>
+                            </div>";
+                        }
+                        if(empty($jobs_html)) $jobs_html = "<span class='text-muted small'>No jobs</span>";
+
+                        // Update totals
+                        $total_period_generated += $daily_comm_generated;
+                        $total_period_payable += $daily_comm_payable;
+
+                        // 3. Advance/Payments
                         $daily_adv = $conn->query("SELECT SUM(amount) FROM advance_payments WHERE mechanic_id = '$mid' AND date_paid = '$current_date'")->fetch_array()[0] ?? 0;
-                        $running_bal += ($daily_earned + $daily_comm - $daily_adv);
+                        
+                        // Running balance update (Only Payable Commission)
+                        $running_bal += ($daily_earned + $daily_comm_payable - $daily_adv);
                     ?>
                     <tr>
                         <td class="text-center"><?php echo date("d M", strtotime($current_date)) ?></td>
                         <td class="text-center"><span class="<?php echo $status_class ?> font-weight-bold"><?php echo $att_status ?></span></td>
                         <td class="text-right">₹<?php echo number_format($daily_earned, 2) ?></td>
-                        <td class="text-right">₹<?php echo number_format($daily_comm, 2) ?></td>
+                        <td><?php echo $jobs_html ?></td>
+                        <td class="text-right">
+                            <div class="payable-comm" title="Payable (Delivered)">₹<?php echo number_format($daily_comm_payable, 2) ?></div>
+                            <div class="generated-comm" title="Generated (Total)">Gen: ₹<?php echo number_format($daily_comm_generated, 2) ?></div>
+                        </td>
                         <td class="text-right text-danger">₹<?php echo number_format($daily_adv, 2) ?></td>
                         <td class="text-right font-weight-bold">₹<?php echo number_format($running_bal, 2) ?></td>
                     </tr>
                     <?php $current_date = date("Y-m-d", strtotime("+1 day", strtotime($current_date))); endwhile; ?>
                 </tbody>
                 <tfoot>
-                    <tr class="bg-light">
-                        <th colspan="5" class="text-right">Closing Balance (Net Total):</th>
-                        <th class="text-right text-navy">₹<?php echo number_format($running_bal, 2) ?></th>
+                    <tr class="bg-light font-weight-bold">
+                        <th colspan="4" class="text-right">Period Commission Totals (Generated | Payable):</th>
+                        <th class="text-right">
+                            <div class="text-primary small">Gen: ₹<?php echo number_format($total_period_generated, 2) ?></div>
+                            <div class="text-success">Pay: ₹<?php echo number_format($total_period_payable, 2) ?></div>
+                        </th>
+                        <th colspan="2"></th>
+                    </tr>
+                    <tr class="bg-navy text-white">
+                        <th colspan="6" class="text-right">Closing Balance (Net Total):</th>
+                        <th class="text-right">₹<?php echo number_format($running_bal, 2) ?></th>
                     </tr>
                 </tfoot>
             </table>
