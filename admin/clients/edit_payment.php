@@ -20,33 +20,55 @@ if(!empty($payment_id) && is_numeric($payment_id)){
 }
 ?>
 
-<div class="container-fluid">
+<style>
+@media (max-width: 576px) {
+    #uni_modal .modal-dialog {
+        margin: 0.5rem !important;
+        max-width: calc(100% - 1rem) !important;
+        width: calc(100% - 1rem) !important;
+    }
+    #uni_modal .modal-body {
+        padding: 10px !important;
+    }
+    #uni_modal .form-group {
+        margin-bottom: 8px !important;
+    }
+    #uni_modal label {
+        font-size: 0.82rem;
+        margin-bottom: 2px;
+    }
+    #uni_modal .form-control, #uni_modal .form-control-sm {
+        font-size: 0.9rem;
+    }
+}
+</style>
+<div class="container-fluid px-1 px-sm-3">
     <form action="clients/save_payment.php" method="POST" id="payment-form">
         <input type="hidden" name="id" value="<?= $payment_id ?>"> 
         <input type="hidden" name="client_id" value="<?= $client_id ?>">
 
         <div class="row">
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Job ID / Ref. (Optional)</label>
                 <input type="text" name="job_id" class="form-control form-control-sm" value="<?= $job_id ?? '' ?>">
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Bill No. (Optional)</label>
                 <input type="text" name="bill_no" class="form-control form-control-sm" value="<?= $bill_no ?? '' ?>">
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Amount Received</label>
                 <input type="number" step="any" name="amount" class="form-control form-control-sm" value="<?= $amount ?? '' ?>" required>
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Discount</label>
                 <input type="number" step="any" name="discount" class="form-control form-control-sm" value="<?= $discount ?? 0 ?>">
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Payment Date</label>
                 <input type="date" name="payment_date" class="form-control form-control-sm" value="<?= isset($payment_date) ? date('Y-m-d', strtotime($payment_date)) : date('Y-m-d') ?>" required>
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Payment Mode</label>
                 <select name="payment_mode" class="form-control form-control-sm" required>
                     <?php 
@@ -57,7 +79,7 @@ if(!empty($payment_id) && is_numeric($payment_id)){
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-md-6 form-group">
+            <div class="col-12 col-sm-6 form-group">
                 <label>Payment Type</label>
                 <select name="payment_type" class="form-control form-control-sm" required>
                     <?php 

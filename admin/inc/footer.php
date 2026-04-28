@@ -36,7 +36,7 @@
           if($size != ''){
             $('#uni_modal .modal-dialog').addClass($size+'  modal-dialog-centered')
           }else{
-            $('#uni_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered")
+            $('#uni_modal .modal-dialog').removeAttr("class").addClass("modal-dialog modal-md modal-dialog-centered modal-dialog-scrollable")
           }
           $('#uni_modal').modal({
             show:true,

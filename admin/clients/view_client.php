@@ -290,6 +290,7 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
 
                 <!-- Active Loans Table (New) -->
                 <h4>Active Loans</h4>
+                <div class="table-responsive">
                 <table class="table table-sm table-bordered mb-4">
                     <thead>
                         <tr>
@@ -326,6 +327,7 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                </div><!-- /.table-responsive -->
 
                 <!-- Tabs Section (with new Loan Payments tab) -->
                 <div class="card card-tabs">
@@ -372,6 +374,7 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                         <div class="tab-content">
                             <!-- Repairs Tab -->
                             <div class="tab-pane fade show active" id="repairs">
+                                <div class="table-responsive">
                                 <table class="table table-hover table-striped table-bordered datatable">
                                     <thead class="bg-navy">
                                         <tr>
@@ -426,10 +429,12 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
+                                </div><!-- /.table-responsive -->
                             </div>
 
                             <!-- Direct Sales Tab -->
                             <div class="tab-pane fade" id="direct_sales">
+                                <div class="table-responsive">
                                 <table class="table table-hover table-striped table-bordered datatable">
                                     <thead class="bg-navy">
                                         <tr>
@@ -466,10 +471,12 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
+                                </div><!-- /.table-responsive -->
                             </div>
 
                             <!-- All Payments Tab (existing) -->
                             <div class="tab-pane fade" id="payments">
+                                <div class="table-responsive">
                                 <table class="table table-hover table-striped table-bordered datatable">
                                     <thead class="bg-navy">
                                         <tr>
@@ -533,10 +540,12 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
+                                </div><!-- /.table-responsive -->
                             </div>
 
                             <!-- New Loan Payments Tab -->
                             <div class="tab-pane fade" id="loan_payments">
+                                <div class="table-responsive">
                                 <table class="table table-hover table-striped table-bordered datatable" id="loan_payments_table">
                                     <thead class="bg-navy">
                                         <tr>
@@ -580,6 +589,7 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
                                         <?php endwhile; ?>
                                     </tbody>
                                 </table>
+                                </div><!-- /.table-responsive -->
                             </div>
                         </div>
                     </div>
@@ -649,6 +659,32 @@ $net_balance = ($opening_balance + $total_billed - $total_paid) + $current_loan_
 </div>
 
 <style>
+    /* Prevent horizontal overflow on mobile */
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        position: relative;
+    }
+    .table-responsive {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 768px) {
+        #uni_modal .modal-dialog {
+            width: 96% !important;
+            max-width: 96% !important;
+            margin: 0.5rem auto !important;
+        }
+        .container-fluid {
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+        .card-body {
+            padding: 0.75rem !important;
+        }
+    }
     /* Active Tab background and text color */
     .nav-tabs .nav-link.active {
         background-color: #007bff !important;
@@ -705,10 +741,17 @@ function printFilteredLedger() {
 
 $(function(){
     // Initialize DataTables for all four tables
-    var repairTable = $('#repairs table').DataTable({ "order": [[0, "desc"]] });
-    var salesTable = $('#direct_sales table').DataTable({ "order": [[0, "desc"]] });
-    var paymentTable = $('#payments table').DataTable({ "order": [[0, "desc"]] });
-    var loanPaymentTable = $('#loan_payments table').DataTable({ "order": [[0, "desc"]] });
+    // Initialize DataTables with horizontal scrolling instead of collapsing responsive mode
+    var dtOptions = { 
+        "order": [[0, "desc"]],
+        "autoWidth": false,
+        "responsive": false,
+        "scrollX": false // We use the CSS table-responsive wrapper for scrolling
+    };
+    var repairTable = $('#repairs table').DataTable(dtOptions);
+    var salesTable = $('#direct_sales table').DataTable(dtOptions);
+    var paymentTable = $('#payments table').DataTable(dtOptions);
+    var loanPaymentTable = $('#loan_payments table').DataTable(dtOptions);
 
     // Custom date filter
     $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
