@@ -381,7 +381,9 @@ try {
             $tot_repair = $conn->query("SELECT SUM(t.amount) as tot FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE t.status = 5 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
             $tot_ds = $conn->query("SELECT SUM(d.total_amount) as tot FROM direct_sales d INNER JOIN client_list c ON d.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
             $tot_loans = $conn->query("SELECT SUM(l.total_payable) as tot FROM client_loans l INNER JOIN client_list c ON l.client_id = c.id WHERE l.status = 1 AND c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
-            $tot_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0")->fetch_assoc()['tot'] ?? 0;
+            $tot_service_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND (p.loan_id IS NULL OR p.loan_id = 0)")->fetch_assoc()['tot'] ?? 0;
+            $tot_active_loan_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_loans l ON p.loan_id = l.id INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND l.status = 1")->fetch_assoc()['tot'] ?? 0;
+            $tot_paid = $tot_service_paid + $tot_active_loan_paid;
             
             $total_outstanding = $tot_ob + $tot_repair + $tot_ds + $tot_loans - $tot_paid;
 
@@ -394,7 +396,9 @@ try {
                 $p_loans = $conn->query("SELECT SUM(l.total_payable) as tot FROM client_loans l INNER JOIN client_list c ON l.client_id = c.id WHERE l.status = 1 AND c.delete_flag = 0 AND DATE(l.loan_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
                 $period_billed = $p_repair + $p_ds + $p_loans;
 
-                $period_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND DATE(p.payment_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $p_service_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND (p.loan_id IS NULL OR p.loan_id = 0) AND DATE(p.payment_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $p_active_loan_paid = $conn->query("SELECT SUM(p.amount + p.discount) as tot FROM client_payments p INNER JOIN client_loans l ON p.loan_id = l.id INNER JOIN client_list c ON p.client_id = c.id WHERE c.delete_flag = 0 AND l.status = 1 AND DATE(p.payment_date) BETWEEN '{$from}' AND '{$to}'")->fetch_assoc()['tot'] ?? 0;
+                $period_paid = $p_service_paid + $p_active_loan_paid;
             }
             ?>
             
