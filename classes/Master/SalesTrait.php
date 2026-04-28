@@ -289,11 +289,48 @@ trait SalesTrait {
 
     function get_client_balance(){
         extract($_POST);
+        $id = $this->conn->real_escape_string($id);
+
+        // 1. Opening Balance
         $opening = floatval($this->conn->query("SELECT opening_balance FROM client_list WHERE id = '{$id}'")->fetch_assoc()['opening_balance'] ?? 0);
-        $total_billed = $this->conn->query("SELECT SUM(amount) as total FROM transaction_list WHERE client_name = '{$id}' AND status = 5")->fetch_assoc()['total'] ?? 0;
-        $total_paid = $this->conn->query("SELECT SUM(amount + discount) as paid FROM client_payments WHERE client_id = '{$id}'")->fetch_assoc()['paid'] ?? 0;
-        $balance = ($opening + $total_billed) - $total_paid;
-        $resp = ['status' => 'success', 'balance' => number_format(abs($balance), 2, '.', ''), 'type' => ($balance > 0 ? 'due' : 'advance'), 'color' => ($balance > 0 ? '#dc3545' : '#28a745'), 'label' => ($balance > 0 ? 'Total Due Amount: ' : 'Advance Amount: ')];
+        
+        // 2. Repairs Billed
+        $repair_billed = floatval($this->conn->query("SELECT SUM(amount) as total FROM transaction_list WHERE client_name = '{$id}' AND status = 5")->fetch_assoc()['total'] ?? 0);
+        
+        // 3. Direct Sales Billed
+        $direct_sales_billed = floatval($this->conn->query("SELECT SUM(total_amount) as total FROM direct_sales WHERE client_id = '{$id}'")->fetch_assoc()['total'] ?? 0);
+        
+        $total_billed = $repair_billed + $direct_sales_billed;
+        
+        // 4. Total Paid (Service Payments only)
+        $total_paid = floatval($this->conn->query("SELECT SUM(amount + discount) as paid FROM client_payments WHERE client_id = '{$id}' AND (loan_id IS NULL OR loan_id = 0)")->fetch_assoc()['paid'] ?? 0);
+        
+        // 5. Active Loans Balance
+        $loan_qry = $this->conn->query("SELECT 
+            SUM(cl.total_payable) as total_active_loan,
+            SUM(IFNULL(paid.total, 0)) as total_active_repaid
+        FROM client_loans cl
+        LEFT JOIN (SELECT loan_id, SUM(amount + discount) as total FROM client_payments GROUP BY loan_id) paid ON cl.id = paid.loan_id
+        WHERE cl.client_id = '{$id}' AND cl.status = 1");
+        
+        $current_loan_balance = 0;
+        if($loan_qry && $loan_qry->num_rows > 0) {
+            $loan_data = $loan_qry->fetch_assoc();
+            $total_active_loan_given = floatval($loan_data['total_active_loan'] ?? 0);
+            $total_active_loan_repaid = floatval($loan_data['total_active_repaid'] ?? 0);
+            $current_loan_balance = $total_active_loan_given - $total_active_loan_repaid;
+        }
+        
+        // Overall Balance
+        $balance = ($opening + $total_billed - $total_paid) + $current_loan_balance;
+
+        $resp = [
+            'status' => 'success', 
+            'balance' => number_format(abs($balance), 2, '.', ''), 
+            'type' => ($balance > 0 ? 'due' : 'advance'), 
+            'color' => ($balance > 0 ? '#dc3545' : '#28a745'), 
+            'label' => ($balance > 0 ? 'Total Due Amount: ' : 'Advance Amount: ')
+        ];
         echo json_encode($resp); exit;
     }
 
