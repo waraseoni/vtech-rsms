@@ -13,6 +13,8 @@ trait DashboardTrait {
         $stats['pending_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 0")->fetch_row()[0] ?? 0;
         $stats['in_progress_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 1")->fetch_row()[0] ?? 0;
         $stats['finished_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 2")->fetch_row()[0] ?? 0;
+        $stats['paid_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 3")->fetch_row()[0] ?? 0;
+        $stats['cancelled_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 4")->fetch_row()[0] ?? 0;
         $stats['delivered_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list WHERE status = 5")->fetch_row()[0] ?? 0;
         $stats['total_jobs'] = $this->conn->query("SELECT COUNT(*) FROM transaction_list")->fetch_row()[0] ?? 0;
         $stats['low_stock'] = $this->conn->query("SELECT COUNT(DISTINCT product_id) FROM inventory_list WHERE quantity <= 5")->fetch_row()[0] ?? 0;

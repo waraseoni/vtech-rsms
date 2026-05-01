@@ -450,10 +450,10 @@ $(function() {
 
     // 2. Status Donut Chart
     var statusOptions = {
-        series: [ <?= (int)$stats['pending_jobs'] ?>, <?= (int)$stats['in_progress_jobs'] ?>, <?= (int)$stats['finished_jobs'] ?>, <?= (int)$stats['delivered_jobs'] ?> ],
+        series: [ <?= (int)$stats['pending_jobs'] ?>, <?= (int)$stats['in_progress_jobs'] ?>, <?= (int)$stats['finished_jobs'] ?>, <?= (int)$stats['paid_jobs'] ?>, <?= (int)$stats['cancelled_jobs'] ?>, <?= (int)$stats['delivered_jobs'] ?> ],
         chart: { height: 350, type: 'donut' },
-        labels: ['Pending', 'In Progress', 'Finished', 'Delivered'],
-        colors: ['#ffc107', '#007bff', '#17a2b8', '#28a745'],
+        labels: ['Pending', 'In Progress', 'Finished', 'Paid', 'Cancelled', 'Delivered'],
+        colors: ['#6c757d', '#ffc107', '#17a2b8', '#28a745', '#dc3545', '#007bff'],
         legend: { position: 'bottom' },
         plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total Jobs', formatter: function (w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0); } } } } } }
     };
