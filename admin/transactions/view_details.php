@@ -379,11 +379,51 @@ if($img_qry->num_rows > 0):
                             </div>
                         </div>
 
-                        <div class="text-center">
+                        <div class="text-center mb-3">
                             <button class="btn btn-success btn-lg btn-block shadow-sm" onclick="sendWA_status()">
                                 <i class="fab fa-whatsapp fa-lg"></i> Send Status on WhatsApp
                             </button>
                         </div>
+
+                        <!-- Progress History (Timeline) -->
+                        <fieldset class="border p-3 rounded-0 bg-light mb-4 shadow-sm">
+                            <legend class="w-auto text-navy font-weight-bold px-2" style="font-size: 1rem;"><i class="fa fa-history mr-1"></i> Job Progress History</legend>
+                            <div class="progress-timeline px-2" style="max-height: 450px; overflow-y: auto;">
+                                <?php 
+                                $logs = $conn->query("SELECT a.*, CONCAT(u.firstname,' ',u.lastname) as fullname FROM activity_logs a LEFT JOIN users u ON a.user_id = u.id WHERE a.module = 'Transactions' AND a.meta_id = '$id' ORDER BY a.date_created DESC");
+                                if($logs->num_rows > 0):
+                                ?>
+                                <div class="list-group list-group-flush">
+                                    <?php while($log = $logs->fetch_assoc()): 
+                                        $l_action = $log['action'];
+                                        $l_details = $log['details'];
+                                        
+                                        if(strpos(strtolower($l_action), 'status') !== false){
+                                            foreach($status_arr as $code => $label){
+                                                $clean_label = explode(" (", $label)[0];
+                                                $l_details = str_replace("to $code", "to <span class='badge badge-primary'>$clean_label</span>", $l_details);
+                                                $l_details = str_replace("from $code", "from <span class='badge badge-secondary'>$clean_label</span>", $l_details);
+                                            }
+                                        }
+                                    ?>
+                                    <div class="list-group-item bg-transparent border-0 border-left ml-2 pl-3 pb-3 position-relative">
+                                        <i class="fa fa-check-circle text-navy position-absolute" style="left: -9px; top: 0; background: #f8f9fa;"></i>
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <h6 class="mb-0 font-weight-bold text-navy" style="font-size: 0.9rem;"><?= $l_action ?></h6>
+                                            <small class="text-muted" style="font-size: 0.75rem;"><i class="far fa-clock"></i> <?= date("d/m H:i", strtotime($log['date_created'])) ?></small>
+                                        </div>
+                                        <div class="small text-dark mt-1" style="line-height: 1.2;"><?= $l_details ?></div>
+                                        <div class="small text-muted mt-1" style="font-size: 0.7rem;"><i class="fa fa-user mr-1"></i><?= $log['fullname'] ?: 'System' ?></div>
+                                    </div>
+                                    <?php endwhile; ?>
+                                </div>
+                                <?php else: ?>
+                                    <div class="text-center py-3 text-muted">
+                                        <small>No progress logs.</small>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </fieldset>
                     </div>
                 </div>
 

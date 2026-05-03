@@ -81,11 +81,16 @@ function activity_log_render_links_html(array $links) {
 	<div class="card-header">
 		<h3 class="card-title">User Activity / Audit Log</h3>
 		<div class="card-tools">
-			<small class="text-muted">Use <strong>View</strong> to open the record, then edit from there if needed.</small>
+			<button class="btn btn-sm btn-danger btn-flat" id="cleanup_logs"><i class="fa fa-broom mr-1"></i> Clean Old Logs</button>
+			<small class="text-muted ml-2">Use <strong>View</strong> to open the record, then edit from there if needed.</small>
 		</div>
 	</div>
 	<div class="card-body">
 		<div class="container-fluid">
+            <div class="alert alert-info py-1 px-2 small">
+                <i class="fa fa-info-circle mr-1"></i> Retention: <strong><?php echo $_settings->info('log_retention') ?: 90 ?> days</strong>. 
+                Cleaning logs will remove entries older than this from the database.
+            </div>
         <table class="table table-hover table-striped" id="activity-list">
 				<colgroup>
 					<col width="13%">
@@ -145,5 +150,32 @@ function activity_log_render_links_html(array $links) {
 			],
 			order:[0,'desc']
 		});
+
+        $('#cleanup_logs').click(function(){
+            _conf("Are you sure to clean up old activity logs? This will delete logs older than <?php echo $_settings->info('log_retention') ?: 90 ?> days.", "cleanup_logs_action")
+        })
 	})
+
+    function cleanup_logs_action(){
+        start_loader();
+        $.ajax({
+            url: _base_url_ + "classes/Master.php?f=clean_activity_logs",
+            method: "POST",
+            dataType: "json",
+            error: err => {
+                console.log(err)
+                alert_toast("An error occurred.", 'error');
+                end_loader();
+            },
+            success: function(resp){
+                if(resp.status == 'success'){
+                    alert_toast(resp.msg, 'success');
+                    setTimeout(() => { location.reload() }, 1500);
+                } else {
+                    alert_toast(resp.msg, 'error');
+                }
+                end_loader();
+            }
+        })
+    }
 </script>

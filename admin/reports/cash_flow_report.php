@@ -66,154 +66,273 @@ $query_string = "
     ORDER BY date ASC, details ASC";
 
 $cash_flow_qry = $conn->query($query_string);
+
+// Pre-calculate totals for summary cards
+$total_in = 0; 
+$total_out = 0;
+$data_rows = [];
+if($cash_flow_qry && $cash_flow_qry->num_rows > 0){
+    while($row = $cash_flow_qry->fetch_assoc()){
+        if($row['type'] == 'Cash In') $total_in += $row['amount'];
+        else $total_out += $row['amount'];
+        $data_rows[] = $row;
+    }
+}
+$net_balance = $total_in - $total_out;
 ?>
 
-<style>
-    .client-link {
-        color: #0d47a1;
-        font-weight: 600;
-        text-decoration: none;
-        border-bottom: 1px dotted #0d47a1;
-        transition: all 0.3s ease;
-    }
-    .client-link:hover {
-        color: #ff5722;
-        border-bottom: 1px solid #ff5722;
-        text-decoration: none;
-    }
-    .badge-success { background-color: #28a745; }
-    .badge-danger { background-color: #dc3545; }
-</style>
-
-<div class="card card-outline card-navy shadow-sm">
-    <div class="card-header">
-        <h3 class="card-title font-weight-bold"><i class="fas fa-wallet mr-2"></i> Monthly Cash Flow</h3>
-        <div class="card-tools">
-            <button class="btn btn-success btn-sm btn-flat" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
-        </div>
-    </div>
-    <div class="card-body">
-        <div class="no-print mb-4 border p-3 bg-light rounded shadow-sm">
-            <form action="" method="GET">
-                <input type="hidden" name="page" value="reports/cash_flow_report">
-                <div class="row align-items-end">
-                    <div class="col-md-2">
-                        <label class="small text-muted font-weight-bold">From Date</label>
-                        <input type="date" name="from" value="<?= $from ?>" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="small text-muted font-weight-bold">To Date</label>
-                        <input type="date" name="to" value="<?= $to ?>" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="small text-muted font-weight-bold">Quick Year</label>
-                        <select class="form-control form-control-sm" onchange="location.href='./?page=reports/cash_flow_report&from='+this.value+'-01-01&to='+this.value+'-12-31'">
-                            <?php for($y=date('Y'); $y>=2020; $y--): ?>
-                                <option value="<?= $y ?>" <?= $current_year == $y ? 'selected' : '' ?>><?= $y ?></option>
-                            <?php endfor; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="btn-group btn-group-sm w-100 shadow-sm">
-                            <button type="submit" class="btn btn-primary"><i class="fa fa-filter"></i> Filter</button>
-                            <a href="./?page=reports/cash_flow_report&from=<?= $prev_month_from ?>&to=<?= $prev_month_to ?>" class="btn btn-info"><i class="fa fa-chevron-left"></i> Prev Month</a>
-                            <a href="./?page=reports/cash_flow_report" class="btn btn-warning text-bold"><i class="fa fa-sync-alt"></i> Reset</a>
-                            <a href="./?page=reports/cash_flow_report&from=<?= $next_month_from ?>&to=<?= $next_month_to ?>" class="btn btn-info">Next Month <i class="fa fa-chevron-right"></i></a>
+<div class="content py-4">
+    <div class="container-fluid">
+        <!-- TOP DASHBOARD SUMMARY (Compact) -->
+        <div class="row no-print mb-4">
+            <div class="col-md-4">
+                <div class="stat-card p-3 shadow-sm bg-white border-left-success">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-success-soft text-success mr-3"><i class="fas fa-arrow-alt-circle-up"></i></div>
+                        <div>
+                            <small class="text-muted text-uppercase font-weight-bold">Total Cash In</small>
+                            <h3 class="mb-0 font-weight-bold text-success">₹<?= number_format($total_in, 2) ?></h3>
                         </div>
                     </div>
                 </div>
-            </form>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 shadow-sm bg-white border-left-danger">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-danger-soft text-danger mr-3"><i class="fas fa-arrow-alt-circle-down"></i></div>
+                        <div>
+                            <small class="text-muted text-uppercase font-weight-bold">Total Cash Out</small>
+                            <h3 class="mb-0 font-weight-bold text-danger">₹<?= number_format($total_out, 2) ?></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card p-3 shadow-sm <?= $net_balance >= 0 ? 'bg-navy' : 'bg-danger' ?> text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-white-20 text-white mr-3"><i class="fas fa-balance-scale"></i></div>
+                        <div>
+                            <small class="text-white-50 text-uppercase font-weight-bold">Net Balance</small>
+                            <h3 class="mb-0 font-weight-bold">₹<?= number_format($net_balance, 2) ?></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-sm">
-                <thead class="bg-navy">
-                    <tr>
-                        <th width="12%">Date</th>
-                        <th width="15%">Category</th>
-                        <th>Details</th>
-                        <th class="text-right" width="12%">In (+)</th>
-                        <th class="text-right" width="12%">Out (-)</th>
-                        <th class="text-right" width="15%">Balance</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $total_in = 0; $total_out = 0;
-                    if($cash_flow_qry && $cash_flow_qry->num_rows > 0):
-                        while($row = $cash_flow_qry->fetch_assoc()): 
-                            if($row['type'] == 'Cash In'){
-                                $total_in += $row['amount'];
-                                $running_balance += $row['amount'];
-                            } else {
-                                $total_out += $row['amount'];
-                                $running_balance -= $row['amount'];
-                            }
-                            
-                            // Prepare details with clickable client name if applicable
-                            // DELIVERED_REPORT.PHP के जैसे link format use करें
-                            if($row['category'] == 'Client Payment' && !empty($row['client_id'])) {
-                                // DELIVERED_REPORT.PHP की तरह link बनाएं
-                                $display_details = '<a href="./?page=clients/view_client&id=' . $row['client_id'] . '" 
-                                                     target="_blank" class="text-dark font-weight-bold">' . 
-                                                     $row['client_fullname'] . '</a> (' . $row['payment_remarks'] . ')';
-                            } else {
-                                $display_details = $row['details'];
-                            }
-                    ?>
-                    <tr>
-                        <td class="text-nowrap"><?= date("d-M-Y", strtotime($row['date'])) ?></td>
-                        <td>
-                            <span class="badge badge-<?= $row['type'] == 'Cash In' ? 'success' : 'danger' ?>">
-                                <?= $row['category'] ?>
-                            </span>
-                        </td>
-                        <td><?= $display_details ?></td>
-                        <td class="text-right text-success font-weight-bold">
-                            <?= ($row['type'] == 'Cash In') ? number_format($row['amount'], 2) : '-' ?>
-                        </td>
-                        <td class="text-right text-danger font-weight-bold">
-                            <?= ($row['type'] == 'Cash Out') ? number_format($row['amount'], 2) : '-' ?>
-                        </td>
-                        <td class="text-right font-weight-bold <?= $running_balance < 0 ? 'text-danger' : 'text-primary' ?>">
-                            ₹ <?= number_format($running_balance, 2) ?>
-                        </td>
-                    </tr>
-                    <?php endwhile; else: ?>
-                    <tr><td colspan="6" class="text-center py-4 text-muted">No transactions found for this period.</td></tr>
-                    <?php endif; ?>
-                </tbody>
-                <tfoot class="bg-light">
-                    <tr>
-                        <th colspan="3" class="text-right text-uppercase">Period Total:</th>
-                        <th class="text-right text-success" style="font-size: 1.1rem;">₹ <?= number_format($total_in, 2) ?></th>
-                        <th class="text-right text-danger" style="font-size: 1.1rem;">₹ <?= number_format($total_out, 2) ?></th>
-                        <th class="text-right <?= $running_balance >= 0 ? 'text-success' : 'text-danger' ?>" style="font-size: 1.2rem;">
-                            ₹ <?= number_format($running_balance, 2) ?>
-                        </th>
-                    </tr>
-                </tfoot>
-            </table>
-            
-            <?php if($cash_flow_qry && $cash_flow_qry->num_rows > 0): ?>
-            <div class="alert alert-info no-print mt-3 p-2 small">
-                <i class="fas fa-info-circle mr-1"></i> 
-                <strong>Note:</strong> Click on client names to view their complete profile and transaction history.
+        <div class="card card-outline card-navy shadow-lg border-0 rounded-lg">
+            <div class="card-header bg-white py-3 no-print">
+                <div class="row align-items-end">
+                    <div class="col-md-6">
+                        <h3 class="card-title font-weight-bold text-navy"><i class="fas fa-wallet mr-2"></i> Cash Flow Statement</h3>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="btn-group shadow-sm">
+                            <button class="btn btn-primary btn-sm px-3" onclick="printStatement()"><i class="fa fa-print mr-1"></i> Print / PDF</button>
+                            <button class="btn btn-success btn-sm px-3" id="export_excel"><i class="fa fa-file-excel mr-1"></i> Excel</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <?php endif; ?>
+            
+            <div class="card-body">
+                <!-- QUICK FILTERS -->
+                <div class="no-print mb-4 border-bottom pb-4">
+                    <form action="" method="GET" id="filter-form">
+                        <input type="hidden" name="page" value="reports/cash_flow_report">
+                        <div class="row align-items-end justify-content-center">
+                            <div class="col-md-2">
+                                <label class="small font-weight-bold">From Date</label>
+                                <input type="date" name="from" value="<?= $from ?>" class="form-control form-control-sm rounded">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="small font-weight-bold">To Date</label>
+                                <input type="date" name="to" value="<?= $to ?>" class="form-control form-control-sm rounded">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="btn-group btn-group-sm shadow-none">
+                                    <button type="submit" class="btn btn-navy"><i class="fa fa-filter"></i> Apply</button>
+                                    <a href="./?page=reports/cash_flow_report&from=<?= $prev_month_from ?>&to=<?= $prev_month_to ?>" class="btn btn-outline-navy"><i class="fa fa-chevron-left"></i> Prev Month</a>
+                                    <a href="./?page=reports/cash_flow_report&from=<?= $next_month_from ?>&to=<?= $next_month_to ?>" class="btn btn-outline-navy">Next Month <i class="fa fa-chevron-right"></i></a>
+                                    <a href="./?page=reports/cash_flow_report" class="btn btn-light border"><i class="fa fa-sync-alt"></i> Reset</a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="out-print">
+                    <!-- BEAUTIFUL PRINT HEADER -->
+                    <div class="print-header d-none d-print-block">
+                        <div class="row align-items-center mb-4 pb-4 border-bottom">
+                            <div class="col-7">
+                                <h2 class="text-navy font-weight-bold mb-0"><?php echo $_settings->info('name') ?></h2>
+                                <p class="text-muted mb-0 small"><?php echo $_settings->info('address') ?></p>
+                                <p class="text-muted mb-0 small">Phone: <?php echo $_settings->info('contact') ?> | Email: <?php echo $_settings->info('email') ?></p>
+                            </div>
+                            <div class="col-5 text-right">
+                                <h1 class="text-navy h2 font-weight-bold mb-1">CASH FLOW REPORT</h1>
+                                <p class="mb-0 text-muted">Generated On: <b><?= date("d M, Y h:i A") ?></b></p>
+                                <div class="badge badge-light border px-2 py-1 mt-2">
+                                    Period: <?= date("d M Y", strtotime($from)) ?> - <?= date("d M Y", strtotime($to)) ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Print Summary Grid -->
+                        <div class="row mb-4">
+                            <div class="col-4">
+                                <div class="border rounded p-2 text-center bg-light">
+                                    <small class="text-muted text-uppercase d-block mb-1">Total Inflow</small>
+                                    <h4 class="mb-0 font-weight-bold text-success">₹<?= number_format($total_in, 2) ?></h4>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2 text-center bg-light">
+                                    <small class="text-muted text-uppercase d-block mb-1">Total Outflow</small>
+                                    <h4 class="mb-0 font-weight-bold text-danger">₹<?= number_format($total_out, 2) ?></h4>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2 text-center bg-navy text-white">
+                                    <small class="text-white-50 text-uppercase d-block mb-1">Net Balance</small>
+                                    <h4 class="mb-0 font-weight-bold">₹<?= number_format($net_balance, 2) ?></h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-sm custom-report-table" id="cash_flow_table">
+                            <thead>
+                                <tr class="bg-navy text-white text-uppercase small">
+                                    <th class="py-2 px-3" width="12%">Date</th>
+                                    <th class="py-2" width="15%">Category</th>
+                                    <th class="py-2">Details</th>
+                                    <th class="py-2 text-right" width="12%">Cash In (+)</th>
+                                    <th class="py-2 text-right" width="12%">Cash Out (-)</th>
+                                    <th class="py-2 text-right pr-3" width="15%">Running Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $temp_balance = 0;
+                                if(!empty($data_rows)):
+                                    foreach($data_rows as $row): 
+                                        if($row['type'] == 'Cash In') $temp_balance += $row['amount'];
+                                        else $temp_balance -= $row['amount'];
+                                        
+                                        $display_details = $row['details'];
+                                        if($row['category'] == 'Client Payment' && !empty($row['client_id'])) {
+                                            $display_details = '<a href="./?page=clients/view_client&id=' . $row['client_id'] . '" class="text-dark font-weight-bold hover-primary no-print">' . $row['client_fullname'] . '</a>';
+                                            $display_details .= '<span class="d-none d-print-inline-block font-weight-bold">' . $row['client_fullname'] . '</span>';
+                                            $display_details .= ' (' . $row['payment_remarks'] . ')';
+                                        }
+                                ?>
+                                <tr>
+                                    <td class="px-3 align-middle"><?= date("d M, Y", strtotime($row['date'])) ?></td>
+                                    <td class="align-middle">
+                                        <span class="badge badge-<?= $row['type'] == 'Cash In' ? 'success' : 'danger' ?>-soft px-2 py-1 rounded">
+                                            <?= $row['category'] ?>
+                                        </span>
+                                    </td>
+                                    <td class="align-middle"><?= $display_details ?></td>
+                                    <td class="text-right align-middle <?= $row['type'] == 'Cash In' ? 'text-success font-weight-bold' : 'text-muted' ?>">
+                                        <?= ($row['type'] == 'Cash In') ? '₹'.number_format($row['amount'], 2) : '-' ?>
+                                    </td>
+                                    <td class="text-right align-middle <?= $row['type'] == 'Cash Out' ? 'text-danger font-weight-bold' : 'text-muted' ?>">
+                                        <?= ($row['type'] == 'Cash Out') ? '₹'.number_format($row['amount'], 2) : '-' ?>
+                                    </td>
+                                    <td class="text-right align-middle pr-3 font-weight-bold <?= $temp_balance < 0 ? 'text-danger' : 'text-navy' ?>">
+                                        ₹ <?= number_format($temp_balance, 2) ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; else: ?>
+                                <tr><td colspan="6" class="text-center py-5 text-muted">No transactions found for this period.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr class="font-weight-bold">
+                                    <th colspan="3" class="text-right py-3 pr-3 text-uppercase">Final Totals for this Period:</th>
+                                    <th class="text-right py-3 text-success">₹ <?= number_format($total_in, 2) ?></th>
+                                    <th class="text-right py-3 text-danger">₹ <?= number_format($total_out, 2) ?></th>
+                                    <th class="text-right py-3 pr-3 <?= $net_balance >= 0 ? 'text-success' : 'text-danger' ?>" style="font-size: 1.1rem;">
+                                        ₹ <?= number_format($net_balance, 2) ?>
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- SIGNATURE BOX (Only on Print) -->
+                    <div class="d-none d-print-block mt-5 pt-5">
+                        <div class="row">
+                            <div class="col-4 text-center border-top pt-2">Prepared By</div>
+                            <div class="col-4"></div>
+                            <div class="col-4 text-center border-top pt-2">Authorized Signature</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 <script>
-// Optional: Add JavaScript for better user experience
-document.addEventListener('DOMContentLoaded', function() {
-    // Add click event to all client links
-    document.querySelectorAll('a[href*="view_client"]').forEach(function(link) {
-        link.addEventListener('click', function(e) {
-            // Optional: Show loading indicator
-            console.log('Opening client profile: ' + this.href);
+    function printStatement(){
+        var head = $('head').html();
+        var content = $('#out-print').html();
+        var nw = window.open("", "_blank", "width=1200,height=900");
+        nw.document.write("<html><head>"+head+"<style>body{background:white!important;padding:40px;} .no-print{display:none!important;} .d-print-block{display:block!important;} .d-print-inline-block{display:inline-block!important;} .table{border:1px solid #333!important;} .table th, .table td{border:1px solid #333!important;} .bg-navy{background:#001f3f!important;color:white!important;}</style></head><body>"+content+"</body></html>");
+        nw.document.close();
+        setTimeout(function(){
+            nw.print();
+        }, 1000);
+    }
+
+    $(function(){
+        $('#export_excel').click(function(){
+            var table = document.getElementById("cash_flow_table");
+            var wb = XLSX.utils.table_to_book(table, {sheet: "Cash_Flow_Report"});
+            XLSX.writeFile(wb, "Cash_Flow_Report_<?= $from ?>_to_<?= $to ?>.xlsx");
         });
     });
-});
 </script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    body { font-family: 'Inter', sans-serif; background-color: #f4f6f9; }
+    .text-navy { color: #001f3f !important; }
+    .bg-navy { background-color: #001f3f !important; color: #fff; }
+    .btn-navy { background-color: #001f3f !important; color: #fff; border: none; }
+    .btn-outline-navy { color: #001f3f; border: 1px solid #001f3f; }
+    .btn-outline-navy:hover { background: #001f3f; color: #fff; }
+
+    .stat-card { border-radius: 12px; border-top: 1px solid #eee; transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .bg-success-soft { background: #e6f4ea; color: #28a745; }
+    .bg-danger-soft { background: #fce8e8; color: #dc3545; }
+    .bg-white-20 { background: rgba(255,255,255,0.15); }
+    
+    .border-left-success { border-left: 5px solid #28a745; }
+    .border-left-danger { border-left: 5px solid #dc3545; }
+    
+    .badge-success-soft { background: #e6f4ea; color: #1e7e34; }
+    .badge-danger-soft { background: #fce8e8; color: #d93025; }
+
+    .custom-report-table thead th { border: none; }
+    .custom-report-table tbody tr:hover { background-color: #f8fafc !important; }
+    
+    .hover-primary:hover { color: #007bff !important; text-decoration: underline !important; }
+
+    @media print {
+        .no-print { display: none !important; }
+        .d-print-block { display: block !important; }
+        body { background: white !important; font-size: 10pt; }
+        .table { width: 100% !important; border-collapse: collapse !important; }
+        .table th, .table td { border: 1px solid #333 !important; padding: 6px !important; }
+    }
+</style>

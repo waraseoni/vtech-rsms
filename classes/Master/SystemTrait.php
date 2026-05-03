@@ -143,8 +143,9 @@ trait SystemTrait {
 
     function save_settings(){
         extract($_POST);
-        $fields = ['name', 'short_name', 'email', 'contact', 'address'];
+        $fields = ['name', 'short_name', 'email', 'contact', 'address', 'log_retention'];
         foreach($fields as $f){
+            if(!isset($$f)) continue;
             $val = $this->conn->real_escape_string($$f);
             if($this->conn->query("SELECT * FROM system_info WHERE meta_field = '$f'")->num_rows > 0)
                 $this->conn->query("UPDATE system_info SET meta_value = '$val' WHERE meta_field = '$f'");
@@ -181,5 +182,19 @@ trait SystemTrait {
         $qry = $this->conn->query("SELECT t.code FROM transaction_list t INNER JOIN client_list c ON t.client_name = c.id WHERE c.contact = '$contact' ORDER BY t.date_created DESC LIMIT 1");
         if($qry->num_rows > 0) return json_encode(['status' => 'success', 'code' => $qry->fetch_assoc()['code']]);
         return json_encode(['status' => 'failed', 'msg' => 'No record found.']);
+    }
+
+    function clean_activity_logs($days = null){
+        if($days === null) $days = $this->settings->info('log_retention') ?: 90;
+        $days = intval($days);
+        if($days <= 0) return json_encode(['status' => 'failed', 'msg' => 'Invalid days.']);
+        
+        $date = date("Y-m-d H:i:s", strtotime("-$days days"));
+        $delete = $this->conn->query("DELETE FROM `activity_logs` WHERE date_created < '$date'");
+        if($delete){
+            $affected = $this->conn->affected_rows;
+            return json_encode(['status' => 'success', 'msg' => "$affected logs older than $days days have been deleted.", 'affected' => $affected]);
+        }
+        return json_encode(['status' => 'failed', 'msg' => 'Database error.']);
     }
 }

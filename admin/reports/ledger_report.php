@@ -84,7 +84,8 @@ $walkin_income = $walkin_data['total_amount'] ?? 0;
 $walkin_sales_detail = $conn->query("SELECT 
     ds.*,
     p.name as product_name,
-    p.price as unit_price
+    dsi.qty as quantity,
+    dsi.price as unit_price
     FROM direct_sales ds
     LEFT JOIN direct_sale_items dsi ON ds.id = dsi.sale_id
     LEFT JOIN product_list p ON dsi.product_id = p.id
@@ -106,7 +107,8 @@ $client_sales_detail = $conn->query("SELECT
     c.middlename as client_middlename,
     c.lastname as client_lastname,
     p.name as product_name,
-    p.price as unit_price
+    dsi.qty as quantity,
+    dsi.price as unit_price
     FROM direct_sales ds
     LEFT JOIN client_list c ON ds.client_id = c.id
     LEFT JOIN direct_sale_items dsi ON ds.id = dsi.sale_id

@@ -70,6 +70,11 @@ if($_settings->chk_flashdata('success')): ?>
 					<label for="address" class="control-label">Office Address</label>
 					<textarea rows="3" class="form-control form-control-sm" name="address" id="address" style="resize:none"><?php echo $_settings->info('address') ?></textarea>
 				</div>
+				<div class="form-group">
+					<label for="log_retention" class="control-label">Activity Log Retention (Days)</label>
+					<input type="number" class="form-control form-control-sm" name="log_retention" id="log_retention" value="<?php echo $_settings->info('log_retention') ?: 90 ?>">
+					<small class="text-muted">Logs older than this will be deleted during cleanup. (Default: 90 days)</small>
+				</div>
 			</fieldset>
 			<div class="form-group">
 				<label for="" class="control-label">Welcome Content</label>

@@ -99,6 +99,7 @@ switch ($action) {
 	case 'get_payment': echo $Master->get_payment(); break;
 	case 'delete_payment': echo $Master->delete_payment(); break;
     case 'get_status_by_contact': echo $Master->get_status_by_contact(); break;
+    case 'clean_activity_logs': echo $Master->clean_activity_logs(); break;
 	default: break;
 }
 ?>
