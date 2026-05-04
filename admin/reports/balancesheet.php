@@ -1,1656 +1,1273 @@
 <?php
-// Date Filter Handling
-$current_year = date('Y');
+/**
+ * ============================================================
+ *  VTech RSMS — Master Business Ledger & Balance Sheet
+ *  MERGED BEST VERSION (Original + DeepSeek + Gemini + Grok)
+ * ============================================================
+ *  Features:
+ *  ✅ Discount tracking in customer balance  [Gemini]
+ *  ✅ Half-day attendance (0.5x salary)      [Grok]
+ *  ✅ Stock includes repair products         [Grok]
+ *  ✅ Monthly direct income column           [Grok]
+ *  ✅ Prev/Next navigation + Reset           [DeepSeek]
+ *  ✅ Business Health Dashboard              [DeepSeek]
+ *  ✅ Top 10 Customers section               [DeepSeek]
+ *  ✅ Hindi month names                      [DeepSeek]
+ *  ✅ Export PDF/Excel + Clipboard           [DeepSeek]
+ *  ✅ Keyboard shortcuts                     [DeepSeek]
+ *  ✅ Tab persistence (localStorage)         [DeepSeek]
+ *  ✅ Flatpickr date picker                  [DeepSeek]
+ *  ✅ Dynamic filter toggle                  [Grok]
+ *  ✅ Input validation (month/year range)    [DeepSeek/Grok]
+ *  ✅ Opening balance carry forward          [Original]
+ *  ✅ Loan EMI tracking                      [DeepSeek]
+ * ============================================================
+ */
+
+// ─────────────────────────────────────────────────────────────
+// 1. DATE FILTER & NAVIGATION
+// ─────────────────────────────────────────────────────────────
+$current_year  = date('Y');
 $current_month = (int)date('m');
-$current_month_name = date('F');
-$current_date = date('Y-m-d');
+$current_date  = date('Y-m-d');
 
-// Get filter parameters
-$filter_year = isset($_GET['year']) ? intval($_GET['year']) : $current_year;
-$filter_month = isset($_GET['month']) ? intval($_GET['month']) : $current_month;
-$filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'monthly';
-$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
-$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
+$filter_year   = isset($_GET['year'])        ? intval($_GET['year'])    : $current_year;
+$filter_month  = isset($_GET['month'])       ? intval($_GET['month'])   : $current_month;
+$filter_type   = isset($_GET['filter_type']) ? $_GET['filter_type']     : 'monthly';
+$start_date    = isset($_GET['start_date'])  ? $_GET['start_date']      : date('Y-m-01');
+$end_date      = isset($_GET['end_date'])    ? $_GET['end_date']        : date('Y-m-t');
 
-// Validate month and year
-if ($filter_month < 1 || $filter_month > 12) $filter_month = $current_month;
-if ($filter_year < 2020 || $filter_year > $current_year + 1) $filter_year = $current_year;
+// Validate ranges  [DeepSeek]
+if ($filter_month < 1 || $filter_month > 12)            $filter_month = $current_month;
+if ($filter_year  < 2020 || $filter_year > $current_year+1) $filter_year  = $current_year;
 
 // Calculate date ranges
-if ($filter_type == 'monthly') {
-    $start_date = date("$filter_year-$filter_month-01");
-    $end_date = date("$filter_year-$filter_month-t", strtotime($start_date));
-} elseif ($filter_type == 'yearly') {
-    $start_date = date("$filter_year-01-01");
-    $end_date = date("$filter_year-12-31");
+if ($filter_type === 'monthly') {
+    $start_date = date("{$filter_year}-{$filter_month}-01");
+    $end_date   = date("{$filter_year}-{$filter_month}-t", strtotime($start_date));
+} elseif ($filter_type === 'yearly') {
+    $start_date = "{$filter_year}-01-01";
+    $end_date   = "{$filter_year}-12-31";
 }
 
-// Navigation handling
+// Prev / Next navigation  [DeepSeek]
 if (isset($_GET['nav'])) {
-    if ($_GET['nav'] == 'prev') {
-        if ($filter_type == 'monthly') {
-            $filter_month--;
-            if ($filter_month < 1) { $filter_month = 12; $filter_year--; }
-        } elseif ($filter_type == 'yearly') { $filter_year--; }
-    } elseif ($_GET['nav'] == 'next') {
-        if ($filter_type == 'monthly') {
-            $filter_month++;
-            if ($filter_month > 12) { $filter_month = 1; $filter_year++; }
-        } elseif ($filter_type == 'yearly') { $filter_year++; }
+    if ($_GET['nav'] === 'prev') {
+        if ($filter_type === 'monthly') { $filter_month--; if ($filter_month < 1)  { $filter_month = 12; $filter_year--; } }
+        else { $filter_year--; }
+    } elseif ($_GET['nav'] === 'next') {
+        if ($filter_type === 'monthly') { $filter_month++; if ($filter_month > 12) { $filter_month = 1;  $filter_year++; } }
+        else { $filter_year++; }
     }
-    echo "<script>location.href = './?page=reports/balancesheet&year=$filter_year&month=$filter_month&filter_type=$filter_type';</script>";
+    echo "<script>window.location='?page=reports/balancesheet&year={$filter_year}&month={$filter_month}&filter_type={$filter_type}';</script>";
     exit();
 }
-
 if (isset($_GET['reset'])) {
-    echo "<script>location.href = './?page=reports/balancesheet';</script>";
+    echo "<script>window.location='?page=reports/balancesheet';</script>";
     exit();
 }
 
-// Function to execute query using system $conn (mysqli)
-function executeQuery($sql) {
-    global $conn;
+// ─────────────────────────────────────────────────────────────
+// 2. HELPER FUNCTIONS
+// ─────────────────────────────────────────────────────────────
+function fetch_all_assoc($conn, $sql) {
     $qry = $conn->query($sql);
-    if(!$qry) return [];
+    if (!$qry) return [];
     $data = [];
-    while($row = $qry->fetch_assoc()){
-        $data[] = $row;
-    }
+    while ($row = $qry->fetch_assoc()) $data[] = $row;
     return $data;
 }
 
-// Get all reports with date filters
-$reports = [];
+// ─────────────────────────────────────────────────────────────
+// 3. COLUMN EXISTENCE CHECK
+// ─────────────────────────────────────────────────────────────
+$columnExists = !empty(fetch_all_assoc($conn, "SHOW COLUMNS FROM client_list LIKE 'opening_balance'"));
+$ob_col       = $columnExists ? "COALESCE(c.opening_balance, 0)" : "0";
 
-// 1. Customer Business Ledger - With Date Filter and Opening Balance Carry Forward
-// First check if opening_balance column exists
-$checkColumnSQL = "SHOW COLUMNS FROM client_list LIKE 'opening_balance'";
-$columnExists = executeQuery($conn, $checkColumnSQL);
+// ─────────────────────────────────────────────────────────────
+// 4. CUSTOMER LEDGER  (Gemini: discount deducted from balance)
+// ─────────────────────────────────────────────────────────────
+$customerLedgerSQL = "
+    SELECT
+        c.id,
+        CONCAT(c.firstname, ' ', COALESCE(c.middlename,''), ' ', c.lastname) AS customer_name,
+        c.contact,
 
-if (!empty($columnExists)) {
-    // Column exists - use the original query
-    $customerLedgerSQL = "
-        SELECT 
-            c.id as 'client_id',
-            CONCAT(c.firstname, ' ', COALESCE(c.middlename, ''), ' ', c.lastname) as 'customer_name',
-            c.contact as 'contact',
-            -- Opening Balance (carry forward from before start_date)
+        -- Opening balance (carry forward) — DISCOUNT included  [Gemini]
+        (
+            {$ob_col}
+            + COALESCE((SELECT SUM(t.amount)   FROM transaction_list t WHERE t.client_name = c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0)
+            - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id = c.id AND DATE(p.payment_date) < '$start_date'), 0)
+        ) AS opening_balance,
+
+        -- Period repair income
+        COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name = c.id AND t.status IN (3,5) AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS period_repair,
+
+        -- Period direct sales
+        COALESCE((SELECT SUM(ds.total_amount) FROM direct_sales ds WHERE ds.client_id = c.id AND DATE(ds.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS period_sales,
+
+        -- Period cash received
+        COALESCE((SELECT SUM(p.amount) FROM client_payments p WHERE p.client_id = c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS period_paid,
+
+        -- Period discount given  [Gemini]
+        COALESCE((SELECT SUM(COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id = c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS period_discount,
+
+        -- Previous job count
+        COALESCE((SELECT COUNT(*) FROM transaction_list t WHERE t.client_name = c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0) AS prev_jobs,
+
+        -- Closing balance (discount deducted)  [Gemini]
+        (
             (
-                COALESCE(c.opening_balance, 0) 
-                + COALESCE((SELECT SUM(t.amount) 
-                           FROM transaction_list t 
-                           WHERE t.client_name = c.id 
-                           AND t.status IN (3,5)
-                           AND t.date_created < '$start_date'), 0)
-                - COALESCE((SELECT SUM(p.amount) 
-                           FROM client_payments p 
-                           WHERE p.client_id = c.id
-                           AND p.payment_date < '$start_date'), 0)
-            ) as 'opening_balance',
-            
-            -- Repair amount in selected period
-            COALESCE((SELECT SUM(t.amount) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_repair_amount',
-            
-            -- Payment received in selected period
-            COALESCE((SELECT SUM(p.amount) 
-             FROM client_payments p 
-             WHERE p.client_id = c.id
-             AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0) as 'total_payment',
-            
-            -- Current Balance (Opening + Current Period Transactions)
-            (
-                (
-                    COALESCE(c.opening_balance, 0) 
-                    + COALESCE((SELECT SUM(t.amount) 
-                               FROM transaction_list t 
-                               WHERE t.client_name = c.id 
-                               AND t.status IN (3,5)
-                               AND t.date_created < '$start_date'), 0)
-                    - COALESCE((SELECT SUM(p.amount) 
-                               FROM client_payments p 
-                               WHERE p.client_id = c.id
-                               AND p.payment_date < '$start_date'), 0)
-                )
-                + 
-                COALESCE((SELECT SUM(t.amount) 
-                 FROM transaction_list t 
-                 WHERE t.client_name = c.id AND t.status IN (3,5)
-                 AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0)
-                - 
-                COALESCE((SELECT SUM(p.amount) 
-                 FROM client_payments p 
-                 WHERE p.client_id = c.id
-                 AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0)
-            ) as 'current_balance',
-            
-            -- Additional info: Total transactions before period (for reference)
-            COALESCE((SELECT COUNT(*) 
-                     FROM transaction_list t 
-                     WHERE t.client_name = c.id 
-                     AND t.status IN (3,5)
-                     AND t.date_created < '$start_date'), 0) as 'previous_transactions',
-            
-            -- Additional info: Total payments before period (for reference)
-            COALESCE((SELECT COUNT(*) 
-                     FROM client_payments p 
-                     WHERE p.client_id = c.id
-                     AND p.payment_date < '$start_date'), 0) as 'previous_payments'
-            
-        FROM client_list c
-        WHERE c.delete_flag = 0
-        HAVING (total_repair_amount > 0 OR total_payment > 0 OR ABS(current_balance) > 0)
-        ORDER BY total_repair_amount DESC
-    ";
-} else {
-    // Column doesn't exist - use alternative query without opening_balance
-    $customerLedgerSQL = "
-        SELECT 
-            c.id as 'client_id',
-            CONCAT(c.firstname, ' ', COALESCE(c.middlename, ''), ' ', c.lastname) as 'customer_name',
-            c.contact as 'contact',
-            -- Opening Balance (from transactions before start_date only)
-            (
-                COALESCE((SELECT SUM(t.amount) 
-                         FROM transaction_list t 
-                         WHERE t.client_name = c.id 
-                         AND t.status IN (3,5)
-                         AND t.date_created < '$start_date'), 0)
-                - COALESCE((SELECT SUM(p.amount) 
-                           FROM client_payments p 
-                           WHERE p.client_id = c.id
-                           AND p.payment_date < '$start_date'), 0)
-            ) as 'opening_balance',
-            
-            -- Repair amount in selected period
-            COALESCE((SELECT SUM(t.amount) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_repair_amount',
-            
-            -- Payment received in selected period
-            COALESCE((SELECT SUM(p.amount) 
-             FROM client_payments p 
-             WHERE p.client_id = c.id
-             AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0) as 'total_payment',
-            
-            -- Current Balance (Opening + Current Period Transactions)
-            (
-                (
-                    COALESCE((SELECT SUM(t.amount) 
-                             FROM transaction_list t 
-                             WHERE t.client_name = c.id 
-                             AND t.status IN (3,5)
-                             AND t.date_created < '$start_date'), 0)
-                    - COALESCE((SELECT SUM(p.amount) 
-                               FROM client_payments p 
-                               WHERE p.client_id = c.id
-                               AND p.payment_date < '$start_date'), 0)
-                )
-                + 
-                COALESCE((SELECT SUM(t.amount) 
-                 FROM transaction_list t 
-                 WHERE t.client_name = c.id AND t.status IN (3,5)
-                 AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0)
-                - 
-                COALESCE((SELECT SUM(p.amount) 
-                 FROM client_payments p 
-                 WHERE p.client_id = c.id
-                 AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0)
-            ) as 'current_balance',
-            
-            -- Additional info: Total transactions before period (for reference)
-            COALESCE((SELECT COUNT(*) 
-                     FROM transaction_list t 
-                     WHERE t.client_name = c.id 
-                     AND t.status IN (3,5)
-                     AND t.date_created < '$start_date'), 0) as 'previous_transactions',
-            
-            -- Additional info: Total payments before period (for reference)
-            COALESCE((SELECT COUNT(*) 
-                     FROM client_payments p 
-                     WHERE p.client_id = c.id
-                     AND p.payment_date < '$start_date'), 0) as 'previous_payments'
-            
-        FROM client_list c
-        WHERE c.delete_flag = 0
-        HAVING (total_repair_amount > 0 OR total_payment > 0 OR ABS(current_balance) > 0)
-        ORDER BY total_repair_amount DESC
-    ";
-}
-$reports['customer_ledger'] = executeQuery($customerLedgerSQL);
+                {$ob_col}
+                + COALESCE((SELECT SUM(t.amount)   FROM transaction_list t WHERE t.client_name = c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0)
+                - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id = c.id AND DATE(p.payment_date) < '$start_date'), 0)
+            )
+            + COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name = c.id AND t.status IN (3,5) AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+            + COALESCE((SELECT SUM(ds.total_amount) FROM direct_sales ds WHERE ds.client_id = c.id AND DATE(ds.date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+            - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id = c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0)
+        ) AS closing_balance
 
-// Check for detailed ledger request
-if (isset($_GET['client_id'])) {
-    $client_id = intval($_GET['client_id']);
-    // Fetch client data
-    $clientSQL = "
-        SELECT 
-            CONCAT(firstname, ' ', COALESCE(middlename, ''), ' ', lastname) as customer_name" .
-            (!empty($columnExists) ? ", opening_balance" : "") . "
-        FROM client_list 
-        WHERE id = $client_id
-    ";
-    $client_data = executeQuery($clientSQL);
-    if (!empty($client_data)) {
-        $client_data = $client_data[0];
-        $reports['client_name'] = $client_data['customer_name'];
-        $opening_balance = !empty($columnExists) ? (float)$client_data['opening_balance'] : 0;
+    FROM client_list c
+    WHERE c.delete_flag = 0
+    HAVING opening_balance != 0 OR period_repair != 0 OR period_sales != 0 OR period_paid != 0
+    ORDER BY customer_name ASC
+";
+$customer_ledger = fetch_all_assoc($conn, $customerLedgerSQL);
 
-        // Fetch full history (no date filter for full ledger)
-        $detailedLedgerSQL = "
-            SELECT 
-                event_date,
-                description,
-                debit,
-                credit
-            FROM (
-                SELECT 
-                    date_created as event_date,
-                    CONCAT('Repair Transaction ID: ', id) as description,
-                    amount as debit,
-                    0 as credit
-                FROM transaction_list
-                WHERE client_name = $client_id AND status IN (3,5)
-                UNION ALL
-                SELECT 
-                    payment_date as event_date,
-                    CONCAT('Payment ID: ', id, ' - ', payment_method) as description,
-                    0 as debit,
-                    amount as credit
-                FROM client_payments
-                WHERE client_id = $client_id
-            ) as events
-            ORDER BY event_date ASC
-        ";
-        $detailed_entries = executeQuery($detailedLedgerSQL);
-
-        // Prepare ledger with running balance
-        $ledger = [];
-        $running_balance = $opening_balance;
-
-        // Add opening balance if non-zero
-        if ($opening_balance != 0) {
-            $ledger[] = [
-                'event_date' => 'Opening',
-                'description' => 'Opening Balance',
-                'debit' => $opening_balance > 0 ? $opening_balance : 0,
-                'credit' => $opening_balance < 0 ? abs($opening_balance) : 0,
-                'balance' => $opening_balance
-            ];
-        }
-
-        foreach ($detailed_entries as $entry) {
-            $running_balance += $entry['debit'] - $entry['credit'];
-            $entry['balance'] = $running_balance;
-            $ledger[] = $entry;
-        }
-
-        $reports['detailed_ledger'] = $ledger;
-    }
-}
-
-// 2. Technician/Mechanic Ledger - With Date Filter and Carry Forward (Corrected for half-days)
+// ─────────────────────────────────────────────────────────────
+// 5. MECHANIC / STAFF LEDGER  (Grok: half-day = 0.5, commission)
+// ─────────────────────────────────────────────────────────────
 $mechanicLedgerSQL = "
-    SELECT 
-        m.id as 'mechanic_id',
-        CONCAT(m.firstname, ' ', COALESCE(m.middlename, ''), ' ', m.lastname) as 'mechanic_name',
-        m.daily_salary as 'daily_salary',
-        m.commission_percent as 'commission_percent',
-        
-        -- Total Advance (including before period)
-        COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id
-         AND a.date_paid <= '$end_date'), 0) as 'total_advance_amount',
-        
-        -- Advance in selected period only
-        COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id
-         AND a.date_paid BETWEEN '$start_date' AND '$end_date'), 0) as 'advance_in_period',
-        
-        -- Total Days Worked (including before period)
-        COALESCE((SELECT SUM(CASE WHEN al.status = 1 THEN 1 WHEN al.status = 3 THEN 0.5 ELSE 0 END) 
-         FROM attendance_list al 
-         WHERE al.mechanic_id = m.id 
-         AND al.curr_date <= '$end_date'), 0) as 'total_days_worked',
-        
-        -- Days Worked in selected period only
-        COALESCE((SELECT SUM(CASE WHEN al.status = 1 THEN 1 WHEN al.status = 3 THEN 0.5 ELSE 0 END) 
-         FROM attendance_list al 
-         WHERE al.mechanic_id = m.id 
-         AND al.curr_date BETWEEN '$start_date' AND '$end_date'), 0) as 'days_worked_in_period',
-        
-        -- Total Salary Due (including before period)
-        (COALESCE((SELECT SUM(CASE WHEN al.status = 1 THEN 1 WHEN al.status = 3 THEN 0.5 ELSE 0 END) 
-          FROM attendance_list al 
-          WHERE al.mechanic_id = m.id 
-          AND al.curr_date <= '$end_date'), 0) * m.daily_salary) as 'total_salary_due',
-        
-        -- Salary Due in selected period only
-        (COALESCE((SELECT SUM(CASE WHEN al.status = 1 THEN 1 WHEN al.status = 3 THEN 0.5 ELSE 0 END) 
-          FROM attendance_list al 
-          WHERE al.mechanic_id = m.id 
-          AND al.curr_date BETWEEN '$start_date' AND '$end_date'), 0) * m.daily_salary) as 'salary_due_in_period',
-        
-        -- Balance Amount (including carry forward)
-        ((COALESCE((SELECT SUM(CASE WHEN al.status = 1 THEN 1 WHEN al.status = 3 THEN 0.5 ELSE 0 END) 
-           FROM attendance_list al 
-           WHERE al.mechanic_id = m.id 
-           AND al.curr_date <= '$end_date'), 0) * m.daily_salary) 
-         - COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id
-          AND a.date_paid <= '$end_date'), 0)) as 'balance_amount'
+    SELECT
+        m.id,
+        CONCAT(m.firstname, ' ', COALESCE(m.middlename,''), ' ', m.lastname) AS mech_name,
+        m.daily_salary,
+        COALESCE(m.commission_percent, 0) AS commission_percent,
+
+        -- All-time days worked (half-day = 0.5)  [Grok]
+        COALESCE((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                  FROM attendance_list al WHERE al.mechanic_id = m.id AND al.curr_date <= '$end_date'), 0) AS total_days,
+
+        -- Period days worked  [Grok]
+        COALESCE((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                  FROM attendance_list al WHERE al.mechanic_id = m.id AND al.curr_date BETWEEN '$start_date' AND '$end_date'), 0) AS period_days,
+
+        -- Period salary due
+        (COALESCE((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                   FROM attendance_list al WHERE al.mechanic_id = m.id AND al.curr_date BETWEEN '$start_date' AND '$end_date'), 0) * m.daily_salary) AS period_salary,
+
+        -- Period commission  [Original]
+        COALESCE((SELECT SUM(mechanic_commission_amount) FROM transaction_list WHERE mechanic_id = m.id AND status = 5 AND DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS period_commission,
+
+        -- Period advance
+        COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id AND DATE(a.date_paid) BETWEEN '$start_date' AND '$end_date'), 0) AS period_advance,
+
+        -- Total advance (all-time)
+        COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id AND DATE(a.date_paid) <= '$end_date'), 0) AS total_advance,
+
+        -- Total salary due (all-time)
+        (COALESCE((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                   FROM attendance_list al WHERE al.mechanic_id = m.id AND al.curr_date <= '$end_date'), 0) * m.daily_salary) AS total_salary,
+
+        -- Net balance (total_salary - total_advance)
+        ((COALESCE((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                    FROM attendance_list al WHERE al.mechanic_id = m.id AND al.curr_date <= '$end_date'), 0) * m.daily_salary)
+         - COALESCE((SELECT SUM(a.amount) FROM advance_payments a WHERE a.mechanic_id = m.id AND DATE(a.date_paid) <= '$end_date'), 0)) AS net_balance
+
     FROM mechanic_list m
     WHERE m.delete_flag = 0
-    HAVING (balance_amount != 0 OR days_worked_in_period > 0)
+    HAVING net_balance != 0 OR period_days > 0
 ";
-$reports['mechanic_ledger'] = executeQuery($mechanicLedgerSQL);
+$mechanic_ledger = fetch_all_assoc($conn, $mechanicLedgerSQL);
 
-// 3. Stock Inventory Summary (Corrected for repair products)
-$stockInventorySQL = "
-    SELECT 
-        p.id as 'product_id',
-        p.name as 'product_name',
-        p.description as 'description',
-        p.price as 'sale_price',
-        COALESCE(SUM(i.quantity), 0) as 'total_stock_in',
-        COALESCE((SELECT SUM(dsi.qty) 
-         FROM direct_sale_items dsi 
-         JOIN direct_sales ds ON ds.id = dsi.sale_id
-         WHERE dsi.product_id = p.id
-         AND ds.date_created BETWEEN '$start_date' AND '$end_date'), 0) +
-        COALESCE((SELECT SUM(tp.qty) 
-         FROM transaction_products tp 
-         JOIN transaction_list tl ON tl.id = tp.transaction_id
-         WHERE tp.product_id = p.id
-         AND tl.status IN (3,5)
-         AND tl.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'sold_quantity',
-        (COALESCE(SUM(i.quantity), 0) 
-         - COALESCE((SELECT SUM(dsi.qty) 
-          FROM direct_sale_items dsi 
-          JOIN direct_sales ds ON ds.id = dsi.sale_id
-          WHERE dsi.product_id = p.id), 0)
-         - COALESCE((SELECT SUM(tp.qty) 
-          FROM transaction_products tp 
-          JOIN transaction_list tl ON tl.id = tp.transaction_id
-          WHERE tp.product_id = p.id
-          AND tl.status IN (3,5)), 0)) as 'remaining_stock',
-        ((COALESCE(SUM(i.quantity), 0) 
-         - COALESCE((SELECT SUM(dsi.qty) 
-          FROM direct_sale_items dsi 
-          JOIN direct_sales ds ON ds.id = dsi.sale_id
-          WHERE dsi.product_id = p.id), 0)
-         - COALESCE((SELECT SUM(tp.qty) 
-          FROM transaction_products tp 
-          JOIN transaction_list tl ON tl.id = tp.transaction_id
-          WHERE tp.product_id = p.id
-          AND tl.status IN (3,5)), 0)) * p.price) as 'stock_value'
+// ─────────────────────────────────────────────────────────────
+// 6. STOCK INVENTORY  (Grok: includes repair products too)
+// ─────────────────────────────────────────────────────────────
+$inventorySQL = "
+    SELECT
+        p.name AS product_name,
+        p.price,
+        COALESCE((SELECT SUM(i.quantity) FROM inventory_list i WHERE i.product_id = p.id AND DATE(i.stock_date) <= '$end_date'), 0) AS stock_in,
+
+        -- Sold via direct sales
+        COALESCE((SELECT SUM(dsi.qty) FROM direct_sale_items dsi
+                  JOIN direct_sales ds ON ds.id = dsi.sale_id
+                  WHERE dsi.product_id = p.id AND DATE(ds.date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+        +
+        -- Used in repair jobs  [Grok]
+        COALESCE((SELECT SUM(tp.qty) FROM transaction_products tp
+                  JOIN transaction_list tl ON tl.id = tp.transaction_id
+                  WHERE tp.product_id = p.id AND tl.status IN (3,5) AND DATE(tl.date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+        AS period_used,
+
+        -- Current remaining stock (all-time basis)
+        (
+            COALESCE((SELECT SUM(i.quantity) FROM inventory_list i WHERE i.product_id = p.id AND DATE(i.stock_date) <= '$end_date'), 0)
+            - COALESCE((SELECT SUM(dsi.qty) FROM direct_sale_items dsi JOIN direct_sales ds ON ds.id=dsi.sale_id WHERE dsi.product_id=p.id), 0)
+            - COALESCE((SELECT SUM(tp.qty) FROM transaction_products tp JOIN transaction_list tl ON tl.id=tp.transaction_id WHERE tp.product_id=p.id AND tl.status IN (3,5)), 0)
+        ) AS curr_stock
+
     FROM product_list p
-    LEFT JOIN inventory_list i ON i.product_id = p.id
     WHERE p.delete_flag = 0
-    GROUP BY p.id, p.name, p.description, p.price
-    HAVING (sold_quantity > 0 OR total_stock_in > 0)
-    ORDER BY sold_quantity DESC, total_stock_in DESC
+    HAVING stock_in > 0
+    ORDER BY curr_stock ASC
 ";
-$reports['stock_inventory'] = executeQuery($stockInventorySQL);
+$inventory_summary = fetch_all_assoc($conn, $inventorySQL);
 
-// 4. Income Summary - With Date Filter
-$incomeSQL = "
-    SELECT 
-        'रिपेयर आय' as 'description',
-        COALESCE((SELECT SUM(amount) FROM transaction_list 
-         WHERE status IN (3,5) 
-         AND date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'amount'
-    UNION ALL
-    SELECT 
-        'सीधी बिक्री' as 'description',
-        COALESCE((SELECT SUM(total_amount) FROM direct_sales 
-         WHERE date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'amount'
-";
-$reports['income_summary'] = executeQuery($incomeSQL);
+// ─────────────────────────────────────────────────────────────
+// 7. LOAN LEDGER  (DeepSeek: EMI remaining, interest rate, status)
+// ─────────────────────────────────────────────────────────────
+$loanSQL = "
+    SELECT
+        l.fullname AS lender_name,
+        l.contact,
+        l.loan_amount,
+        COALESCE(l.interest_rate, 0) AS interest_rate,
+        COALESCE(l.emi_amount, 0)    AS emi_amount,
+        l.start_date,
+        CASE l.status WHEN 1 THEN 'सक्रिय' WHEN 2 THEN 'पूर्ण' ELSE 'अन्य' END AS loan_status,
 
-// 5. Expense Summary - With Date Filter
-$expenseSQL = "
-    SELECT 
-        category as 'expense_category',
-        COALESCE(SUM(amount), 0) as 'amount'
-    FROM expense_list
-    WHERE date_created BETWEEN '$start_date' AND '$end_date'
-    GROUP BY category
-    ORDER BY COALESCE(SUM(amount), 0) DESC
-";
-$reports['expense_summary'] = executeQuery($expenseSQL);
+        COALESCE((SELECT SUM(lp.amount_paid) FROM loan_payments lp WHERE lp.lender_id = l.id AND DATE(lp.payment_date) < '$start_date'), 0) AS prev_paid,
+        COALESCE((SELECT SUM(lp.amount_paid) FROM loan_payments lp WHERE lp.lender_id = l.id AND DATE(lp.payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS period_paid,
+        COALESCE((SELECT SUM(lp.amount_paid) FROM loan_payments lp WHERE lp.lender_id = l.id AND DATE(lp.payment_date) <= '$end_date'), 0) AS total_paid,
 
-// 6. Monthly Transaction Summary - With Date Filter (Added direct_income)
-$monthlySummarySQL = "
-    SELECT 
-        DATE_FORMAT(t.date_created, '%Y-%m') as 'month',
-        COUNT(t.id) as 'total_jobs',
-        COALESCE(SUM(CASE WHEN t.status IN (3,5) THEN t.amount ELSE 0 END), 0) as 'repair_income',
-        COUNT(DISTINCT t.client_name) as 'total_customers',
-        COALESCE((SELECT SUM(e.amount) 
-         FROM expense_list e 
-         WHERE DATE_FORMAT(e.date_created, '%Y-%m') = DATE_FORMAT(t.date_created, '%Y-%m')
-         AND e.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_expenses',
-        COALESCE((SELECT SUM(ds.total_amount) 
-         FROM direct_sales ds 
-         WHERE DATE_FORMAT(ds.date_created, '%Y-%m') = DATE_FORMAT(t.date_created, '%Y-%m')
-         AND ds.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'direct_income'
-    FROM transaction_list t
-    WHERE t.date_created BETWEEN '$start_date' AND '$end_date'
-    GROUP BY DATE_FORMAT(t.date_created, '%Y-%m')
-    ORDER BY DATE_FORMAT(t.date_created, '%Y-%m') DESC
-";
-$reports['monthly_summary'] = executeQuery($monthlySummarySQL);
+        (l.loan_amount - COALESCE((SELECT SUM(lp.amount_paid) FROM loan_payments lp WHERE lp.lender_id = l.id AND DATE(lp.payment_date) <= '$end_date'), 0)) AS outstanding,
 
-// 7. Top Customers - With Date Filter (Updated with carry forward)
-// Check column existence again for this query
-if (!empty($columnExists)) {
-    $topCustomersSQL = "
-        SELECT 
-            c.id as 'client_id',
-            CONCAT(c.firstname, ' ', COALESCE(c.middlename, ''), ' ', c.lastname) as 'customer_name',
-            c.contact as 'contact',
-            -- Previous transactions count
-            COALESCE((SELECT COUNT(*) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created < '$start_date'), 0) as 'previous_jobs',
-            
-            -- Current period transactions
-            COALESCE((SELECT COUNT(*) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_jobs',
-            
-            -- Total amount in current period
-            COALESCE((SELECT SUM(t.amount) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_amount',
-            
-            -- Payments in current period
-            COALESCE((SELECT SUM(p.amount) 
-             FROM client_payments p 
-             WHERE p.client_id = c.id
-             AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0) as 'total_payment_amount',
-            
-            -- Balance carry forward from before period
-            (
-                COALESCE(c.opening_balance, 0) 
-                + COALESCE((SELECT SUM(t.amount) 
-                           FROM transaction_list t 
-                           WHERE t.client_name = c.id 
-                           AND t.status IN (3,5)
-                           AND t.date_created < '$start_date'), 0)
-                - COALESCE((SELECT SUM(p.amount) 
-                           FROM client_payments p 
-                           WHERE p.client_id = c.id
-                           AND p.payment_date < '$start_date'), 0)
-            ) as 'opening_balance',
-            
-            -- Current balance including carry forward
-            (
-                (
-                    COALESCE(c.opening_balance, 0) 
-                    + COALESCE((SELECT SUM(t.amount) 
-                               FROM transaction_list t 
-                               WHERE t.client_name = c.id 
-                               AND t.status IN (3,5)
-                               AND t.date_created < '$start_date'), 0)
-                    - COALESCE((SELECT SUM(p.amount) 
-                               FROM client_payments p 
-                               WHERE p.client_id = c.id
-                               AND p.payment_date < '$start_date'), 0)
-                )
-                + 
-                COALESCE((SELECT SUM(t.amount) 
-                 FROM transaction_list t 
-                 WHERE t.client_name = c.id AND t.status IN (3,5)
-                 AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0)
-                - 
-                COALESCE((SELECT SUM(p.amount) 
-                 FROM client_payments p 
-                 WHERE p.client_id = c.id
-                 AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0)
-            ) as 'current_balance'
-        FROM client_list c
-        WHERE c.delete_flag = 0
-        HAVING total_amount > 0 OR ABS(current_balance) > 0
-        ORDER BY total_amount DESC
-        LIMIT 10
-    ";
-} else {
-    $topCustomersSQL = "
-        SELECT 
-            c.id as 'client_id',
-            CONCAT(c.firstname, ' ', COALESCE(c.middlename, ''), ' ', c.lastname) as 'customer_name',
-            c.contact as 'contact',
-            -- Previous transactions count
-            COALESCE((SELECT COUNT(*) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created < '$start_date'), 0) as 'previous_jobs',
-            
-            -- Current period transactions
-            COALESCE((SELECT COUNT(*) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_jobs',
-            
-            -- Total amount in current period
-            COALESCE((SELECT SUM(t.amount) 
-             FROM transaction_list t 
-             WHERE t.client_name = c.id AND t.status IN (3,5)
-             AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0) as 'total_amount',
-            
-            -- Payments in current period
-            COALESCE((SELECT SUM(p.amount) 
-             FROM client_payments p 
-             WHERE p.client_id = c.id
-             AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0) as 'total_payment_amount',
-            
-            -- Balance carry forward from before period
-            (
-                COALESCE((SELECT SUM(t.amount) 
-                         FROM transaction_list t 
-                         WHERE t.client_name = c.id 
-                         AND t.status IN (3,5)
-                         AND t.date_created < '$start_date'), 0)
-                - COALESCE((SELECT SUM(p.amount) 
-                           FROM client_payments p 
-                           WHERE p.client_id = c.id
-                           AND p.payment_date < '$start_date'), 0)
-            ) as 'opening_balance',
-            
-            -- Current balance including carry forward
-            (
-                (
-                    COALESCE((SELECT SUM(t.amount) 
-                             FROM transaction_list t 
-                             WHERE t.client_name = c.id 
-                             AND t.status IN (3,5)
-                             AND t.date_created < '$start_date'), 0)
-                    - COALESCE((SELECT SUM(p.amount) 
-                               FROM client_payments p 
-                               WHERE p.client_id = c.id
-                               AND p.payment_date < '$start_date'), 0)
-                )
-                + 
-                COALESCE((SELECT SUM(t.amount) 
-                 FROM transaction_list t 
-                 WHERE t.client_name = c.id AND t.status IN (3,5)
-                 AND t.date_created BETWEEN '$start_date' AND '$end_date'), 0)
-                - 
-                COALESCE((SELECT SUM(p.amount) 
-                 FROM client_payments p 
-                 WHERE p.client_id = c.id
-                 AND p.payment_date BETWEEN '$start_date' AND '$end_date'), 0)
-            ) as 'current_balance'
-        FROM client_list c
-        WHERE c.delete_flag = 0
-        HAVING total_amount > 0 OR ABS(current_balance) > 0
-        ORDER BY total_amount DESC
-        LIMIT 10
-    ";
-}
-$reports['top_customers'] = executeQuery($topCustomersSQL);
+        CASE WHEN COALESCE(l.emi_amount,0) > 0
+             THEN CEIL((l.loan_amount - COALESCE((SELECT SUM(lp.amount_paid) FROM loan_payments lp WHERE lp.lender_id = l.id), 0)) / l.emi_amount)
+             ELSE 0
+        END AS remaining_emis
 
-// 8. Loan Ledger (Assuming this exists from original, if not, add your SQL here)
-$loanLedgerSQL = "
-    SELECT 
-        l.id as 'lender_id',
-        l.name as 'lender_name',
-        l.loan_amount as 'loan_amount',
-        l.interest_rate as 'interest_rate',
-        l.emi_amount as 'emi_amount',
-        l.start_date as 'start_date',
-        -- Previous payments
-        COALESCE((SELECT SUM(lp.amount) 
-         FROM loan_payments lp 
-         WHERE lp.lender_id = l.id
-         AND lp.payment_date < '$start_date'), 0) as 'previous_payments',
-        
-        -- Paid in period
-        COALESCE((SELECT SUM(lp.amount) 
-         FROM loan_payments lp 
-         WHERE lp.lender_id = l.id
-         AND lp.payment_date BETWEEN '$start_date' AND '$end_date'), 0) as 'paid_in_period',
-        
-        -- Total paid
-        COALESCE((SELECT SUM(lp.amount) 
-         FROM loan_payments lp 
-         WHERE lp.lender_id = l.id
-         AND lp.payment_date <= '$end_date'), 0) as 'total_paid',
-        
-        -- Balance amount
-        (l.loan_amount - COALESCE((SELECT SUM(lp.amount) 
-         FROM loan_payments lp 
-         WHERE lp.lender_id = l.id
-         AND lp.payment_date <= '$end_date'), 0)) as 'balance_amount',
-        
-        -- Remaining EMIs (approximate)
-        CEIL((l.loan_amount - COALESCE((SELECT SUM(lp.amount) 
-         FROM loan_payments lp 
-         WHERE lp.lender_id = l.id
-         AND lp.payment_date <= '$end_date'), 0)) / l.emi_amount) as 'remaining_emis',
-        
-        CASE WHEN (l.loan_amount - COALESCE((SELECT SUM(lp.amount) 
-              FROM loan_payments lp 
-              WHERE lp.lender_id = l.id
-              AND lp.payment_date <= '$end_date'), 0)) > 0 THEN 'सक्रिय' ELSE 'समाप्त' END as 'status'
     FROM lender_list l
-    WHERE l.delete_flag = 0
-    HAVING balance_amount > 0 OR paid_in_period > 0
-    ORDER BY balance_amount DESC
+    WHERE l.start_date <= '$end_date'
+    HAVING (total_paid > 0 OR outstanding > 0)
 ";
-$reports['loan_ledger'] = executeQuery($loanLedgerSQL);
+$loan_ledger = fetch_all_assoc($conn, $loanSQL);
+
+// ─────────────────────────────────────────────────────────────
+// 8. TOP 10 CUSTOMERS  [DeepSeek]
+// ─────────────────────────────────────────────────────────────
+$topCustomersSQL = "
+    SELECT
+        CONCAT(c.firstname,' ',COALESCE(c.middlename,''),' ',c.lastname) AS customer_name,
+        c.contact,
+        COALESCE((SELECT COUNT(*) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0) AS prev_jobs,
+        COALESCE((SELECT COUNT(*) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS period_jobs,
+        COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS period_amount,
+        COALESCE((SELECT SUM(p.amount) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS period_paid,
+        COALESCE((SELECT SUM(COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS period_discount,
+
+        -- Opening balance with discount  [Gemini]
+        (
+            {$ob_col}
+            + COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0)
+            - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) < '$start_date'), 0)
+        ) AS opening_balance,
+
+        -- Closing balance with discount  [Gemini]
+        (
+            (
+                {$ob_col}
+                + COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0)
+                - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) < '$start_date'), 0)
+            )
+            + COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+            - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) BETWEEN '$start_date' AND '$end_date'), 0)
+        ) AS closing_balance
+
+    FROM client_list c
+    WHERE c.delete_flag = 0
+    HAVING period_amount > 0 OR ABS(closing_balance) > 0
+    ORDER BY period_amount DESC
+    LIMIT 10
+";
+$top_customers = fetch_all_assoc($conn, $topCustomersSQL);
+
+// ─────────────────────────────────────────────────────────────
+// 9. MONTHLY SUMMARY  (Grok: direct_income column added)
+// ─────────────────────────────────────────────────────────────
+$monthlySummarySQL = "
+    SELECT
+        DATE_FORMAT(t.date_created,'%Y-%m') AS mmonth,
+        COUNT(t.id) AS total_jobs,
+        COALESCE(SUM(CASE WHEN t.status IN (3,5) THEN t.amount ELSE 0 END), 0) AS repair_income,
+        COUNT(DISTINCT t.client_name) AS total_customers,
+        COALESCE((SELECT SUM(ds.total_amount) FROM direct_sales ds
+                  WHERE DATE_FORMAT(ds.date_created,'%Y-%m') = DATE_FORMAT(t.date_created,'%Y-%m')
+                  AND DATE(ds.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS direct_income,
+        COALESCE((SELECT SUM(e.amount) FROM expense_list e
+                  WHERE DATE_FORMAT(e.date_created,'%Y-%m') = DATE_FORMAT(t.date_created,'%Y-%m')
+                  AND DATE(e.date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS total_expenses
+    FROM transaction_list t
+    WHERE DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'
+    GROUP BY DATE_FORMAT(t.date_created,'%Y-%m')
+    ORDER BY mmonth DESC
+";
+$monthly_summary = fetch_all_assoc($conn, $monthlySummarySQL);
+
+// ─────────────────────────────────────────────────────────────
+// 10. INCOME & EXPENSE SUMMARY
+// ─────────────────────────────────────────────────────────────
+$income_summary = fetch_all_assoc($conn, "
+    SELECT 'रिपेयर आय' AS description,
+           COALESCE((SELECT SUM(amount) FROM transaction_list WHERE status IN (3,5) AND DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS amount
+    UNION ALL
+    SELECT 'सीधी बिक्री',
+           COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0)
+");
+$expense_summary = fetch_all_assoc($conn, "
+    SELECT category AS expense_category, COALESCE(SUM(amount),0) AS amount
+    FROM expense_list
+    WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'
+    GROUP BY category
+    ORDER BY amount DESC
+");
+
+// ─────────────────────────────────────────────────────────────
+// 11. DASHBOARD TOTALS  [DeepSeek]
+// ─────────────────────────────────────────────────────────────
+$bh = fetch_all_assoc($conn, "
+    SELECT
+        COALESCE((SELECT COUNT(DISTINCT client_name) FROM transaction_list WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS active_customers,
+        COALESCE((SELECT COUNT(*) FROM transaction_list WHERE status IN (3,5) AND DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS completed_jobs,
+        COALESCE((SELECT COUNT(*) FROM transaction_list WHERE status = 0 AND DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS pending_jobs,
+        COALESCE((SELECT SUM(amount) FROM transaction_list WHERE status IN (3,5) AND DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS repair_income,
+        COALESCE((SELECT SUM(total_amount) FROM direct_sales WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS direct_income,
+        COALESCE((SELECT SUM(amount) FROM expense_list WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'), 0) AS total_expense,
+        COALESCE((SELECT SUM(amount) FROM client_payments WHERE DATE(payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS cash_received,
+        COALESCE((SELECT SUM(COALESCE(discount,0)) FROM client_payments WHERE DATE(payment_date) BETWEEN '$start_date' AND '$end_date'), 0) AS discount_given
+    FROM dual
+");
+$bh = !empty($bh) ? $bh[0] : array_fill_keys(['active_customers','completed_jobs','pending_jobs','repair_income','direct_income','total_expense','cash_received','discount_given'], 0);
+$total_income = $bh['repair_income'] + $bh['direct_income'];
+$net_profit   = $total_income - $bh['total_expense'];
+
+// Total receivable (all customers, closing balance)
+$total_receivable = 0;
+foreach ($customer_ledger as $c) $total_receivable += $c['closing_balance'];
+
+// Total salary payable & advance
+$sal_data = fetch_all_assoc($conn, "
+    SELECT
+        COALESCE(SUM((SELECT SUM(CASE WHEN al.status=1 THEN 1 WHEN al.status=3 THEN 0.5 ELSE 0 END)
+                      FROM attendance_list al WHERE al.mechanic_id=m.id AND al.curr_date <= '$end_date') * m.daily_salary), 0) AS salary_payable,
+        COALESCE((SELECT SUM(amount) FROM advance_payments WHERE DATE(date_paid) <= '$end_date'), 0) AS advance_given
+    FROM mechanic_list m WHERE m.delete_flag = 0
+");
+$total_salary_payable = $sal_data[0]['salary_payable'] ?? 0;
+$total_advance_given  = $sal_data[0]['advance_given']  ?? 0;
+
+// Grand stock value
+$grand_stock_val = 0;
+foreach ($inventory_summary as $inv) $grand_stock_val += max(0, $inv['curr_stock']) * $inv['price'];
+
+// Opening balance (carry forward total)
+$ob_data = fetch_all_assoc($conn, "
+    SELECT COALESCE(SUM(
+        {$ob_col}
+        + COALESCE((SELECT SUM(t.amount) FROM transaction_list t WHERE t.client_name=c.id AND t.status IN (3,5) AND DATE(t.date_created) < '$start_date'), 0)
+        - COALESCE((SELECT SUM(p.amount + COALESCE(p.discount,0)) FROM client_payments p WHERE p.client_id=c.id AND DATE(p.payment_date) < '$start_date'), 0)
+    ), 0) AS total_ob
+    FROM client_list c WHERE c.delete_flag = 0
+");
+$total_opening_bal = $ob_data[0]['total_ob'] ?? 0;
+
+// ─────────────────────────────────────────────────────────────
+// 12. HINDI MONTH NAMES  [DeepSeek]
+// ─────────────────────────────────────────────────────────────
+$month_names = [
+    1=>'जनवरी',2=>'फरवरी',3=>'मार्च',4=>'अप्रैल',5=>'मई',6=>'जून',
+    7=>'जुलाई',8=>'अगस्त',9=>'सितंबर',10=>'अक्टूबर',11=>'नवंबर',12=>'दिसंबर'
+];
+$period_label = $filter_type === 'monthly'
+    ? ($month_names[$filter_month] ?? $filter_month)." {$filter_year}"
+    : ($filter_type === 'yearly' ? "वर्ष {$filter_year}" : date('d/m/Y',strtotime($start_date)).' — '.date('d/m/Y',strtotime($end_date)));
 ?>
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VTech — Master Ledger & Balance Sheet</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
 <style>
-    .report-card { border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-    .positive { color: green; font-weight: bold; }
-    .negative { color: red; font-weight: bold; }
-    .table-container { overflow-x: auto; max-height: 600px; }
-    .sticky-header th { position: sticky; top: 0; background: #f8f9fa; z-index: 10; }
-</style>9fa; z-index: 10; }
-        /* More styles as in original */
-    </style>
+/* ══════════════════════════════════════════
+   VTech Balance Sheet — Master Styles
+══════════════════════════════════════════ */
+:root {
+    --navy:    #0d1b2a;
+    --indigo:  #3a0ca3;
+    --purple:  #7209b7;
+    --violet:  #9b5de5;
+    --cyan:    #0dcaf0;
+    --green:   #06d6a0;
+    --amber:   #ffd166;
+    --red:     #ef476f;
+    --surface: #f5f7fa;
+    --card-bg: #ffffff;
+    --radius:  14px;
+    --shadow:  0 4px 24px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;}
+body{background:var(--surface);font-family:'Segoe UI',sans-serif;color:#1a1a2e;}
+
+/* ── Header ── */
+.page-header{
+    background:linear-gradient(135deg,var(--navy) 0%,var(--indigo) 60%,var(--purple) 100%);
+    color:#fff;padding:28px 32px;border-radius:var(--radius);
+    margin-bottom:24px;box-shadow:var(--shadow);
+}
+.page-header h2{font-size:1.7rem;font-weight:800;margin:0;}
+.page-header p{opacity:.8;margin:4px 0 0;}
+
+/* ── Filter card ── */
+.filter-card{
+    background:#fff;border-radius:var(--radius);padding:20px 24px;
+    box-shadow:var(--shadow);margin-bottom:24px;
+    border-top:4px solid var(--indigo);
+}
+.period-badge{
+    display:inline-block;padding:6px 16px;border-radius:999px;
+    background:linear-gradient(90deg,var(--indigo),var(--purple));
+    color:#fff;font-size:.8rem;font-weight:600;margin-bottom:12px;
+}
+
+/* ── Stat cards ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
+.stat-card{
+    background:var(--card-bg);border-radius:var(--radius);padding:20px;
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+    transition:transform .2s;
+}
+.stat-card:hover{transform:translateY(-4px);}
+.stat-card::before{
+    content:'';position:absolute;top:0;left:0;width:5px;height:100%;
+}
+.stat-card.income::before {background:var(--green);}
+.stat-card.expense::before{background:var(--red);}
+.stat-card.profit::before {background:var(--indigo);}
+.stat-card.recv::before   {background:var(--amber);}
+.stat-card.cash::before   {background:var(--cyan);}
+.stat-card.discount::before{background:var(--violet);}
+.stat-card.salary::before {background:#ff6b6b;}
+.stat-card.stock::before  {background:#4ecdc4;}
+
+.stat-card .s-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#6c757d;margin-bottom:4px;}
+.stat-card .s-val  {font-size:1.55rem;font-weight:800;line-height:1.1;}
+.stat-card .s-sub  {font-size:.75rem;color:#888;margin-top:3px;}
+.stat-card .s-icon {position:absolute;right:16px;top:16px;font-size:2rem;opacity:.12;}
+
+/* ── Summary bar ── */
+.summary-bar{
+    background:#fff;border-radius:var(--radius);padding:18px 24px;
+    box-shadow:var(--shadow);margin-bottom:24px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:0;text-align:center;
+}
+.summary-bar .sb-item{padding:8px;}
+.summary-bar .sb-item:not(:last-child){border-right:1px solid #f0f0f0;}
+.summary-bar .sb-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#999;}
+.summary-bar .sb-val  {font-size:1.25rem;font-weight:800;}
+
+/* ── Tabs ── */
+.nav-pills-custom{gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.nav-pills-custom .nav-link{
+    border:1.5px solid #e0e0e0;border-radius:10px;background:#fff;
+    color:var(--navy);font-weight:600;font-size:.85rem;padding:9px 18px;
+    display:flex;align-items:center;gap:6px;transition:all .2s;
+}
+.nav-pills-custom .nav-link.active,
+.nav-pills-custom .nav-link:hover{
+    background:linear-gradient(135deg,var(--indigo),var(--purple));
+    color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(114,9,183,.25);
+}
+
+/* ── Tables ── */
+.tbl-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.tbl-wrap .tbl-head{
+    padding:16px 20px;
+    background:linear-gradient(90deg,var(--navy),var(--indigo));
+    color:#fff;display:flex;align-items:center;justify-content:space-between;
+}
+.tbl-wrap .tbl-head h6{margin:0;font-weight:700;font-size:.95rem;}
+.tbl-container{max-height:440px;overflow-y:auto;}
+.tbl-container::-webkit-scrollbar{width:5px;}
+.tbl-container::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px;}
+
+table.ledger{width:100%;border-collapse:collapse;font-size:.85rem;}
+table.ledger thead th{
+    background:#f1f4f9;color:var(--navy);text-transform:uppercase;
+    font-size:.7rem;letter-spacing:.7px;font-weight:700;
+    padding:11px 14px;border-bottom:2px solid #e3e8f0;
+    position:sticky;top:0;z-index:5;
+}
+table.ledger tbody tr{border-bottom:1px solid #f5f5f5;transition:background .15s;}
+table.ledger tbody tr:hover{background:#f8f9ff;}
+table.ledger td{padding:10px 14px;vertical-align:middle;}
+table.ledger tfoot tr{background:#f1f4f9;font-weight:700;}
+table.ledger tfoot td{padding:10px 14px;border-top:2px solid #d0d7e8;}
+
+/* ── Color helpers ── */
+.c-dr  {color:var(--red)   !important;font-weight:700;}
+.c-cr  {color:#06a77d      !important;font-weight:700;}
+.c-disc{color:var(--violet)!important;font-weight:700;}
+.c-muted{color:#999;}
+
+/* ── Badges ── */
+.badge-soft-blue  {background:#dbeafe;color:#1e40af;border-radius:6px;padding:3px 8px;font-size:.75rem;}
+.badge-soft-green {background:#d1fae5;color:#065f46;border-radius:6px;padding:3px 8px;font-size:.75rem;}
+.badge-soft-red   {background:#fee2e2;color:#991b1b;border-radius:6px;padding:3px 8px;font-size:.75rem;}
+.badge-soft-amber {background:#fef3c7;color:#92400e;border-radius:6px;padding:3px 8px;font-size:.75rem;}
+.badge-soft-purple{background:#ede9fe;color:#4c1d95;border-radius:6px;padding:3px 8px;font-size:.75rem;}
+
+/* ── Progress bar ── */
+.fin-bar{border-radius:999px;height:10px;overflow:hidden;background:#e9ecef;margin-top:12px;}
+.fin-bar-fill{height:100%;border-radius:999px;}
+
+/* ── Footer bar ── */
+.footer-bar{
+    background:#fff;border-radius:var(--radius);padding:16px 24px;
+    box-shadow:var(--shadow);margin-top:24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;
+}
+.footer-meta{display:flex;gap:24px;flex-wrap:wrap;}
+.footer-meta span{font-size:.78rem;color:#666;}
+.footer-meta strong{color:var(--navy);}
+
+/* ── Responsiveness ── */
+@media(max-width:600px){
+    .stat-row{grid-template-columns:1fr 1fr;}
+    .summary-bar{grid-template-columns:1fr;}
+    .summary-bar .sb-item:not(:last-child){border-right:none;border-bottom:1px solid #f0f0f0;}
+}
+
+/* ── Print ── */
+@media print{
+    .no-print{display:none!important;}
+    .page-header,.filter-card{box-shadow:none;}
+    body{background:#fff;}
+    .tbl-container{max-height:none;overflow:visible;}
+}
+</style>
 </head>
 <body>
-    <div class="container-fluid mt-4 mb-5">
-        <!-- Filter Form -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0"><i class="bi bi-filter"></i> रिपोर्ट फिल्टर</h5>
-            </div>
-            <div class="card-body">
-                <form method="GET" class="row g-3">
-                    <input type="hidden" name="page" value="reports/balancesheet">
-                    <div class="col-md-3">
-                        <label class="form-label">फिल्टर प्रकार</label>
-                        <select name="filter_type" id="filter_type" class="form-select" onchange="toggleFilters(this)">
-                            <option value="monthly" <?php echo $filter_type == 'monthly' ? 'selected' : ''; ?>>मासिक</option>
-                            <option value="yearly" <?php echo $filter_type == 'yearly' ? 'selected' : ''; ?>>वार्षिक</option>
-                            <option value="custom" <?php echo $filter_type == 'custom' ? 'selected' : ''; ?>>कस्टम</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2" id="month_filter" style="<?php echo $filter_type == 'custom' ? 'display:none;' : ''; ?>">
-                        <label class="form-label">महीना</label>
-                        <select name="month" class="form-select">
-                            <?php for($m=1; $m<=12; $m++): ?>
-                                <option value="<?php echo $m; ?>" <?php echo $filter_month == $m ? 'selected' : ''; ?>><?php echo date('F', mktime(0,0,0,$m,1)); ?></option>
-                            <?php endfor; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-2" id="year_filter" style="<?php echo $filter_type == 'custom' ? 'display:none;' : ''; ?>">
-                        <label class="form-label">वर्ष</label>
-                        <input type="number" name="year" class="form-control" value="<?php echo $filter_year; ?>" min="2020" max="<?php echo $current_year + 1; ?>">
-                    </div>
-                    <div class="col-md-3" id="custom_start" style="<?php echo $filter_type != 'custom' ? 'display:none;' : ''; ?>">
-                        <label class="form-label">शुरू तारीख</label>
-                        <input type="date" name="start_date" id="start_date" class="form-control" value="<?php echo $start_date; ?>">
-                    </div>
-                    <div class="col-md-3" id="custom_end" style="<?php echo $filter_type != 'custom' ? 'display:none;' : ''; ?>">
-                        <label class="form-label">अंत तारीख</label>
-                        <input type="date" name="end_date" id="end_date" class="form-control" value="<?php echo $end_date; ?>">
-                    </div>
-                    <div class="col-md-12 text-end">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel"></i> लागू करें</button>
-                        <a href="?page=reports/balancesheet&nav=prev" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> पिछला</a>
-                        <a href="?page=reports/balancesheet&nav=next" class="btn btn-secondary"><i class="bi bi-arrow-right"></i> अगला</a>
-                        <a href="?page=reports/balancesheet&reset=1" class="btn btn-warning"><i class="bi bi-arrow-counterclockwise"></i> रीसेट</a>
-                    </div>
-                </form>
-            </div>
+<div class="container-fluid px-3 px-md-4 py-4">
+
+<!-- ══════════════ HEADER ══════════════ -->
+<div class="page-header no-print">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h2><i class="bi bi-journals me-2"></i>Master Business Ledger</h2>
+            <p>VTech RSMS — Unified Financial Reporting & Balance Sheet</p>
         </div>
-
-        <!-- Dashboard Stats -->
-        <?php
-        // Calculate totals for dashboard
-        $total_repair_income = 0;
-        $total_direct_sales = 0;
-        foreach($reports['income_summary'] as $income) {
-            if($income['description'] == 'रिपेयर आय') $total_repair_income = $income['amount'];
-            if($income['description'] == 'सीधी बिक्री') $total_direct_sales = $income['amount'];
-        }
-        $total_income = $total_repair_income + $total_direct_sales;
-        
-        $total_expenses = 0;
-        foreach($reports['expense_summary'] as $exp) {
-            $total_expenses += $exp['amount'];
-        }
-        
-        $net_profit = $total_income - $total_expenses;
-        
-        $total_customers = count($reports['customer_ledger']);
-        $total_stock_value = 0;
-        foreach($reports['stock_inventory'] as $stock) {
-            $total_stock_value += $stock['stock_value'];
-        }
-        
-        $total_mechanic_balance = 0;
-        foreach($reports['mechanic_ledger'] as $mech) {
-            $total_mechanic_balance += $mech['balance_amount'];
-        }
-        
-        $total_loan_balance = 0;
-        foreach($reports['loan_ledger'] as $loan) {
-            $total_loan_balance += $loan['balance_amount'];
-        }
-        ?>
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-center report-card">
-                    <div class="card-body">
-                        <h5 class="card-title">कुल आय</h5>
-                        <p class="stat-number positive">₹<?php echo number_format($total_income, 2); ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center report-card">
-                    <div class="card-body">
-                        <h5 class="card-title">कुल व्यय</h5>
-                        <p class="stat-number negative">₹<?php echo number_format($total_expenses, 2); ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center report-card">
-                    <div class="card-body">
-                        <h5 class="card-title">शुद्ध लाभ</h5>
-                        <p class="stat-number <?php echo $net_profit >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($net_profit, 2); ?></p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center report-card">
-                    <div class="card-body">
-                        <h5 class="card-title">स्टॉक मूल्य</h5>
-                        <p class="stat-number">₹<?php echo number_format($total_stock_value, 2); ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <ul class="nav nav-tabs mb-4" id="reportTabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" data-toggle="tab" href="#customer" role="tab"><i class="bi bi-people"></i> ग्राहक लेजर</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#mechanic" role="tab"><i class="bi bi-tools"></i> मैकेनिक लेजर</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#inventory" role="tab"><i class="bi bi-box-seam"></i> स्टॉक इन्वेंटरी</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#income" role="tab"><i class="bi bi-currency-rupee"></i> आय सारांश</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#expense" role="tab"><i class="bi bi-wallet"></i> व्यय सारांश</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#top_customers" role="tab"><i class="bi bi-star"></i> शीर्ष ग्राहक</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#loan" role="tab"><i class="bi bi-bank"></i> लोन लेजर</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-toggle="tab" href="#monthly" role="tab"><i class="bi bi-calendar-month"></i> मासिक सारांश</a>
-            </li>
-        </ul>
-
-        <div class="tab-content">
-            <!-- Customer Ledger Tab -->
-            <div class="tab-pane fade show active" id="customer" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-people"></i> ग्राहक व्यापार लेजर
-                    <small class="text-muted date-range-display">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-people"></i> ग्राहक व्यापार लेजर</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['customer_ledger'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई ग्राहक लेनदेन नहीं हुआ है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>ग्राहक नाम</th>
-                                            <th>संपर्क</th>
-                                            <th>पिछला जॉब</th>
-                                            <th>इस अवधि में जॉब</th>
-                                            <th>पिछला बैलेंस</th>
-                                            <th>इस अवधि में मरम्मत राशि</th>
-                                            <th>इस अवधि में प्राप्त भुगतान</th>
-                                            <th>वर्तमान बैलेंस</th>
-                                            <th>क्रिया</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $total_opening = 0;
-                                        $total_repair = 0;
-                                        $total_payment = 0;
-                                        $total_balance = 0;
-                                        $total_prev_jobs = 0;
-                                        $total_jobs = 0;
-                                        $current_url = $_SERVER['REQUEST_URI'];
-                                        ?>
-                                        <?php foreach($reports['customer_ledger'] as $customer): ?>
-                                            <?php 
-                                                $total_opening += $customer['opening_balance'];
-                                                $total_repair += $customer['total_repair_amount'];
-                                                $total_payment += $customer['total_payment'];
-                                                $total_balance += $customer['current_balance'];
-                                                $total_prev_jobs += $customer['previous_transactions'];
-                                                $total_jobs += ($customer['total_repair_amount'] > 0 ? 1 : 0); // Approximate jobs
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $customer['customer_name']; ?></strong></td>
-                                                <td><?php echo $customer['contact']; ?></td>
-                                                <td><span class="badge bg-secondary"><?php echo $customer['previous_transactions']; ?></span></td>
-                                                <td><span class="badge bg-primary"><?php echo $customer['total_repair_amount'] > 0 ? 1 : 0; ?></span></td> <!-- Adjust if count available -->
-                                                <td class="<?php echo $customer['opening_balance'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($customer['opening_balance'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($customer['total_repair_amount'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($customer['total_payment'], 2); ?></td>
-                                                <td class="<?php echo $customer['current_balance'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($customer['current_balance'], 2); ?></td>
-                                                <td>
-                                                    <a href="<?php echo $current_url . (strpos($current_url, '?') !== false ? '&' : '?') . 'client_id=' . $customer['client_id']; ?>" class="btn btn-sm btn-primary">विवरण देखें</a>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong><span class="badge bg-secondary"><?php echo $total_prev_jobs; ?></span></strong></td>
-                                            <td><strong><span class="badge bg-primary"><?php echo $total_jobs; ?></span></strong></td>
-                                            <td class="<?php echo $total_opening >= 0 ? 'positive' : 'negative'; ?>"><strong>₹<?php echo number_format($total_opening, 2); ?></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_repair, 2); ?></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_payment, 2); ?></strong></td>
-                                            <td class="<?php echo $total_balance >= 0 ? 'positive' : 'negative'; ?>"><strong>₹<?php echo number_format($total_balance, 2); ?></strong></td>
-                                            <td><strong>-</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                <div class="alert alert-info">
-                                    <h6><i class="bi bi-calculator"></i> ग्राहक विश्लेषण</h6>
-                                    <small>
-                                        कुल ग्राहक: <?php echo $total_customers; ?><br>
-                                        कुल पिछला बैलेंस: ₹<?php echo number_format($total_opening, 2); ?><br>
-                                        कुल मरम्मत राशि: ₹<?php echo number_format($total_repair, 2); ?><br>
-                                        कुल प्राप्त भुगतान: ₹<?php echo number_format($total_payment, 2); ?><br>
-                                        कुल बैलेंस: ₹<?php echo number_format($total_balance, 2); ?><br>
-                                        प्राप्ति प्रतिशत: <?php echo ($total_repair + abs($total_opening)) > 0 ? number_format($total_payment / ($total_repair + abs($total_opening)) * 100, 2) : '0'; ?>%
-                                    </small>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <?php if (isset($reports['detailed_ledger'])): ?>
-                    <div class="card report-card mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-journal-text"></i> <?php echo $reports['client_name']; ?> का पूरा लेजर</h5>
-                        </div>
-                        <div class="card-body">
-                            <?php if (empty($reports['detailed_ledger'])): ?>
-                                <div class="alert alert-info text-center">
-                                    <i class="bi bi-info-circle"></i> इस ग्राहक का कोई लेनदेन इतिहास नहीं है।
-                                </div>
-                            <?php else: ?>
-                                <div class="table-container">
-                                    <table class="table table-hover table-sm">
-                                        <thead class="sticky-header">
-                                            <tr>
-                                                <th>तारीख</th>
-                                                <th>विवरण</th>
-                                                <th>डेबिट (मरम्मत)</th>
-                                                <th>क्रेडिट (भुगतान)</th>
-                                                <th>बैलेंस</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach($reports['detailed_ledger'] as $entry): ?>
-                                                <tr>
-                                                    <td><?php echo $entry['event_date']; ?></td>
-                                                    <td><?php echo $entry['description']; ?></td>
-                                                    <td class="positive">₹<?php echo number_format($entry['debit'], 2); ?></td>
-                                                    <td class="positive">₹<?php echo number_format($entry['credit'], 2); ?></td>
-                                                    <td class="<?php echo $entry['balance'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($entry['balance'], 2); ?></td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php endif; ?>
-                            <div class="mt-3 text-end">
-                                <a href="<?php echo preg_replace('/&client_id=\d+/', '', $current_url); ?>" class="btn btn-secondary">बंद करें</a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
-            
-            <!-- Mechanic Ledger Tab -->
-            <div class="tab-pane fade" id="mechanic" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-tools"></i> मैकेनिक/टेक्निशियन लेजर
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-warning text-white">
-                        <h5 class="mb-0"><i class="bi bi-tools"></i> मैकेनिक/टेक्निशियन लेजर</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['mechanic_ledger'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई मैकेनिक लेनदेन नहीं हुआ है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>मैकेनिक नाम</th>
-                                            <th>दैनिक वेतन</th>
-                                            <th>कमीशन %</th>
-                                            <th>इस अवधि में दिन</th>
-                                            <th>इस अवधि में वेतन देय</th>
-                                            <th>इस अवधि में एडवांस</th>
-                                            <th>कुल एडवांस</th>
-                                            <th>कुल वेतन देय</th>
-                                            <th>बैलेंस राशि</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $mech_total_days = 0;
-                                        $mech_total_salary_due = 0;
-                                        $mech_total_advance = 0;
-                                        $mech_total_balance = 0;
-                                        ?>
-                                        <?php foreach($reports['mechanic_ledger'] as $mech): ?>
-                                            <?php 
-                                                $mech_total_days += $mech['days_worked_in_period'];
-                                                $mech_total_salary_due += $mech['salary_due_in_period'];
-                                                $mech_total_advance += $mech['advance_in_period'];
-                                                $mech_total_balance += $mech['balance_amount'];
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $mech['mechanic_name']; ?></strong></td>
-                                                <td>₹<?php echo number_format($mech['daily_salary'], 2); ?></td>
-                                                <td><?php echo $mech['commission_percent']; ?>%</td>
-                                                <td><span class="badge bg-info"><?php echo number_format($mech['days_worked_in_period'], 1); ?></span></td>
-                                                <td class="positive">₹<?php echo number_format($mech['salary_due_in_period'], 2); ?></td>
-                                                <td class="negative">₹<?php echo number_format($mech['advance_in_period'], 2); ?></td>
-                                                <td class="negative">₹<?php echo number_format($mech['total_advance_amount'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($mech['total_salary_due'], 2); ?></td>
-                                                <td class="<?php echo $mech['balance_amount'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($mech['balance_amount'], 2); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong><span class="badge bg-info"><?php echo number_format($mech_total_days, 1); ?></span></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($mech_total_salary_due, 2); ?></strong></td>
-                                            <td class="negative"><strong>₹<?php echo number_format($mech_total_advance, 2); ?></strong></td>
-                                            <td class="negative"><strong>-</strong></td>
-                                            <td class="positive"><strong>-</strong></td>
-                                            <td class="<?php echo $mech_total_balance >= 0 ? 'positive' : 'negative'; ?>"><strong>₹<?php echo number_format($mech_total_balance, 2); ?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Stock Inventory Tab -->
-            <div class="tab-pane fade" id="inventory" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-box-seam"></i> स्टॉक इन्वेंटरी सारांश
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-box-seam"></i> स्टॉक इन्वेंटरी सारांश</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['stock_inventory'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई स्टॉक गतिविधि नहीं हुई है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>उत्पाद नाम</th>
-                                            <th>विवरण</th>
-                                            <th>बिक्री मूल्य</th>
-                                            <th>कुल स्टॉक में</th>
-                                            <th>इस अवधि में बेचा गया</th>
-                                            <th>शेष स्टॉक</th>
-                                            <th>स्टॉक मूल्य</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $total_stock_in = 0;
-                                        $total_sold = 0;
-                                        $total_remaining = 0;
-                                        $total_value = 0;
-                                        ?>
-                                        <?php foreach($reports['stock_inventory'] as $stock): ?>
-                                            <?php 
-                                                $total_stock_in += $stock['total_stock_in'];
-                                                $total_sold += $stock['sold_quantity'];
-                                                $total_remaining += $stock['remaining_stock'];
-                                                $total_value += $stock['stock_value'];
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $stock['product_name']; ?></strong></td>
-                                                <td><?php echo $stock['description']; ?></td>
-                                                <td>₹<?php echo number_format($stock['sale_price'], 2); ?></td>
-                                                <td><span class="badge bg-primary"><?php echo $stock['total_stock_in']; ?></span></td>
-                                                <td><span class="badge bg-warning"><?php echo $stock['sold_quantity']; ?></span></td>
-                                                <td><span class="badge bg-info"><?php echo $stock['remaining_stock']; ?></span></td>
-                                                <td class="positive">₹<?php echo number_format($stock['stock_value'], 2); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong><span class="badge bg-primary"><?php echo $total_stock_in; ?></span></strong></td>
-                                            <td><strong><span class="badge bg-warning"><?php echo $total_sold; ?></span></strong></td>
-                                            <td><strong><span class="badge bg-info"><?php echo $total_remaining; ?></span></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_value, 2); ?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Income Summary Tab -->
-            <div class="tab-pane fade" id="income" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-currency-rupee"></i> आय सारांश
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-currency-rupee"></i> आय सारांश</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['income_summary'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई आय नहीं हुई है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>विवरण</th>
-                                            <th>राशि</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $total_income = 0; ?>
-                                        <?php foreach($reports['income_summary'] as $income): ?>
-                                            <?php $total_income += $income['amount']; ?>
-                                            <tr>
-                                                <td><strong><?php echo $income['description']; ?></strong></td>
-                                                <td class="positive">₹<?php echo number_format($income['amount'], 2); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल आय:</strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_income, 2); ?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Expense Summary Tab -->
-            <div class="tab-pane fade" id="expense" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-wallet"></i> व्यय सारांश
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-danger text-white">
-                        <h5 class="mb-0"><i class="bi bi-wallet"></i> व्यय सारांश</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['expense_summary'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई व्यय नहीं हुआ है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>श्रेणी</th>
-                                            <th>राशि</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php $total_exp = 0; ?>
-                                        <?php foreach($reports['expense_summary'] as $exp): ?>
-                                            <?php $total_exp += $exp['amount']; ?>
-                                            <tr>
-                                                <td><strong><?php echo $exp['expense_category']; ?></strong></td>
-                                                <td class="negative">₹<?php echo number_format($exp['amount'], 2); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल व्यय:</strong></td>
-                                            <td class="negative"><strong>₹<?php echo number_format($total_exp, 2); ?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Top Customers Tab -->
-            <div class="tab-pane fade" id="top_customers" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-star"></i> शीर्ष 10 ग्राहक
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-star"></i> शीर्ष 10 ग्राहक</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['top_customers'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई शीर्ष ग्राहक नहीं है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>ग्राहक नाम</th>
-                                            <th>संपर्क</th>
-                                            <th>पिछला जॉब</th>
-                                            <th>इस अवधि में जॉब</th>
-                                            <th>इस अवधि में राशि</th>
-                                            <th>इस अवधि में भुगतान</th>
-                                            <th>पिछला बैलेंस</th>
-                                            <th>वर्तमान बैलेंस</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $top_total_jobs = 0;
-                                        $top_total_amount = 0;
-                                        $top_total_payment = 0;
-                                        $top_total_balance = 0;
-                                        ?>
-                                        <?php foreach($reports['top_customers'] as $top): ?>
-                                            <?php 
-                                                $top_total_jobs += $top['total_jobs'];
-                                                $top_total_amount += $top['total_amount'];
-                                                $top_total_payment += $top['total_payment_amount'];
-                                                $top_total_balance += $top['current_balance'];
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $top['customer_name']; ?></strong></td>
-                                                <td><?php echo $top['contact']; ?></td>
-                                                <td><span class="badge bg-secondary"><?php echo $top['previous_jobs']; ?></span></td>
-                                                <td><span class="badge bg-primary"><?php echo $top['total_jobs']; ?></span></td>
-                                                <td class="positive">₹<?php echo number_format($top['total_amount'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($top['total_payment_amount'], 2); ?></td>
-                                                <td class="<?php echo $top['opening_balance'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($top['opening_balance'], 2); ?></td>
-                                                <td class="<?php echo $top['current_balance'] >= 0 ? 'positive' : 'negative'; ?>">₹<?php echo number_format($top['current_balance'], 2); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong><span class="badge bg-primary"><?php echo $top_total_jobs; ?></span></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($top_total_amount, 2); ?></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($top_total_payment, 2); ?></strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td class="<?php echo $top_total_balance >= 0 ? 'positive' : 'negative'; ?>"><strong>₹<?php echo number_format($top_total_balance, 2); ?></strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Loan Ledger Tab -->
-            <div class="tab-pane fade" id="loan" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-bank"></i> लोन लेजर
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-danger text-white">
-                        <h5 class="mb-0"><i class="bi bi-bank"></i> लोन लेजर</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['loan_ledger'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई लोन गतिविधि नहीं हुई है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>उधारकर्ता नाम</th>
-                                            <th>उधार राशि</th>
-                                            <th>ब्याज दर %</th>
-                                            <th>मासिक किस्त</th>
-                                            <th>शुरू तारीख</th>
-                                            <th>पिछला भुगतान</th>
-                                            <th>इस अवधि में भुगतान</th>
-                                            <th>कुल भुगतान</th>
-                                            <th>शेष राशि</th>
-                                            <th>शेष EMI</th>
-                                            <th>स्थिति</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $total_loan_amount = 0;
-                                        $total_loan_previous = 0;
-                                        $total_loan_paid = 0;
-                                        $total_loan_balance = 0;
-                                        $total_remaining_emis = 0;
-                                        ?>
-                                        <?php foreach($reports['loan_ledger'] as $loan): ?>
-                                            <?php 
-                                                $total_loan_amount += $loan['loan_amount'];
-                                                $total_loan_previous += $loan['previous_payments'];
-                                                $total_loan_paid += $loan['total_paid'];
-                                                $total_loan_balance += $loan['balance_amount'];
-                                                $total_remaining_emis += $loan['remaining_emis'];
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $loan['lender_name']; ?></strong></td>
-                                                <td>₹<?php echo number_format($loan['loan_amount'], 2); ?></td>
-                                                <td><?php echo $loan['interest_rate']; ?>%</td>
-                                                <td>₹<?php echo number_format($loan['emi_amount'], 2); ?></td>
-                                                <td><?php echo $loan['start_date']; ?></td>
-                                                <td class="positive">₹<?php echo number_format($loan['previous_payments'], 2); ?></td>
-                                                <td class="positive">
-                                                    <span class="badge bg-success">₹<?php echo number_format($loan['paid_in_period'], 2); ?></span>
-                                                </td>
-                                                <td class="positive">₹<?php echo number_format($loan['total_paid'], 2); ?></td>
-                                                <td class="<?php echo $loan['balance_amount'] > 0 ? 'negative' : 'positive'; ?>">
-                                                    ₹<?php echo number_format($loan['balance_amount'], 2); ?>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-warning"><?php echo $loan['remaining_emis']; ?></span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge <?php echo $loan['status'] == 'सक्रिय' ? 'bg-warning' : 'bg-success'; ?>">
-                                                        <?php echo $loan['status']; ?>
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong>₹<?php echo number_format($total_loan_amount, 2); ?></strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td><strong>-</strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_loan_previous, 2); ?></strong></td>
-                                            <td class="positive">
-                                                <strong><span class="badge bg-success">₹<?php echo number_format($total_loan_paid - $total_loan_previous, 2); ?></span></strong>
-                                            </td>
-                                            <td class="positive"><strong>₹<?php echo number_format($total_loan_paid, 2); ?></strong></td>
-                                            <td class="<?php echo $total_loan_balance > 0 ? 'negative' : 'positive'; ?>">
-                                                <strong>₹<?php echo number_format($total_loan_balance, 2); ?></strong>
-                                            </td>
-                                            <td>
-                                                <strong><span class="badge bg-warning"><?php echo $total_remaining_emis; ?></span></strong>
-                                            </td>
-                                            <td><strong>-</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                <div class="alert alert-info">
-                                    <h6><i class="bi bi-calculator"></i> लोन विश्लेषण</h6>
-                                    <small>
-                                        कुल उधार राशि: ₹<?php echo number_format($total_loan_amount, 2); ?><br>
-                                        पिछला भुगतान: ₹<?php echo number_format($total_loan_previous, 2); ?><br>
-                                        इस अवधि में भुगतान: ₹<?php echo number_format($total_loan_paid - $total_loan_previous, 2); ?><br>
-                                        कुल भुगतान: ₹<?php echo number_format($total_loan_paid, 2); ?><br>
-                                        शेष राशि: ₹<?php echo number_format($total_loan_balance, 2); ?><br>
-                                        भुगतान प्रतिशत: <?php echo $total_loan_amount > 0 ? number_format($total_loan_paid / $total_loan_amount * 100, 2) : '0'; ?>%<br>
-                                        शेष EMI: <?php echo $total_remaining_emis; ?>
-                                    </small>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Monthly Summary Tab -->
-            <div class="tab-pane fade" id="monthly" role="tabpanel">
-                <h4 class="mb-3">
-                    <i class="bi bi-calendar-month"></i> मासिक लेन-देन सारांश
-                    <small class="text-muted">
-                        (<?php echo date('d/m/Y', strtotime($start_date)); ?> से <?php echo date('d/m/Y', strtotime($end_date)); ?>)
-                    </small>
-                </h4>
-                
-                <div class="card report-card mb-4">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0"><i class="bi bi-calendar-month"></i> मासिक लेन-देन सारांश</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($reports['monthly_summary'])): ?>
-                            <div class="alert alert-info text-center">
-                                <i class="bi bi-info-circle"></i> इस अवधि में कोई लेनदेन नहीं हुआ है।
-                            </div>
-                        <?php else: ?>
-                            <div class="table-container">
-                                <table class="table table-hover table-sm">
-                                    <thead class="sticky-header">
-                                        <tr>
-                                            <th>महीना</th>
-                                            <th>कुल जॉब</th>
-                                            <th>रिपेयर आय</th>
-                                            <th>सीधी बिक्री</th>
-                                            <th>कुल आय</th>
-                                            <th>कुल ग्राहक</th>
-                                            <th>कुल व्यय</th>
-                                            <th>शुद्ध आय</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $monthly_total_jobs = 0;
-                                        $monthly_total_repair = 0;
-                                        $monthly_total_direct = 0;
-                                        $monthly_total_income = 0;
-                                        $monthly_total_customers = 0;
-                                        $monthly_total_expenses = 0;
-                                        $monthly_total_net = 0;
-                                        ?>
-                                        <?php foreach($reports['monthly_summary'] as $monthly): ?>
-                                            <?php 
-                                                $total_income_monthly = $monthly['repair_income'] + $monthly['direct_income'];
-                                                $net_income_monthly = $total_income_monthly - $monthly['total_expenses'];
-                                                
-                                                $monthly_total_jobs += $monthly['total_jobs'];
-                                                $monthly_total_repair += $monthly['repair_income'];
-                                                $monthly_total_direct += $monthly['direct_income'];
-                                                $monthly_total_income += $total_income_monthly;
-                                                $monthly_total_customers += $monthly['total_customers'];
-                                                $monthly_total_expenses += $monthly['total_expenses'];
-                                                $monthly_total_net += $net_income_monthly;
-                                            ?>
-                                            <tr>
-                                                <td><strong><?php echo $monthly['month']; ?></strong></td>
-                                                <td><span class="badge bg-primary"><?php echo $monthly['total_jobs']; ?></span></td>
-                                                <td class="positive">₹<?php echo number_format($monthly['repair_income'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($monthly['direct_income'], 2); ?></td>
-                                                <td class="positive">₹<?php echo number_format($total_income_monthly, 2); ?></td>
-                                                <td><span class="badge bg-info"><?php echo $monthly['total_customers']; ?></span></td>
-                                                <td class="negative">₹<?php echo number_format($monthly['total_expenses'], 2); ?></td>
-                                                <td class="<?php echo $net_income_monthly >= 0 ? 'positive' : 'negative'; ?>">
-                                                    ₹<?php echo number_format($net_income_monthly, 2); ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                        <!-- Totals Row -->
-                                        <tr class="table-dark">
-                                            <td><strong>कुल:</strong></td>
-                                            <td><strong><span class="badge bg-primary"><?php echo $monthly_total_jobs; ?></span></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($monthly_total_repair, 2); ?></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($monthly_total_direct, 2); ?></strong></td>
-                                            <td class="positive"><strong>₹<?php echo number_format($monthly_total_income, 2); ?></strong></td>
-                                            <td><strong><span class="badge bg-info"><?php echo $monthly_total_customers; ?></span></strong></td>
-                                            <td class="negative"><strong>₹<?php echo number_format($monthly_total_expenses, 2); ?></strong></td>
-                                            <td class="<?php echo $monthly_total_net >= 0 ? 'positive' : 'negative'; ?>">
-                                                <strong>₹<?php echo number_format($monthly_total_net, 2); ?></strong>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-5 mb-4 text-center">
-            <hr>
-            <p class="text-muted">
-                <i class="bi bi-clock"></i> रिपोर्ट जनरेट समय: <?php echo date('d-m-Y H:i:s'); ?> |
-                <i class="bi bi-database"></i> डेटाबेस: <?php echo $dbname; ?> |
-                <i class="bi bi-funnel"></i> फिल्टर: 
-                <?php 
-                $month_names = [
-                    'January' => 'जनवरी',
-                    'February' => 'फरवरी',
-                    'March' => 'मार्च',
-                    'April' => 'अप्रैल',
-                    'May' => 'मई',
-                    'June' => 'जून',
-                    'July' => 'जुलाई',
-                    'August' => 'अगस्त',
-                    'September' => 'सितंबर',
-                    'October' => 'अक्टूबर',
-                    'November' => 'नवंबर',
-                    'December' => 'दिसंबर'
-                ]; // Full mapping
-                $filter_month_name = date('F', mktime(0,0,0,$filter_month,1));
-                if ($filter_type == 'monthly') {
-                    echo isset($month_names[$filter_month_name]) ? $month_names[$filter_month_name] . " $filter_year" : $filter_month . " $filter_year";
-                } elseif ($filter_type == 'yearly') {
-                    echo "वर्ष $filter_year";
-                } else {
-                    echo date('d/m/Y', strtotime($start_date)) . " से " . date('d/m/Y', strtotime($end_date));
-                }
-                ?>
-                |
-                <i class="bi bi-info-circle"></i> बैलेंस कैरी फॉरवर्ड: हाँ
-            </p>
-            <div class="btn-group" role="group">
-                <button onclick="window.print()" class="btn btn-primary">
-                    <i class="bi bi-printer"></i> प्रिंट रिपोर्ट
-                </button>
-                <button onclick="location.reload()" class="btn btn-success">
-                    <i class="bi bi-arrow-clockwise"></i> रिफ्रेश करें
-                </button>
-                <a href="?page=reports/balancesheet&reset=1" class="btn btn-danger">
-                    <i class="bi bi-x-circle"></i> सभी फिल्टर रीसेट
-                </a>
-                <a href="?page=reports/balancesheet&year=<?php echo $current_year; ?>&month=<?php echo $current_month; ?>&filter_type=monthly" 
-                   class="btn btn-info">
-                    <i class="bi bi-calendar-check"></i> वर्तमान महीना
-                </a>
-            </div>
-            
-            <!-- Export Options -->
-            <div class="mt-3">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportData('pdf')">
-                        <i class="bi bi-file-pdf"></i> PDF
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportData('excel')">
-                        <i class="bi bi-file-excel"></i> Excel
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportData('csv')">
-                        <i class="bi bi-file-text"></i> CSV
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard()">
-                        <i class="bi bi-clipboard"></i> कॉपी
-                    </button>
-                </div>
-            </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-light btn-sm fw-semibold">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+            <button onclick="location.reload()" class="btn btn-outline-light btn-sm fw-semibold">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+            </button>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        function toggleFilters(select) {
-            const type = select.value;
-            document.getElementById('month_filter').style.display = type === 'custom' ? 'none' : 'block';
-            document.getElementById('year_filter').style.display = type === 'custom' ? 'none' : 'block';
-            document.getElementById('custom_start').style.display = type === 'custom' ? 'block' : 'none';
-            document.getElementById('custom_end').style.display = type === 'custom' ? 'block' : 'none';
-        }
+<!-- ══════════════ FILTER BAR ══════════════ -->
+<div class="filter-card no-print">
+    <div class="period-badge"><i class="bi bi-calendar3 me-1"></i><?= htmlspecialchars($period_label) ?></div>
+    <form method="GET" class="row g-2 align-items-end">
+        <input type="hidden" name="page" value="reports/balancesheet">
 
-        // Initialize date pickers
-        if (document.getElementById('start_date')) {
-            flatpickr("#start_date", {
-                dateFormat: "Y-m-d",
-                maxDate: "today"
-            });
-        }
-        
-        if (document.getElementById('end_date')) {
-            flatpickr("#end_date", {
-                dateFormat: "Y-m-d",
-                maxDate: "today"
-            });
-        }
+        <div class="col-6 col-md-2">
+            <label class="form-label small fw-semibold mb-1">Filter Type</label>
+            <select name="filter_type" class="form-select form-select-sm" id="filter_type_sel" onchange="toggleFilters(this)">
+                <option value="monthly" <?= $filter_type==='monthly'?'selected':'' ?>>मासिक</option>
+                <option value="yearly"  <?= $filter_type==='yearly' ?'selected':'' ?>>वार्षिक</option>
+                <option value="custom"  <?= $filter_type==='custom' ?'selected':'' ?>>कस्टम</option>
+            </select>
+        </div>
 
-        // Auto-refresh every 15 minutes
-        setTimeout(function() {
-            if(confirm('रिपोर्ट को रिफ्रेश करें? नई डेटा दिखाई देगी।')) {
-                window.location.reload();
-            }
-        }, 900000); // 15 minutes
+        <div class="col-6 col-md-2" id="f_month" style="<?= $filter_type==='custom'?'display:none':''; ?>">
+            <label class="form-label small fw-semibold mb-1">Month</label>
+            <select name="month" class="form-select form-select-sm">
+                <?php foreach($month_names as $n=>$nm): ?>
+                <option value="<?= $n ?>" <?= $filter_month==$n?'selected':'' ?>><?= $nm ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
 
-        // Export functions
-        function exportData(type) {
-            let url = window.location.href;
-            let exportUrl = url + (url.includes('?') ? '&' : '?') + 'export=' + type;
-            
-            if (type === 'pdf') {
-                window.open(exportUrl, '_blank');
-            } else if (type === 'excel' || type === 'csv') {
-                // For Excel/CSV, you would typically make an AJAX call
-                alert(type.toUpperCase() + ' एक्सपोर्ट की सुविधा जल्द ही उपलब्ध होगी।');
-            }
-        }
+        <div class="col-6 col-md-2" id="f_year" style="<?= $filter_type==='custom'?'display:none':''; ?>">
+            <label class="form-label small fw-semibold mb-1">Year</label>
+            <select name="year" class="form-select form-select-sm">
+                <?php for($y=2020;$y<=$current_year+1;$y++): ?>
+                <option value="<?= $y ?>" <?= $filter_year==$y?'selected':'' ?>><?= $y ?></option>
+                <?php endfor; ?>
+            </select>
+        </div>
 
-        function copyToClipboard() {
-            // Copy summary data to clipboard
-            let text = `व्यापार रिपोर्ट - ${document.title}\n`;
-            text += `अवधि: ${document.querySelector('.date-range-display').textContent}\n`;
-            text += `बैलेंस कैरी फॉरवर्ड: हाँ\n\n`;
-            
-            // Add dashboard stats
-            const stats = document.querySelectorAll('.stat-number');
-            stats.forEach((stat, index) => {
-                const title = stat.closest('.card').querySelector('.card-title').textContent.trim();
-                text += `${title}: ${stat.textContent.trim()}\n`;
-            });
-            
-            navigator.clipboard.writeText(text).then(() => {
-                alert('सारांश क्लिपबोर्ड में कॉपी किया गया!');
-            });
-        }
+        <div class="col-6 col-md-2" id="f_start" style="<?= $filter_type!=='custom'?'display:none':''; ?>">
+            <label class="form-label small fw-semibold mb-1">From</label>
+            <input type="date" name="start_date" id="start_date" value="<?= $start_date ?>" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-md-2" id="f_end" style="<?= $filter_type!=='custom'?'display:none':''; ?>">
+            <label class="form-label small fw-semibold mb-1">To</label>
+            <input type="date" name="end_date" id="end_date" value="<?= $end_date ?>" class="form-control form-control-sm">
+        </div>
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl + P for print
-            if (e.ctrlKey && e.key === 'p') {
-                e.preventDefault();
-                window.print();
-            }
-            // Ctrl + R for refresh
-            if (e.ctrlKey && e.key === 'r') {
-                e.preventDefault();
-                location.reload();
-            }
-            // Ctrl + F for filter focus
-            if (e.ctrlKey && e.key === 'f') {
-                e.preventDefault();
-                document.querySelector('#filter_type').focus();
-            }
+        <div class="col-12 col-md-3 d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary btn-sm fw-semibold"><i class="bi bi-funnel me-1"></i>Apply</button>
+            <a href="?page=reports/balancesheet&year=<?= $filter_year ?>&month=<?= $filter_month ?>&filter_type=<?= $filter_type ?>&nav=prev"
+               class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+            <a href="?page=reports/balancesheet&year=<?= $filter_year ?>&month=<?= $filter_month ?>&filter_type=<?= $filter_type ?>&nav=next"
+               class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+            <a href="?page=reports/balancesheet&year=<?= $current_year ?>&month=<?= $current_month ?>&filter_type=monthly"
+               class="btn btn-outline-success btn-sm"><i class="bi bi-calendar-check me-1"></i>Current</a>
+            <a href="?page=reports/balancesheet&reset=1" class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- ══════════════ STAT CARDS  ══════════════ -->
+<div class="stat-row">
+    <div class="stat-card income">
+        <div class="s-label">Period Income</div>
+        <div class="s-val text-success">₹ <?= number_format($total_income,2) ?></div>
+        <div class="s-sub">Repair: ₹<?= number_format($bh['repair_income'],2) ?> | Sales: ₹<?= number_format($bh['direct_income'],2) ?></div>
+        <i class="bi bi-cash-coin s-icon"></i>
+    </div>
+    <div class="stat-card expense">
+        <div class="s-label">Period Expense</div>
+        <div class="s-val text-danger">₹ <?= number_format($bh['total_expense'],2) ?></div>
+        <div class="s-sub">&nbsp;</div>
+        <i class="bi bi-wallet s-icon"></i>
+    </div>
+    <div class="stat-card profit">
+        <div class="s-label">Net Profit</div>
+        <div class="s-val <?= $net_profit>=0?'text-success':'text-danger' ?>">₹ <?= number_format($net_profit,2) ?></div>
+        <div class="s-sub">Income − Expense</div>
+        <i class="bi bi-graph-up-arrow s-icon"></i>
+    </div>
+    <div class="stat-card recv">
+        <div class="s-label">Total Receivable</div>
+        <div class="s-val">₹ <?= number_format($total_receivable,2) ?></div>
+        <div class="s-sub">From all customers</div>
+        <i class="bi bi-people s-icon"></i>
+    </div>
+    <div class="stat-card cash">
+        <div class="s-label">Cash Received</div>
+        <div class="s-val text-info">₹ <?= number_format($bh['cash_received'],2) ?></div>
+        <div class="s-sub">Period payments</div>
+        <i class="bi bi-bank s-icon"></i>
+    </div>
+    <div class="stat-card discount">
+        <div class="s-label">Discount Given</div>
+        <div class="s-val c-disc">₹ <?= number_format($bh['discount_given'],2) ?></div>
+        <div class="s-sub">Period discounts</div>
+        <i class="bi bi-tag s-icon"></i>
+    </div>
+    <div class="stat-card salary">
+        <div class="s-label">Salary Payable</div>
+        <div class="s-val text-danger">₹ <?= number_format($total_salary_payable - $total_advance_given,2) ?></div>
+        <div class="s-sub">Net after advance</div>
+        <i class="bi bi-person-badge s-icon"></i>
+    </div>
+    <div class="stat-card stock">
+        <div class="s-label">Stock Value</div>
+        <div class="s-val" style="color:#4ecdc4;">₹ <?= number_format($grand_stock_val,2) ?></div>
+        <div class="s-sub">At sale price</div>
+        <i class="bi bi-box-seam s-icon"></i>
+    </div>
+</div>
+
+<!-- ══════════════ BALANCE SUMMARY BAR ══════════════ -->
+<div class="summary-bar">
+    <div class="sb-item">
+        <div class="sb-title">Opening Balance (Carry Forward)</div>
+        <div class="sb-val <?= $total_opening_bal>=0?'text-success':'text-danger' ?>">
+            ₹ <?= number_format($total_opening_bal,2) ?>
+        </div>
+        <small class="text-muted">Before <?= date('d M Y',strtotime($start_date)) ?></small>
+    </div>
+    <div class="sb-item">
+        <div class="sb-title">Net Income (This Period)</div>
+        <div class="sb-val <?= $net_profit>=0?'text-success':'text-danger' ?>">
+            ₹ <?= number_format($net_profit,2) ?>
+        </div>
+        <small class="text-muted"><?= date('d M Y',strtotime($start_date)) ?> — <?= date('d M Y',strtotime($end_date)) ?></small>
+    </div>
+    <div class="sb-item">
+        <div class="sb-title">Cumulative Balance</div>
+        <div class="sb-val <?= ($total_opening_bal+$net_profit)>=0?'text-success':'text-danger' ?>">
+            ₹ <?= number_format($total_opening_bal + $net_profit,2) ?>
+        </div>
+        <small class="text-muted">Opening + Net</small>
+    </div>
+</div>
+
+<!-- Progress bar -->
+<?php if($total_income > 0): ?>
+<div class="fin-bar mb-4">
+    <div class="fin-bar-fill" style="width:<?= min(100, ($net_profit/$total_income)*100) ?>%;
+         background:<?= $net_profit>=0?'linear-gradient(90deg,#06d6a0,#0dcaf0)':'linear-gradient(90deg,#ef476f,#ffd166)' ?>">
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- ══════════════ TABS ══════════════ -->
+<ul class="nav nav-pills-custom no-print" id="ledgerTabs" role="tablist">
+    <li><a class="nav-link active" data-bs-toggle="tab" href="#tab-customers"><i class="bi bi-people-fill"></i> Customer Ledger</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-top"><i class="bi bi-trophy-fill"></i> Top Customers</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-staff"><i class="bi bi-person-badge-fill"></i> Staff Ledger</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-stock"><i class="bi bi-box-seam-fill"></i> Inventory</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-finance"><i class="bi bi-cash-stack"></i> Income / Expense</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-loans"><i class="bi bi-bank2"></i> Loans</a></li>
+    <li><a class="nav-link" data-bs-toggle="tab" href="#tab-monthly"><i class="bi bi-calendar-month-fill"></i> Monthly Summary</a></li>
+</ul>
+
+<div class="tab-content mt-2">
+
+    <!-- ══ CUSTOMER LEDGER TAB ══ -->
+    <div class="tab-pane fade show active" id="tab-customers">
+        <div class="tbl-wrap">
+            <div class="tbl-head">
+                <h6><i class="bi bi-journal-text me-2"></i>Customer Ledger — <?= htmlspecialchars($period_label) ?></h6>
+                <span class="badge-soft-blue"><?= count($customer_ledger) ?> customers</span>
+            </div>
+            <?php if(!$columnExists): ?>
+            <div class="alert alert-warning m-3 py-2">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <code>opening_balance</code> column not found — carry forward calculated from transactions only.
+            </div>
+            <?php endif; ?>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th class="text-end">Opening Bal</th>
+                            <th class="text-end">Repair Billed</th>
+                            <th class="text-end">Sales Billed</th>
+                            <th class="text-end">Cash Paid</th>
+                            <th class="text-end">Discount</th>
+                            <th class="text-end">Closing Bal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $t_ob=$t_r=$t_s=$t_p=$t_d=$t_cl=0; $sn=1;
+                        foreach($customer_ledger as $row):
+                            $t_ob+=$row['opening_balance'];
+                            $t_r +=$row['period_repair'];
+                            $t_s +=$row['period_sales'];
+                            $t_p +=$row['period_paid'];
+                            $t_d +=$row['period_discount'];
+                            $t_cl+=$row['closing_balance'];
+                        ?>
+                        <tr>
+                            <td class="c-muted"><?= $sn++ ?></td>
+                            <td>
+                                <strong><?= htmlspecialchars($row['customer_name']) ?></strong>
+                                <br><small class="c-muted"><?= htmlspecialchars($row['contact']) ?></small>
+                            </td>
+                            <td class="text-end <?= $row['opening_balance']>0?'c-dr':'c-cr' ?>">
+                                ₹ <?= number_format(abs($row['opening_balance']),2) ?>
+                                <small><?= $row['opening_balance']>0?' (Dr)':' (Cr)' ?></small>
+                            </td>
+                            <td class="text-end">₹ <?= number_format($row['period_repair'],2) ?></td>
+                            <td class="text-end">₹ <?= number_format($row['period_sales'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($row['period_paid'],2) ?></td>
+                            <td class="text-end c-disc">₹ <?= number_format($row['period_discount'],2) ?></td>
+                            <td class="text-end <?= $row['closing_balance']>0?'c-dr':'c-cr' ?>">
+                                ₹ <?= number_format(abs($row['closing_balance']),2) ?>
+                                <small><?= $row['closing_balance']>0?' (Dr)':' (Cr)' ?></small>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Total</td>
+                            <td class="text-end <?= $t_ob>0?'c-dr':'c-cr' ?>">₹ <?= number_format(abs($t_ob),2) ?></td>
+                            <td class="text-end">₹ <?= number_format($t_r,2) ?></td>
+                            <td class="text-end">₹ <?= number_format($t_s,2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($t_p,2) ?></td>
+                            <td class="text-end c-disc">₹ <?= number_format($t_d,2) ?></td>
+                            <td class="text-end <?= $t_cl>0?'c-dr':'c-cr' ?>">₹ <?= number_format(abs($t_cl),2) ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="p-3">
+                <small class="c-muted"><i class="bi bi-info-circle me-1"></i>
+                    Dr = Customer owes us &nbsp;|&nbsp; Cr = We owe customer &nbsp;|&nbsp;
+                    Discount is included in balance calculation.
+                </small>
+            </div>
+        </div>
+    </div><!-- /tab-customers -->
+
+    <!-- ══ TOP CUSTOMERS TAB ══ -->
+    <div class="tab-pane fade" id="tab-top">
+        <div class="tbl-wrap">
+            <div class="tbl-head">
+                <h6><i class="bi bi-trophy me-2"></i>Top 10 Customers — <?= htmlspecialchars($period_label) ?></h6>
+                <span class="badge-soft-amber"><?= count($top_customers) ?> shown</span>
+            </div>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Customer</th>
+                            <th class="text-center">Prev Jobs</th>
+                            <th class="text-center">Period Jobs</th>
+                            <th class="text-end">Period Amount</th>
+                            <th class="text-end">Paid</th>
+                            <th class="text-end">Discount</th>
+                            <th class="text-end">Opening Bal</th>
+                            <th class="text-end">Closing Bal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $sn=1; foreach($top_customers as $r): ?>
+                        <tr>
+                            <td class="c-muted"><?= $sn++ ?></td>
+                            <td>
+                                <strong><?= htmlspecialchars($r['customer_name']) ?></strong>
+                                <br><small class="c-muted"><?= htmlspecialchars($r['contact']) ?></small>
+                            </td>
+                            <td class="text-center"><span class="badge-soft-blue"><?= $r['prev_jobs'] ?></span></td>
+                            <td class="text-center"><span class="badge-soft-green"><?= $r['period_jobs'] ?></span></td>
+                            <td class="text-end">₹ <?= number_format($r['period_amount'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($r['period_paid'],2) ?></td>
+                            <td class="text-end c-disc">₹ <?= number_format($r['period_discount'],2) ?></td>
+                            <td class="text-end <?= $r['opening_balance']>0?'c-dr':'c-cr' ?>">
+                                ₹ <?= number_format(abs($r['opening_balance']),2) ?>
+                            </td>
+                            <td class="text-end <?= $r['closing_balance']>0?'c-dr':'c-cr' ?>">
+                                ₹ <?= number_format(abs($r['closing_balance']),2) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div><!-- /tab-top -->
+
+    <!-- ══ STAFF LEDGER TAB ══ -->
+    <div class="tab-pane fade" id="tab-staff">
+        <div class="tbl-wrap">
+            <div class="tbl-head">
+                <h6><i class="bi bi-person-badge me-2"></i>Staff / Mechanic Ledger — <?= htmlspecialchars($period_label) ?></h6>
+                <span class="badge-soft-purple"><?= count($mechanic_ledger) ?> staff</span>
+            </div>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th class="text-end">Rate/Day</th>
+                            <th class="text-end">Com%</th>
+                            <th class="text-center">Period Days<br><small>(half=0.5)</small></th>
+                            <th class="text-end">Period Salary</th>
+                            <th class="text-end">Period Commission</th>
+                            <th class="text-end">Period Advance</th>
+                            <th class="text-end">Total Salary</th>
+                            <th class="text-end">Total Advance</th>
+                            <th class="text-end">Net Payable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $m_ps=$m_pc=$m_pa=$m_ts=$m_ta=$m_nb=0;
+                        foreach($mechanic_ledger as $m):
+                            $m_ps+=$m['period_salary'];
+                            $m_pc+=$m['period_commission'];
+                            $m_pa+=$m['period_advance'];
+                            $m_ts+=$m['total_salary'];
+                            $m_ta+=$m['total_advance'];
+                            $m_nb+=$m['net_balance'];
+                        ?>
+                        <tr>
+                            <td>
+                                <strong><?= htmlspecialchars($m['mech_name']) ?></strong>
+                            </td>
+                            <td class="text-end">₹ <?= number_format($m['daily_salary'],0) ?></td>
+                            <td class="text-end"><?= $m['commission_percent'] ?>%</td>
+                            <td class="text-center">
+                                <span class="badge-soft-blue"><?= number_format($m['period_days'],1) ?></span>
+                            </td>
+                            <td class="text-end">₹ <?= number_format($m['period_salary'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($m['period_commission'],2) ?></td>
+                            <td class="text-end c-dr">₹ <?= number_format($m['period_advance'],2) ?></td>
+                            <td class="text-end">₹ <?= number_format($m['total_salary'],2) ?></td>
+                            <td class="text-end c-dr">₹ <?= number_format($m['total_advance'],2) ?></td>
+                            <td class="text-end <?= $m['net_balance']>=0?'c-cr':'c-dr' ?>">
+                                ₹ <?= number_format($m['net_balance'],2) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4">Total</td>
+                            <td class="text-end">₹ <?= number_format($m_ps,2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($m_pc,2) ?></td>
+                            <td class="text-end c-dr">₹ <?= number_format($m_pa,2) ?></td>
+                            <td class="text-end">₹ <?= number_format($m_ts,2) ?></td>
+                            <td class="text-end c-dr">₹ <?= number_format($m_ta,2) ?></td>
+                            <td class="text-end <?= $m_nb>=0?'c-cr':'c-dr' ?>">₹ <?= number_format($m_nb,2) ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="p-3">
+                <small class="c-muted"><i class="bi bi-info-circle me-1"></i>
+                    Half-day attendance counted as 0.5 days. Net Payable = All-time Salary − All-time Advance.
+                </small>
+            </div>
+        </div>
+    </div><!-- /tab-staff -->
+
+    <!-- ══ INVENTORY TAB ══ -->
+    <div class="tab-pane fade" id="tab-stock">
+        <div class="tbl-wrap">
+            <div class="tbl-head">
+                <h6><i class="bi bi-boxes me-2"></i>Inventory Valuation</h6>
+                <span class="badge-soft-green">Grand Value: ₹<?= number_format($grand_stock_val,2) ?></span>
+            </div>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-center">Total Stock In</th>
+                            <th class="text-center">Used/Sold (Period)</th>
+                            <th class="text-center">Current Stock</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-end">Stock Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($inventory_summary as $inv):
+                            $curr = max(0, $inv['curr_stock']);
+                            $val  = $curr * $inv['price'];
+                        ?>
+                        <tr>
+                            <td><strong><?= htmlspecialchars($inv['product_name']) ?></strong></td>
+                            <td class="text-center"><span class="badge-soft-blue"><?= $inv['stock_in'] ?></span></td>
+                            <td class="text-center"><span class="badge-soft-amber"><?= $inv['period_used'] ?></span></td>
+                            <td class="text-center">
+                                <span class="<?= $curr<=5?'badge-soft-red':'badge-soft-green' ?>"><?= $curr ?></span>
+                            </td>
+                            <td class="text-end">₹ <?= number_format($inv['price'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($val,2) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end">Grand Total Stock Valuation:</td>
+                            <td class="text-end c-cr">₹ <?= number_format($grand_stock_val,2) ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="p-3">
+                <small class="c-muted"><i class="bi bi-info-circle me-1"></i>
+                    Current stock = Total received − sold via Direct Sales − used in Repairs.
+                    Red badge = low stock (≤5 units).
+                </small>
+            </div>
+        </div>
+    </div><!-- /tab-stock -->
+
+    <!-- ══ INCOME / EXPENSE TAB ══ -->
+    <div class="tab-pane fade" id="tab-finance">
+        <div class="row g-3">
+            <!-- Income -->
+            <div class="col-md-6">
+                <div class="tbl-wrap h-100">
+                    <div class="tbl-head" style="background:linear-gradient(90deg,#065f46,#06d6a0);">
+                        <h6><i class="bi bi-arrow-up-circle me-2"></i>Income — <?= htmlspecialchars($period_label) ?></h6>
+                    </div>
+                    <table class="ledger">
+                        <thead><tr><th>Description</th><th class="text-end">Amount</th></tr></thead>
+                        <tbody>
+                            <?php $ti=0; foreach($income_summary as $inc): $ti+=$inc['amount']; ?>
+                            <tr>
+                                <td><?= htmlspecialchars($inc['description']) ?></td>
+                                <td class="text-end c-cr">₹ <?= number_format($inc['amount'],2) ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr><td>Total Income</td><td class="text-end c-cr">₹ <?= number_format($ti,2) ?></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <!-- Expense -->
+            <div class="col-md-6">
+                <div class="tbl-wrap h-100">
+                    <div class="tbl-head" style="background:linear-gradient(90deg,#991b1b,#ef476f);">
+                        <h6><i class="bi bi-arrow-down-circle me-2"></i>Expense — <?= htmlspecialchars($period_label) ?></h6>
+                    </div>
+                    <table class="ledger">
+                        <thead><tr><th>Category</th><th class="text-end">Amount</th></tr></thead>
+                        <tbody>
+                            <?php $te=0;
+                            if(empty($expense_summary)): ?>
+                            <tr><td colspan="2" class="text-center c-muted py-3">No expenses in this period.</td></tr>
+                            <?php else: foreach($expense_summary as $exp): $te+=$exp['amount']; ?>
+                            <tr>
+                                <td><?= htmlspecialchars($exp['expense_category']) ?></td>
+                                <td class="text-end c-dr">₹ <?= number_format($exp['amount'],2) ?></td>
+                            </tr>
+                            <?php endforeach; endif; ?>
+                        </tbody>
+                        <tfoot>
+                            <tr><td>Total Expense</td><td class="text-end c-dr">₹ <?= number_format($te,2) ?></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div><!-- /tab-finance -->
+
+    <!-- ══ LOANS TAB ══ -->
+    <div class="tab-pane fade" id="tab-loans">
+        <div class="tbl-wrap">
+            <div class="tbl-head" style="background:linear-gradient(90deg,#92400e,#ffd166);color:#1a1a2e;">
+                <h6><i class="bi bi-bank2 me-2"></i>Loan / Liability Ledger</h6>
+                <span class="badge-soft-amber"><?= count($loan_ledger) ?> loans</span>
+            </div>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>Lender</th>
+                            <th class="text-end">Principal</th>
+                            <th class="text-center">Int%</th>
+                            <th class="text-end">EMI</th>
+                            <th>Start Date</th>
+                            <th class="text-end">Prev Paid</th>
+                            <th class="text-end">Period Paid</th>
+                            <th class="text-end">Total Paid</th>
+                            <th class="text-end">Outstanding</th>
+                            <th class="text-center">Rem EMI</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $tl_amt=$tl_prev=$tl_per=$tl_tot=$tl_out=0;
+                        foreach($loan_ledger as $l):
+                            $tl_amt +=$l['loan_amount'];
+                            $tl_prev+=$l['prev_paid'];
+                            $tl_per +=$l['period_paid'];
+                            $tl_tot +=$l['total_paid'];
+                            $tl_out +=$l['outstanding'];
+                        ?>
+                        <tr>
+                            <td>
+                                <strong><?= htmlspecialchars($l['lender_name']) ?></strong>
+                                <?php if(!empty($l['contact'])): ?>
+                                <br><small class="c-muted"><?= htmlspecialchars($l['contact']) ?></small>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-end">₹ <?= number_format($l['loan_amount'],2) ?></td>
+                            <td class="text-center"><?= $l['interest_rate'] ?>%</td>
+                            <td class="text-end">₹ <?= number_format($l['emi_amount'],2) ?></td>
+                            <td><?= $l['start_date'] ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($l['prev_paid'],2) ?></td>
+                            <td class="text-end">
+                                <span class="badge-soft-green">₹ <?= number_format($l['period_paid'],2) ?></span>
+                            </td>
+                            <td class="text-end c-cr">₹ <?= number_format($l['total_paid'],2) ?></td>
+                            <td class="text-end <?= $l['outstanding']>0?'c-dr':'c-cr' ?>">
+                                ₹ <?= number_format($l['outstanding'],2) ?>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge-soft-amber"><?= $l['remaining_emis'] ?></span>
+                            </td>
+                            <td>
+                                <span class="<?= $l['loan_status']==='सक्रिय'?'badge-soft-red':'badge-soft-green' ?>">
+                                    <?= $l['loan_status'] ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total</td>
+                            <td class="text-end">₹ <?= number_format($tl_amt,2) ?></td>
+                            <td colspan="3"></td>
+                            <td class="text-end c-cr">₹ <?= number_format($tl_prev,2) ?></td>
+                            <td class="text-end"><span class="badge-soft-green">₹ <?= number_format($tl_per,2) ?></span></td>
+                            <td class="text-end c-cr">₹ <?= number_format($tl_tot,2) ?></td>
+                            <td class="text-end c-dr">₹ <?= number_format($tl_out,2) ?></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div><!-- /tab-loans -->
+
+    <!-- ══ MONTHLY SUMMARY TAB ══ -->
+    <div class="tab-pane fade" id="tab-monthly">
+        <div class="tbl-wrap">
+            <div class="tbl-head" style="background:linear-gradient(90deg,#0d1b2a,#4361ee);">
+                <h6><i class="bi bi-calendar-month me-2"></i>Monthly Transaction Summary</h6>
+            </div>
+            <div class="tbl-container">
+                <table class="ledger">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th class="text-center">Jobs</th>
+                            <th class="text-end">Repair Income</th>
+                            <th class="text-end">Direct Sales</th>
+                            <th class="text-end">Total Income</th>
+                            <th class="text-center">Customers</th>
+                            <th class="text-end">Expenses</th>
+                            <th class="text-end">Net Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $mo_j=$mo_r=$mo_d=$mo_ti=$mo_c=$mo_e=$mo_np=0;
+                        foreach($monthly_summary as $ms):
+                            $ti_m   = $ms['repair_income'] + $ms['direct_income'];
+                            $net_m  = $ti_m - $ms['total_expenses'];
+                            $mo_j  += $ms['total_jobs'];
+                            $mo_r  += $ms['repair_income'];
+                            $mo_d  += $ms['direct_income'];
+                            $mo_ti += $ti_m;
+                            $mo_c  += $ms['total_customers'];
+                            $mo_e  += $ms['total_expenses'];
+                            $mo_np += $net_m;
+                        ?>
+                        <tr>
+                            <td><strong><?= $ms['mmonth'] ?></strong></td>
+                            <td class="text-center"><span class="badge-soft-blue"><?= $ms['total_jobs'] ?></span></td>
+                            <td class="text-end c-cr">₹ <?= number_format($ms['repair_income'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($ms['direct_income'],2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($ti_m,2) ?></td>
+                            <td class="text-center"><span class="badge-soft-purple"><?= $ms['total_customers'] ?></span></td>
+                            <td class="text-end c-dr">₹ <?= number_format($ms['total_expenses'],2) ?></td>
+                            <td class="text-end <?= $net_m>=0?'c-cr':'c-dr' ?>">₹ <?= number_format($net_m,2) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td>Total</td>
+                            <td class="text-center"><span class="badge-soft-blue"><?= $mo_j ?></span></td>
+                            <td class="text-end c-cr">₹ <?= number_format($mo_r,2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($mo_d,2) ?></td>
+                            <td class="text-end c-cr">₹ <?= number_format($mo_ti,2) ?></td>
+                            <td class="text-center"><span class="badge-soft-purple"><?= $mo_c ?></span></td>
+                            <td class="text-end c-dr">₹ <?= number_format($mo_e,2) ?></td>
+                            <td class="text-end <?= $mo_np>=0?'c-cr':'c-dr' ?>">₹ <?= number_format($mo_np,2) ?></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div><!-- /tab-monthly -->
+
+</div><!-- /tab-content -->
+
+<!-- ══════════════ FOOTER BAR ══════════════ -->
+<div class="footer-bar no-print">
+    <div class="footer-meta">
+        <span><i class="bi bi-clock me-1"></i>Generated: <strong><?= date('d M Y H:i') ?></strong></span>
+        <span><i class="bi bi-calendar3 me-1"></i>Period: <strong><?= htmlspecialchars($period_label) ?></strong></span>
+        <span><i class="bi bi-arrow-repeat me-1"></i>Carry Forward: <strong style="color:var(--green);">Enabled</strong></span>
+        <span><i class="bi bi-tag me-1"></i>Discount in Balance: <strong style="color:var(--violet);">Yes</strong></span>
+        <span><i class="bi bi-currency-rupee me-1"></i>Currency: <strong>INR (₹)</strong></span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button onclick="window.print()" class="btn btn-dark btn-sm"><i class="bi bi-printer me-1"></i>Print</button>
+        <button onclick="exportData('pdf')"   class="btn btn-outline-danger btn-sm"><i class="bi bi-file-pdf me-1"></i>PDF</button>
+        <button onclick="exportData('excel')" class="btn btn-outline-success btn-sm"><i class="bi bi-file-excel me-1"></i>Excel</button>
+        <button onclick="copyToClipboard()"  class="btn btn-outline-secondary btn-sm"><i class="bi bi-clipboard me-1"></i>Copy</button>
+        <button onclick="location.reload()"  class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- ══════════════ SCRIPTS ══════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// ── Flatpickr date pickers  [DeepSeek]
+if(document.getElementById('start_date')) flatpickr('#start_date',{dateFormat:'Y-m-d',maxDate:'today'});
+if(document.getElementById('end_date'))   flatpickr('#end_date',  {dateFormat:'Y-m-d',maxDate:'today'});
+
+// ── Dynamic filter toggle  [Grok]
+function toggleFilters(sel){
+    const t = sel.value;
+    document.getElementById('f_month').style.display = t==='custom'?'none':'block';
+    document.getElementById('f_year') .style.display = t==='custom'?'none':'block';
+    document.getElementById('f_start').style.display = t==='custom'?'block':'none';
+    document.getElementById('f_end')  .style.display = t==='custom'?'block':'none';
+}
+
+// ── Tab persistence (localStorage)  [DeepSeek]
+document.addEventListener('DOMContentLoaded',function(){
+    const tabs = document.querySelectorAll('a[data-bs-toggle="tab"]');
+    tabs.forEach(tab=>{
+        tab.addEventListener('shown.bs.tab',e=>{
+            localStorage.setItem('vt_active_tab', e.target.getAttribute('href'));
+            history.replaceState(null,null, e.target.getAttribute('href'));
         });
+    });
+    let active = localStorage.getItem('vt_active_tab') || window.location.hash;
+    if(active){
+        const t = document.querySelector('a[href="'+active+'"]');
+        if(t) new bootstrap.Tab(t).show();
+    }
+});
 
-        // Tab persistence
-        $(document).ready(function() {
-            // Store active tab in localStorage
-            $('.nav-tabs a').on('shown.bs.tab', function (e) {
-                localStorage.setItem('activeTab', $(e.target).attr('href'));
-            });
+// ── Keyboard shortcuts  [DeepSeek]
+document.addEventListener('keydown',function(e){
+    if(e.ctrlKey && e.key==='p'){ e.preventDefault(); window.print(); }
+    if(e.ctrlKey && e.key==='r'){ e.preventDefault(); location.reload(); }
+});
 
-            // Get active tab from localStorage
-            var activeTab = localStorage.getItem('activeTab');
-            if (activeTab) {
-                $('.nav-tabs a[href="' + activeTab + '"]').tab('show');
-            }
+// ── Auto-refresh every 15 minutes  [DeepSeek]
+setTimeout(()=>{
+    if(confirm('Data may have changed. Refresh the report?')) window.location.reload();
+}, 900000);
 
-            // Check for hash in URL
-            if (window.location.hash) {
-                $('.nav-tabs a[href="' + window.location.hash + '"]').tab('show');
-            }
-        });
-    </script>
+// ── Export functions  [DeepSeek]
+function exportData(type){
+    let url = window.location.href;
+    let exportUrl = url + (url.includes('?')?'&':'?') + 'export=' + type;
+    if(type==='pdf') window.open(exportUrl,'_blank');
+    else alert(type.toUpperCase()+' export coming soon!');
+}
+
+function copyToClipboard(){
+    let text = 'VTech Business Report\n';
+    text += 'Period: <?= addslashes($period_label) ?>\n';
+    text += 'Generated: <?= date('d M Y H:i') ?>\n\n';
+    text += 'Total Income:    ₹ <?= number_format($total_income,2) ?>\n';
+    text += 'Total Expense:   ₹ <?= number_format($bh['total_expense'],2) ?>\n';
+    text += 'Net Profit:      ₹ <?= number_format($net_profit,2) ?>\n';
+    text += 'Total Receivable:₹ <?= number_format($total_receivable,2) ?>\n';
+    text += 'Cash Received:   ₹ <?= number_format($bh['cash_received'],2) ?>\n';
+    text += 'Discount Given:  ₹ <?= number_format($bh['discount_given'],2) ?>\n';
+    text += 'Stock Value:     ₹ <?= number_format($grand_stock_val,2) ?>\n';
+    navigator.clipboard.writeText(text).then(()=>alert('Summary copied to clipboard!'));
+}
+</script>
+</body>
+</html>

@@ -713,32 +713,25 @@ function copyMessage() {
 
 // Export functions
 function printReport() {
-    var printWindow = window.open('', '_blank');
-    printWindow.document.write('<html><head><title>Client List Report</title>');
-    printWindow.document.write('<style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; margin-top: 20px; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; font-weight: bold; } .text-right { text-align: right; } .text-center { text-align: center; } .high-balance { background-color: #fff5f5; } .very-high-balance { background-color: #ffe6e6; } </style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write('<h2>Client List Report (including Loans)</h2><p>Date: ' + new Date().toLocaleDateString() + '</p>');
-    var table = document.getElementById('client-list-main');
-    if (table) { printWindow.document.write(table.outerHTML); } else { printWindow.document.write('<p>No data available</p>'); }
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    const search = $('#searchAll').val() || '';
+    const min_bal = $('#minBalance').val() || '';
+    const max_bal = $('#maxBalance').val() || '';
+    
+    const url = `clients/export_clients.php?format=print&search=${encodeURIComponent(search)}&min_balance=${min_bal}&max_balance=${max_bal}`;
+    window.open(url, '_blank');
 }
 
 function exportExcel() {
-    var table = document.getElementById('client-list-main');
-    var html = table.outerHTML;
-    var blob = new Blob([html], {type: 'application/vnd.ms-excel'});
-    var downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = 'client_list_' + new Date().toISOString().slice(0,10) + '.xls';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    const search = $('#searchAll').val() || '';
+    const min_bal = $('#minBalance').val() || '';
+    const max_bal = $('#maxBalance').val() || '';
+    
+    const url = `clients/export_clients.php?format=excel&search=${encodeURIComponent(search)}&min_balance=${min_bal}&max_balance=${max_bal}`;
+    window.location.href = url;
 }
 
 function exportPDF() {
-    alert_toast("For PDF export, please use the Print button and select 'Save as PDF' in the print dialog", 'info', 5000);
+    // PDF is handled by the print view's Save as PDF option for best quality
     printReport();
 }
 

@@ -1,519 +1,434 @@
 <?php
-// डेट रेंज सेट करें
+/**
+ * Professional Accounting Dashboard
+ * Optimized for VTech RSMS
+ */
+
+// Date range filters
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : date('Y-m-01');
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : date('Y-m-t');
-$report_type = isset($_GET['report_type']) ? $_GET['report_type'] : 'cash_flow';
 
-// रिपोर्ट जनरेट करने का फंक्शन
-function getCashFlowReport($conn, $start_date, $end_date) {
-    $report = [
-        'income' => [],
-        'expenses' => [],
-        'summary' => []
-    ];
-    
-    // 1. जॉब से आय
-    $job_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(t.amount), 0) as total_job_income,
-            COUNT(t.id) as total_jobs,
-            COALESCE(SUM(t.mechanic_commission_amount), 0) as commission_paid
-        FROM transaction_list t
-        WHERE t.status IN (5) 
-        AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'
-    ");
-    $job_income = $job_query->fetch_assoc();
-    
-    $report['income']['job_income'] = [
-        'label' => 'Job/Service Income',
-        'amount' => floatval($job_income['total_job_income']),
-        'details' => [
-            'Total Jobs' => $job_income['total_jobs'],
-            'Commission Paid' => $job_income['commission_paid']
-        ]
-    ];
-    
-    // 2. डायरेक्ट सेल्स
-    $sales_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(total_amount), 0) as total_sales,
-            COUNT(id) as total_sales_count
-        FROM direct_sales 
-        WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'
-    ");
-    $sales_income = $sales_query->fetch_assoc();
-    
-    $report['income']['direct_sales'] = [
-        'label' => 'Direct Sales',
-        'amount' => floatval($sales_income['total_sales']),
-        'details' => [
-            'Total Sales' => $sales_income['total_sales_count']
-        ]
-    ];
-    
-    // 3. ग्राहक भुगतान
-    $payment_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(amount), 0) as total_payments,
-            COALESCE(SUM(discount), 0) as total_discount,
-            COUNT(id) as payment_count
-        FROM client_payments 
-        WHERE payment_date BETWEEN '$start_date' AND '$end_date'
-    ");
-    $client_payments = $payment_query->fetch_assoc();
-    
-    $report['income']['client_payments'] = [
-        'label' => 'Client Payments',
-        'amount' => floatval($client_payments['total_payments']),
-        'details' => [
-            'Total Payments' => $client_payments['payment_count'],
-            'Discount' => $client_payments['total_discount']
-        ]
-    ];
-    
-    // 4. मैकेनिक सैलरी/एडवांस
-    $salary_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(amount), 0) as total_advance,
-            COUNT(id) as advance_count
-        FROM advance_payments 
-        WHERE date_paid BETWEEN '$start_date' AND '$end_date'
-    ");
-    $salary_expense = $salary_query->fetch_assoc();
-    
-    $report['expenses']['salary_advance'] = [
-        'label' => 'Mechanic Salary/Advance',
-        'amount' => floatval($salary_expense['total_advance']),
-        'details' => [
-            'Total Payments' => $salary_expense['advance_count']
-        ]
-    ];
-    
-    // 5. दुकान के खर्चे
-    $expense_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(amount), 0) as total_expenses,
-            GROUP_CONCAT(CONCAT(category, ': ₹', amount) SEPARATOR ', ') as expense_details
-        FROM expense_list 
-        WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date'
-    ");
-    $shop_expenses = $expense_query->fetch_assoc();
-    
-    $report['expenses']['shop_expenses'] = [
-        'label' => 'Shop Expenses',
-        'amount' => floatval($shop_expenses['total_expenses']),
-        'details' => [
-            'Details' => $shop_expenses['expense_details'] ?: 'No expenses'
-        ]
-    ];
-    
-    // 6. लोन EMI
-    $loan_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(amount_paid), 0) as total_emi,
-            COUNT(id) as emi_count
-        FROM loan_payments 
-        WHERE payment_date BETWEEN '$start_date' AND '$end_date'
-    ");
-    $loan_emi = $loan_query->fetch_assoc();
-    
-    $report['expenses']['loan_emi'] = [
-        'label' => 'Loan EMI',
-        'amount' => floatval($loan_emi['total_emi']),
-        'details' => [
-            'Total EMI' => $loan_emi['emi_count']
-        ]
-    ];
-    
-    // 7. अन्य छूट
-    $discount_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(discount), 0) as total_discount_given
-        FROM client_payments 
-        WHERE payment_date BETWEEN '$start_date' AND '$end_date'
-    ");
-    $discounts = $discount_query->fetch_assoc();
-    
-    $report['expenses']['discounts'] = [
-        'label' => 'Client Discount',
-        'amount' => floatval($discounts['total_discount_given']),
-        'details' => []
-    ];
-    
-    // कुल आय और व्यय
-    $total_income = $report['income']['job_income']['amount'] + 
-                   $report['income']['direct_sales']['amount'] + 
-                   $report['income']['client_payments']['amount'];
-    
-    $total_expenses = $report['expenses']['salary_advance']['amount'] + 
-                     $report['expenses']['shop_expenses']['amount'] + 
-                     $report['expenses']['loan_emi']['amount'] + 
-                     $report['expenses']['discounts']['amount'];
-    
-    $net_profit = $total_income - $total_expenses;
-    
-    $report['summary'] = [
-        'total_income' => $total_income,
-        'total_expenses' => $total_expenses,
-        'net_profit' => $net_profit,
-        'period' => "From $start_date to $end_date"
-    ];
-    
-    return $report;
-}
+// 1. FINANCIAL DATA FETCHING LOGIC
+// ---------------------------------------------------------
 
-// ट्रेडिंग अकाउंट रिपोर्ट
-function getTradingAccount($conn, $start_date, $end_date) {
-    $report = [
-        'opening_stock' => 0,
-        'purchases' => 0,
-        'closing_stock' => 0,
-        'gross_profit' => 0,
-        'expenses' => [],
-        'net_profit' => 0
-    ];
-    
-    // Opening Stock (पहले दिन से पहले का inventory value)
-    $opening_stock_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(il.quantity * p.price), 0) as stock_value
-        FROM inventory_list il
-        JOIN product_list p ON il.product_id = p.id
-        WHERE il.stock_date < '$start_date'
-    ");
-    $opening_stock = $opening_stock_query->fetch_assoc();
-    $report['opening_stock'] = floatval($opening_stock['stock_value']);
-    
-    // Purchases (इन्वेंटरी में नए सामान)
-    $purchases_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(il.quantity * p.price), 0) as purchase_value,
-            COUNT(il.id) as purchase_items
-        FROM inventory_list il
-        JOIN product_list p ON il.product_id = p.id
-        WHERE il.stock_date BETWEEN '$start_date' AND '$end_date'
-    ");
-    $purchases = $purchases_query->fetch_assoc();
-    $report['purchases'] = floatval($purchases['purchase_value']);
-    
-    // Closing Stock (अंतिम दिन का inventory value)
-    $closing_stock_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(il.quantity * p.price), 0) as stock_value
-        FROM inventory_list il
-        JOIN product_list p ON il.product_id = p.id
-        WHERE il.stock_date <= '$end_date'
-    ");
-    $closing_stock = $closing_stock_query->fetch_assoc();
-    $report['closing_stock'] = floatval($closing_stock['stock_value']);
-    
-    // Sales (कैश फ्लो से)
-    $cash_flow = getCashFlowReport($conn, $start_date, $end_date);
-    $sales = $cash_flow['summary']['total_income'];
-    
-    // Cost of Goods Sold (बेचे गए माल की लागत)
-    $cogs = $report['opening_stock'] + $report['purchases'] - $report['closing_stock'];
-    
-    // Gross Profit
-    $report['gross_profit'] = $sales - $cogs;
-    
-    // Expenses (कैश फ्लो से लें)
-    $report['expenses'] = [
-        'Salary/Advance' => $cash_flow['expenses']['salary_advance']['amount'],
-        'Shop Expenses' => $cash_flow['expenses']['shop_expenses']['amount'],
-        'Loan EMI' => $cash_flow['expenses']['loan_emi']['amount'],
-        'Discounts' => $cash_flow['expenses']['discounts']['amount']
-    ];
-    
-    // Total Expenses
-    $total_expenses = array_sum($report['expenses']);
-    
-    // Net Profit
-    $report['net_profit'] = $report['gross_profit'] - $total_expenses;
-    
-    return $report;
-}
+// A. Revenue (Billed Income)
+$revenue_query = $conn->query("
+    SELECT 
+        (SELECT COALESCE(SUM(amount), 0) FROM transaction_list WHERE status = 5 AND DATE(date_created) BETWEEN '$start_date' AND '$end_date') as service_billed,
+        (SELECT COALESCE(SUM(total_amount), 0) FROM direct_sales WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date') as sales_billed,
+        (SELECT COALESCE(SUM(mechanic_commission_amount), 0) FROM transaction_list WHERE status = 5 AND DATE(date_created) BETWEEN '$start_date' AND '$end_date') as commission_cost
+");
+$revenue = $revenue_query->fetch_assoc();
+$total_revenue = $revenue['service_billed'] + $revenue['sales_billed'];
 
-// बैलेंस शीट
-function getBalanceSheet($conn, $as_on_date) {
-    $balance_sheet = [
-        'assets' => [],
-        'liabilities' => [],
-        'equity' => []
-    ];
-    
-    // ASSETS
-    // 1. Cash & Bank (कैश फ्लो से net profit)
-    $cash_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(
-                (SELECT COALESCE(SUM(amount), 0) FROM client_payments WHERE payment_date <= '$as_on_date') +
-                (SELECT COALESCE(SUM(total_amount), 0) FROM direct_sales WHERE DATE(date_created) <= '$as_on_date') +
-                (SELECT COALESCE(SUM(amount), 0) FROM transaction_list WHERE status IN (2,3,5) AND DATE(date_created) <= '$as_on_date') -
-                (SELECT COALESCE(SUM(amount), 0) FROM advance_payments WHERE date_paid <= '$as_on_date') -
-                (SELECT COALESCE(SUM(amount), 0) FROM expense_list WHERE DATE(date_created) <= '$as_on_date') -
-                (SELECT COALESCE(SUM(amount_paid), 0) FROM loan_payments WHERE payment_date <= '$as_on_date')
-            ), 0) as cash_balance
-    ");
-    $cash = $cash_query->fetch_assoc();
-    $balance_sheet['assets']['cash_bank'] = [
-        'label' => 'Cash/Bank Balance',
-        'amount' => floatval($cash['cash_balance'])
-    ];
-    
-    // 2. Inventory (स्टॉक)
-    $inventory_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(il.quantity * p.price), 0) as stock_value
-        FROM inventory_list il
-        JOIN product_list p ON il.product_id = p.id
-        WHERE il.stock_date <= '$as_on_date'
-    ");
-    $inventory = $inventory_query->fetch_assoc();
-    $balance_sheet['assets']['inventory'] = [
-        'label' => 'Stock/Inventory',
-        'amount' => floatval($inventory['stock_value'])
-    ];
-    
-    // 3. Accounts Receivable (ग्राहक बकाया)
-    $receivable_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(cl.opening_balance), 0) as opening_balance,
-            COALESCE(SUM(
-                (SELECT COALESCE(SUM(amount), 0) FROM transaction_list WHERE client_name = cl.id AND status IN (2,3,5) AND DATE(date_created) <= '$as_on_date') -
-                (SELECT COALESCE(SUM(amount), 0) FROM client_payments WHERE client_id = cl.id AND payment_date <= '$as_on_date')
-            ), 0) as pending_amount
-        FROM client_list cl
-        WHERE cl.delete_flag = 0
-    ");
-    $receivables = $receivable_query->fetch_assoc();
-    $balance_sheet['assets']['receivables'] = [
-        'label' => 'Customer Dues',
-        'amount' => floatval($receivables['opening_balance'] + $receivables['pending_amount'])
-    ];
-    
-    // LIABILITIES
-    // 1. Loan Payable (बकाया लोन)
-    $loan_query = $conn->query("
-        SELECT 
-            COALESCE(SUM(loan_amount - 
-                COALESCE((SELECT SUM(amount_paid) FROM loan_payments WHERE lender_id = l.id AND payment_date <= '$as_on_date'), 0)
-            ), 0) as outstanding_loan
-        FROM lender_list l
-        WHERE l.status = 1
-    ");
-    $loan = $loan_query->fetch_assoc();
-    $balance_sheet['liabilities']['loan_payable'] = [
-        'label' => 'Outstanding Loan',
-        'amount' => floatval($loan['outstanding_loan'])
-    ];
-    
-    // EQUITY
-    // 1. Capital (शुरुआती पूंजी - यह आपको manually डालना होगा या system_info में store करना होगा)
-    $capital = 100000; // उदाहरण के लिए, आप इसे डेटाबेस में store कर सकते हैं
-    $balance_sheet['equity']['capital'] = [
-        'label' => 'Capital',
-        'amount' => $capital
-    ];
-    
-    // 2. Retained Earnings (संचित लाभ)
-    // कुल assets - कुल liabilities - capital
-    $total_assets = array_sum(array_column($balance_sheet['assets'], 'amount'));
-    $total_liabilities = array_sum(array_column($balance_sheet['liabilities'], 'amount'));
-    $retained_earnings = $total_assets - $total_liabilities - $capital;
-    
-    $balance_sheet['equity']['retained_earnings'] = [
-        'label' => 'Retained Earnings',
-        'amount' => $retained_earnings
-    ];
-    
-    // Totals
-    $balance_sheet['total_assets'] = $total_assets;
-    $balance_sheet['total_liabilities_equity'] = $total_liabilities + $capital + $retained_earnings;
-    
-    return $balance_sheet;
-}
+// B. Cost of Goods Sold (COGS)
+$repair_parts_cost_query = $conn->query("
+    SELECT SUM(tp.qty * p.cost_price) as cost 
+    FROM transaction_products tp 
+    JOIN product_list p ON tp.product_id = p.id 
+    JOIN transaction_list t ON tp.transaction_id = t.id 
+    WHERE t.status = 5 AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'
+");
+$repair_parts_cost = $repair_parts_cost_query->fetch_assoc()['cost'] ?? 0;
 
-// रिपोर्ट जनरेट करें
-$cash_flow_report = getCashFlowReport($conn, $start_date, $end_date);
-$trading_account = getTradingAccount($conn, $start_date, $end_date);
-$balance_sheet = getBalanceSheet($conn, $end_date);
+$direct_sales_cost_query = $conn->query("
+    SELECT SUM(dsi.qty * p.cost_price) as cost 
+    FROM direct_sale_items dsi 
+    JOIN product_list p ON dsi.product_id = p.id 
+    JOIN direct_sales ds ON dsi.sale_id = ds.id 
+    WHERE DATE(ds.date_created) BETWEEN '$start_date' AND '$end_date'
+");
+$direct_sales_cost = $direct_sales_cost_query->fetch_assoc()['cost'] ?? 0;
+
+$total_cogs = $repair_parts_cost + $direct_sales_cost + $revenue['commission_cost'];
+
+// C. Collections (Actual Cash Inflow)
+$collections_query = $conn->query("
+    SELECT 
+        COALESCE(SUM(amount), 0) as total_collected,
+        COALESCE(SUM(discount), 0) as total_discount
+    FROM client_payments 
+    WHERE DATE(payment_date) BETWEEN '$start_date' AND '$end_date'
+");
+$collections = $collections_query->fetch_assoc();
+
+// D. Operating Expenses (Cash Outflow)
+$expenses_query = $conn->query("
+    SELECT 
+        (SELECT COALESCE(SUM(amount), 0) FROM expense_list WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date') as shop_expenses,
+        (SELECT COALESCE(SUM(amount), 0) FROM advance_payments WHERE DATE(date_paid) BETWEEN '$start_date' AND '$end_date') as staff_advances,
+        (SELECT COALESCE(SUM(amount_paid), 0) FROM loan_payments WHERE DATE(payment_date) BETWEEN '$start_date' AND '$end_date') as loan_emis
+");
+$expenses = $expenses_query->fetch_assoc();
+$total_op_expenses = $expenses['shop_expenses'] + $expenses['staff_advances'] + $expenses['loan_emis'];
+
+// E. Profitability Calculations
+$gross_profit = $total_revenue - $total_cogs;
+$net_profit = $gross_profit - $total_op_expenses - $collections['total_discount'];
+
+// F. Expense Breakdown by Category
+$expense_categories = $conn->query("
+    SELECT category, SUM(amount) as total 
+    FROM expense_list 
+    WHERE DATE(date_created) BETWEEN '$start_date' AND '$end_date' 
+    GROUP BY category 
+    ORDER BY total DESC
+");
+
+// G. Top 5 Customers by Billed Amount
+$top_customers = $conn->query("
+    SELECT c.firstname, c.lastname, SUM(t.amount) as total_billed
+    FROM transaction_list t 
+    JOIN client_list c ON t.client_name = c.id 
+    WHERE t.status = 5 AND DATE(t.date_created) BETWEEN '$start_date' AND '$end_date'
+    GROUP BY t.client_name 
+    ORDER BY total_billed DESC LIMIT 5
+");
+
+// H. Assets & Liabilities (As of End Date)
+$assets_query = $conn->query("
+    SELECT 
+        (
+            (SELECT COALESCE(SUM(amount), 0) FROM client_payments WHERE DATE(payment_date) <= '$end_date') -
+            (SELECT COALESCE(SUM(amount), 0) FROM expense_list WHERE DATE(date_created) <= '$end_date') -
+            (SELECT COALESCE(SUM(amount), 0) FROM advance_payments WHERE DATE(date_paid) <= '$end_date') -
+            (SELECT COALESCE(SUM(amount_paid), 0) FROM loan_payments WHERE DATE(payment_date) <= '$end_date')
+        ) as cash_on_hand,
+        (SELECT COALESCE(SUM(i.quantity * p.price), 0) FROM inventory_list i JOIN product_list p ON i.product_id = p.id WHERE i.stock_date <= '$end_date') as inventory_value,
+        (
+            (SELECT COALESCE(SUM(opening_balance), 0) FROM client_list WHERE delete_flag = 0) +
+            (SELECT COALESCE(SUM(amount), 0) FROM transaction_list WHERE status = 5 AND DATE(date_created) <= '$end_date') +
+            (SELECT COALESCE(SUM(total_amount), 0) FROM direct_sales WHERE DATE(date_created) <= '$end_date') +
+            (SELECT COALESCE(SUM(total_payable), 0) FROM client_loans WHERE status = 1 AND DATE(loan_date) <= '$end_date') -
+            (SELECT COALESCE(SUM(amount + discount), 0) FROM client_payments WHERE DATE(payment_date) <= '$end_date')
+        ) as accounts_receivable
+");
+$assets = $assets_query->fetch_assoc();
+
+$liabilities_query = $conn->query("
+    SELECT 
+        (SELECT COALESCE(SUM(loan_amount), 0) FROM lender_list WHERE status = 1) - 
+        (SELECT COALESCE(SUM(amount_paid), 0) FROM loan_payments) as loans_payable
+");
+$liabilities = $liabilities_query->fetch_assoc();
+
+// I. Stock Summary
+$stock_movements = $conn->query("
+    SELECT p.name, SUM(i.quantity) as current_stock, p.price, p.cost_price
+    FROM inventory_list i 
+    JOIN product_list p ON i.product_id = p.id 
+    GROUP BY i.product_id 
+    HAVING current_stock > 0
+    ORDER BY current_stock DESC LIMIT 5
+");
 ?>
 
 <style>
-    .income-box { border-left: 5px solid #28a745; background: #f8fff9; }
-    .expense-box { border-left: 5px solid #dc3545; background: #fff8f8; }
-    .profit-box { border-left: 5px solid #ffc107; background: #fffdf2; }
-    .amount { font-size: 1.5rem; font-weight: bold; }
-    .positive { color: #28a745; }
-    .negative { color: #dc3545; }
-    .summary-card { background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
-    @media print { .no-print { display: none; } .report-section { box-shadow: none; border: 1px solid #dee2e6; } }
+    :root {
+        --primary: #001f3f;
+        --secondary: #6c757d;
+        --success: #28a745;
+        --danger: #dc3545;
+        --info: #17a2b8;
+        --warning: #ffc107;
+        --light: #f8f9fa;
+        --dark: #343a40;
+    }
+
+    .accounting-dashboard { background: #f4f6f9; min-height: 80vh; padding-bottom: 50px; font-family: 'Inter', sans-serif; }
+    .stat-card { border: none !important; border-radius: 15px; transition: all 0.3s ease-in-out; overflow: hidden; position: relative; z-index: 1; }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.15) !important; }
+    
+    /* Custom Backgrounds to fix hover bleach */
+    .custom-bg-white { background: #ffffff !important; color: #333 !important; }
+    .custom-bg-navy { background: linear-gradient(135deg, #001f3f 0%, #003366 100%) !important; color: white !important; }
+    
+    /* Hover override */
+    .stat-card:hover { background: inherit !important; }
+    .custom-bg-white:hover { background: #ffffff !important; }
+    .custom-bg-navy:hover { background: linear-gradient(135deg, #001429 0%, #001f3f 100%) !important; }
+
+    .metric-value { font-size: 1.8rem; font-weight: 800; margin: 10px 0; letter-spacing: -1px; }
+    .metric-label { font-size: 0.85rem; text-transform: uppercase; font-weight: 600; opacity: 0.8; }
+    .icon-bg { position: absolute; right: -10px; bottom: -10px; font-size: 5rem; opacity: 0.1; transform: rotate(-15deg); z-index: 1; }
+    .nav-pills-custom .nav-link { border-radius: 30px; padding: 10px 25px; font-weight: 600; color: var(--dark); background: #fff; margin-right: 10px; border: 1px solid #dee2e6; transition: all 0.3s; }
+    .nav-pills-custom .nav-link.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(0, 31, 63, 0.3); }
+    .report-table th { background: var(--primary); color: white; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; border: none; }
+    .summary-row { background: #f8f9fa; font-weight: bold; }
+    .progress-custom { height: 8px; border-radius: 10px; background: #eee; }
+    .bg-gradient-navy { background: linear-gradient(135deg, #001f3f 0%, #003366 100%); }
+    .card-header-navy { background: #001f3f; color: white; border-radius: 15px 15px 0 0 !important; }
+
+    /* PROFESSIONAL PRINT STYLES */
+    @media print {
+        .no-print, .btn, .main-sidebar, .main-header, .nav-pills-custom, hr { display: none !important; }
+        .content-wrapper { margin-left: 0 !important; padding: 0 !important; background: white !important; }
+        .container-fluid { padding: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        .stat-card { border: 1px solid #ddd !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .col-xl-3, .col-md-6 { width: 25% !important; float: left !important; flex: 0 0 25% !important; max-width: 25% !important; }
+        .col-md-7 { width: 60% !important; float: left !important; }
+        .col-md-5 { width: 40% !important; float: left !important; }
+        .row { display: block !important; clear: both !important; }
+        .table td, .table th { padding: 5px !important; font-size: 11px !important; }
+        .tab-content { padding: 0 !important; }
+        .tab-pane { display: block !important; opacity: 1 !important; }
+        body { background: white !important; color: black !important; }
+        .text-navy { color: #001f3f !important; }
+    }
 </style>
 
-<div class="card card-outline card-navy shadow rounded-0">
-    <div class="card-header">
-        <h3 class="card-title font-weight-bold text-navy"><i class="bi bi-calculator"></i> Accounting Dashboard</h3>
-    </div>
-    <div class="card-body">
-        <!-- फिल्टर फॉर्म -->
-        <div class="filter-form no-print mb-4">
-            <form method="GET" action="" class="row g-3">
-                <input type="hidden" name="page" value="reports/accounting_dashboard">
-                <div class="col-md-3">
-                    <label class="form-label small">Report Type</label>
-                    <select name="report_type" class="form-control form-control-sm" id="reportType">
-                        <option value="cash_flow" <?= $report_type == 'cash_flow' ? 'selected' : '' ?>>Cash Flow</option>
-                        <option value="trading_account" <?= $report_type == 'trading_account' ? 'selected' : '' ?>>Trading Account</option>
-                        <option value="balance_sheet" <?= $report_type == 'balance_sheet' ? 'selected' : '' ?>>Balance Sheet</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small">Start Date</label>
-                    <input type="date" name="start_date" class="form-control form-control-sm" value="<?= $start_date ?>" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small">End Date</label>
-                    <input type="date" name="end_date" class="form-control form-control-sm" value="<?= $end_date ?>" required>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <button type="submit" class="btn btn-navy btn-sm w-100 bg-gradient-navy text-white">
-                        <i class="bi bi-search"></i> View Report
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- रिपोर्ट सेक्शन -->
-        <?php if($report_type == 'cash_flow'): ?>
-        <div class="report-section">
-            <h4 class="mb-4 text-navy"><i class="bi bi-cash-stack"></i> Cash Flow Report</h4>
-            <p class="text-muted small">Period: <?= $cash_flow_report['summary']['period'] ?></p>
-            
-            <div class="row mb-4">
-                <div class="col-md-6 mb-3">
-                    <div class="p-3 income-box card">
-                        <h5 class="mb-3"><i class="bi bi-arrow-down-circle text-success"></i> Income</h5>
-                        <table class="table table-sm table-hover">
-                            <?php foreach($cash_flow_report['income'] as $item): ?>
-                            <tr>
-                                <td><?= $item['label'] ?></td>
-                                <td class="text-end">
-                                    <span class="amount positive">₹<?= number_format($item['amount'], 2) ?></span>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                            <tr class="table-success">
-                                <td><strong>Total Income</strong></td>
-                                <td class="text-end">
-                                    <strong class="amount">₹<?= number_format($cash_flow_report['summary']['total_income'], 2) ?></strong>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="col-md-6 mb-3">
-                    <div class="p-3 expense-box card">
-                        <h5 class="mb-3"><i class="bi bi-arrow-up-circle text-danger"></i> Expenses</h5>
-                        <table class="table table-sm table-hover">
-                            <?php foreach($cash_flow_report['expenses'] as $item): ?>
-                            <tr>
-                                <td><?= $item['label'] ?></td>
-                                <td class="text-end">
-                                    <span class="amount negative">₹<?= number_format($item['amount'], 2) ?></span>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                            <tr class="table-danger">
-                                <td><strong>Total Expenses</strong></td>
-                                <td class="text-end">
-                                    <strong class="amount">₹<?= number_format($cash_flow_report['summary']['total_expenses'], 2) ?></strong>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+<div class="accounting-dashboard">
+    <div class="container-fluid pt-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+            <div>
+                <h2 class="font-weight-bold text-navy mb-0">Financial Analytics Dashboard</h2>
+                <p class="text-muted">Smart Insights for Business Performance</p>
             </div>
-            
-            <div class="summary-card shadow">
-                <div class="row text-center">
-                    <div class="col-md-4">
-                        <h6 class="small">Total Income</h6>
-                        <h3 class="mb-0">₹<?= number_format($cash_flow_report['summary']['total_income'], 2) ?></h3>
-                    </div>
-                    <div class="col-md-4">
-                        <h6 class="small">Total Expenses</h6>
-                        <h3 class="mb-0">₹<?= number_format($cash_flow_report['summary']['total_expenses'], 2) ?></h3>
-                    </div>
-                    <div class="col-md-4">
-                        <h6 class="small">Net Profit/Loss</h6>
-                        <h3 class="mb-0 <?= $cash_flow_report['summary']['net_profit'] >= 0 ? 'text-success' : 'text-danger' ?>">
-                            ₹<?= number_format($cash_flow_report['summary']['net_profit'], 2) ?>
-                        </h3>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <?php elseif($report_type == 'trading_account'): ?>
-        <div class="report-section">
-            <h4 class="mb-4 text-navy"><i class="bi bi-graph-up"></i> Trading Account</h4>
-            <div class="table-responsive">
-                <table class="table table-bordered table-sm">
-                    <thead class="bg-light">
-                        <tr><th colspan="2" class="text-center">Trading Account Details</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Opening Stock</td><td class="text-end">₹<?= number_format($trading_account['opening_stock'], 2) ?></td></tr>
-                        <tr><td>Purchases</td><td class="text-end">₹<?= number_format($trading_account['purchases'], 2) ?></td></tr>
-                        <tr><td>Closing Stock</td><td class="text-end text-success">₹<?= number_format($trading_account['closing_stock'], 2) ?></td></tr>
-                        <tr class="font-weight-bold bg-light"><td>Gross Profit</td><td class="text-end text-success">₹<?= number_format($trading_account['gross_profit'], 2) ?></td></tr>
-                        <tr class="bg-light"><td colspan="2">Expenses</td></tr>
-                        <?php foreach($trading_account['expenses'] as $label => $amount): ?>
-                        <tr><td><?= $label ?></td><td class="text-end text-danger">₹<?= number_format($amount, 2) ?></td></tr>
-                        <?php endforeach; ?>
-                        <tr class="font-weight-bold bg-navy text-white"><td>Net Profit/Loss</td><td class="text-end">₹<?= number_format($trading_account['net_profit'], 2) ?></td></tr>
-                    </tbody>
-                </table>
+            <div class="d-flex gap-2">
+                <button onclick="window.print()" class="btn btn-outline-navy mr-2 bg-white">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <a href="./?page=reports/balancesheet" class="btn btn-navy bg-gradient-navy text-white">
+                    <i class="fas fa-file-invoice-dollar"></i> Detailed Balance Sheet
+                </a>
             </div>
         </div>
 
-        <?php elseif($report_type == 'balance_sheet'): ?>
-        <div class="report-section">
-            <h4 class="mb-4 text-navy"><i class="bi bi-scale"></i> Balance Sheet</h4>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card card-success card-outline">
-                        <div class="card-header"><h5 class="card-title">Assets</h5></div>
-                        <div class="card-body p-0">
-                            <table class="table table-sm">
-                                <?php foreach($balance_sheet['assets'] as $asset): ?>
-                                <tr><td><?= $asset['label'] ?></td><td class="text-end">₹<?= number_format($asset['amount'], 2) ?></td></tr>
-                                <?php endforeach; ?>
-                                <tr class="bg-success text-white"><td>Total Assets</td><td class="text-end">₹<?= number_format($balance_sheet['total_assets'], 2) ?></td></tr>
-                            </table>
-                        </div>
+        <!-- Filter Bar -->
+        <div class="card shadow-sm border-0 mb-4 no-print" style="border-radius: 15px;">
+            <div class="card-body">
+                <form action="" method="GET" class="row align-items-end">
+                    <input type="hidden" name="page" value="reports/accounting_dashboard">
+                    <div class="col-md-3">
+                        <label class="small font-weight-bold">From Date</label>
+                        <input type="date" name="start_date" value="<?= $start_date ?>" class="form-control rounded-pill border-light bg-light">
                     </div>
+                    <div class="col-md-3">
+                        <label class="small font-weight-bold">To Date</label>
+                        <input type="date" name="end_date" value="<?= $end_date ?>" class="form-control rounded-pill border-light bg-light">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary btn-block rounded-pill shadow-sm">
+                            <i class="fas fa-sync-alt mr-1"></i> Update Analytics
+                        </button>
+                    </div>
+                    <div class="col-md-3 text-right">
+                        <span class="badge badge-pill badge-info px-3 py-2">
+                            Period: <?= date('d M', strtotime($start_date)) ?> - <?= date('d M Y', strtotime($end_date)) ?>
+                        </span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Metrics -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card shadow-sm custom-bg-white">
+                    <div class="card-body">
+                        <div class="metric-label text-primary">Total Revenue</div>
+                        <div class="metric-value text-dark">₹ <?= number_format($total_revenue, 2) ?></div>
+                        <div class="trend-indicator text-success"><i class="fas fa-file-invoice"></i> Service + Sales</div>
+                    </div>
+                    <i class="fas fa-chart-line icon-bg text-primary"></i>
                 </div>
-                <div class="col-md-6">
-                    <div class="card card-primary card-outline">
-                        <div class="card-header"><h5 class="card-title">Liabilities & Equity</h5></div>
-                        <div class="card-body p-0">
-                            <table class="table table-sm">
-                                <?php foreach($balance_sheet['liabilities'] as $liability): ?>
-                                <tr><td><?= $liability['label'] ?></td><td class="text-end">₹<?= number_format($liability['amount'], 2) ?></td></tr>
-                                <?php endforeach; ?>
-                                <?php foreach($balance_sheet['equity'] as $equity): ?>
-                                <tr><td><?= $equity['label'] ?></td><td class="text-end">₹<?= number_format($equity['amount'], 2) ?></td></tr>
-                                <?php endforeach; ?>
-                                <tr class="bg-primary text-white"><td>Total Liab. & Equity</td><td class="text-end">₹<?= number_format($balance_sheet['total_liabilities_equity'], 2) ?></td></tr>
-                            </table>
-                        </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card shadow-sm custom-bg-white">
+                    <div class="card-body">
+                        <div class="metric-label text-success">Gross Profit</div>
+                        <div class="metric-value text-dark">₹ <?= number_format($gross_profit, 2) ?></div>
+                        <div class="trend-indicator text-success"><i class="fas fa-hand-holding-usd"></i> After Parts & Comm.</div>
                     </div>
+                    <i class="fas fa-money-bill-wave icon-bg text-success"></i>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card shadow-sm custom-bg-white">
+                    <div class="card-body">
+                        <div class="metric-label text-danger">Operating Expenses</div>
+                        <div class="metric-value text-dark">₹ <?= number_format($total_op_expenses, 2) ?></div>
+                        <div class="trend-indicator text-danger"><i class="fas fa-arrow-down"></i> Shop + Salary + EMI</div>
+                    </div>
+                    <i class="fas fa-wallet icon-bg text-danger"></i>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card shadow-sm custom-bg-navy text-white">
+                    <div class="card-body">
+                        <div class="metric-label">Estimated Net Profit</div>
+                        <div class="metric-value">₹ <?= number_format($net_profit, 2) ?></div>
+                        <div class="trend-indicator"><i class="fas fa-piggy-bank"></i> Period Earnings</div>
+                    </div>
+                    <i class="fas fa-trophy icon-bg"></i>
                 </div>
             </div>
         </div>
-        <?php endif; ?>
+
+        <!-- Detailed Analytics Tabs -->
+        <div class="card shadow-sm border-0" style="border-radius: 15px;">
+            <div class="card-body p-0">
+                <ul class="nav nav-pills nav-pills-custom p-3" id="pills-tab" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-toggle="pill" href="#pills-summary">Executive Summary</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pills-performance">Performance Analytics</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pills-cash">Cash Flow</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pills-assets">Assets & Liabilities</a></li>
+                    <li class="nav-item"><a class="nav-link" data-toggle="pill" href="#pills-inventory">Inventory Health</a></li>
+                </ul>
+                <hr class="m-0">
+                <div class="tab-content p-4" id="pills-tabContent">
+                    
+                    <!-- Executive Summary Tab -->
+                    <div class="tab-pane fade show active" id="pills-summary">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <h5 class="font-weight-bold mb-4">Profit & Loss Overview</h5>
+                                <table class="table report-table">
+                                    <thead><tr><th>Description</th><th class="text-right">Amount (₹)</th></tr></thead>
+                                    <tbody>
+                                        <tr><td>Service/Repair Revenue (Billed)</td><td class="text-right"><?= number_format($revenue['service_billed'], 2) ?></td></tr>
+                                        <tr><td>Direct Sales Revenue (Billed)</td><td class="text-right"><?= number_format($revenue['sales_billed'], 2) ?></td></tr>
+                                        <tr class="summary-row"><td>Total Gross Revenue</td><td class="text-right"><?= number_format($total_revenue, 2) ?></td></tr>
+                                        <tr><td><span class="text-danger ml-3">- Cost of Parts (Repairs + Sales)</span></td><td class="text-right text-danger">(<?= number_format($repair_parts_cost + $direct_sales_cost, 2) ?>)</td></tr>
+                                        <tr><td><span class="text-danger ml-3">- Mechanic Commissions</span></td><td class="text-right text-danger">(<?= number_format($revenue['commission_cost'], 2) ?>)</td></tr>
+                                        <tr class="summary-row"><td>Gross Profit</td><td class="text-right text-success"><?= number_format($gross_profit, 2) ?></td></tr>
+                                        <tr><td><span class="text-danger ml-3">- Operating Expenses (Shop/Adv/EMI)</span></td><td class="text-right text-danger">(<?= number_format($total_op_expenses, 2) ?>)</td></tr>
+                                        <tr><td><span class="text-danger ml-3">- Discounts Allowed</span></td><td class="text-right text-danger">(<?= number_format($collections['total_discount'], 2) ?>)</td></tr>
+                                        <tr class="summary-row" style="background: var(--primary); color: white;"><td>NET OPERATING PROFIT</td><td class="text-right">₹ <?= number_format($net_profit, 2) ?></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="p-4 bg-light border rounded-lg" style="border-radius: 15px;">
+                                    <h5 class="font-weight-bold mb-3">Efficiency Metrics</h5>
+                                    <?php $margin = $total_revenue > 0 ? ($net_profit / $total_revenue) * 100 : 0; $collection_rate = $total_revenue > 0 ? ($collections['total_collected'] / $total_revenue) * 100 : 0; ?>
+                                    <div class="mb-4">
+                                        <div class="d-flex justify-content-between mb-1"><span class="small font-weight-bold">Net Profit Margin</span><span class="small font-weight-bold"><?= number_format($margin, 1) ?>%</span></div>
+                                        <div class="progress progress-custom"><div class="progress-bar bg-success" style="width: <?= min(100, max(0, $margin)) ?>%"></div></div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <div class="d-flex justify-content-between mb-1"><span class="small font-weight-bold">Collection Efficiency</span><span class="small font-weight-bold"><?= number_format($collection_rate, 1) ?>%</span></div>
+                                        <div class="progress progress-custom"><div class="progress-bar bg-info" style="width: <?= min(100, max(0, $collection_rate)) ?>%"></div></div>
+                                    </div>
+                                    <div class="mt-4 p-3 bg-white border rounded">
+                                        <p class="small text-muted mb-1"><i class="fas fa-info-circle mr-1"></i> Strategy Insight:</p>
+                                        <p class="small mb-0">Your Gross Profit is <b>₹ <?= number_format($gross_profit, 2) ?></b>. To increase Net Profit, focus on optimizing <b>Shop Expenses</b> and <b>Discount Policies</b>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Analytics Tab -->
+                    <div class="tab-pane fade" id="pills-performance">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold mb-3">Expense Breakdown</h5>
+                                <div class="list-group">
+                                    <?php while($ex = $expense_categories->fetch_assoc()): ?>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><?= $ex['category'] ?></span>
+                                        <span class="font-weight-bold">₹ <?= number_format($ex['total'], 2) ?></span>
+                                    </div>
+                                    <?php endwhile; ?>
+                                    <?php if($expense_categories->num_rows == 0): ?>
+                                    <div class="list-group-item text-center text-muted">No expenses recorded in this period</div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold mb-3">Top 5 Revenue Contributors</h5>
+                                <div class="list-group">
+                                    <?php while($tc = $top_customers->fetch_assoc()): ?>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><?= $tc['firstname'] . ' ' . $tc['lastname'] ?></span>
+                                        <span class="badge badge-primary badge-pill">₹ <?= number_format($tc['total_billed'], 2) ?></span>
+                                    </div>
+                                    <?php endwhile; ?>
+                                    <?php if($top_customers->num_rows == 0): ?>
+                                    <div class="list-group-item text-center text-muted">No revenue data available</div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cash Flow Tab -->
+                    <div class="tab-pane fade" id="pills-cash">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold text-success mb-3"><i class="fas fa-arrow-circle-down"></i> Cash Inflow (Receipts)</h5>
+                                <ul class="list-group list-group-flush border rounded mb-4">
+                                    <li class="list-group-item d-flex justify-content-between"><span>Total Client Payments Collected</span><span class="font-weight-bold">₹ <?= number_format($collections['total_collected'], 2) ?></span></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold text-danger mb-3"><i class="fas fa-arrow-circle-up"></i> Cash Outflow (Payments)</h5>
+                                <ul class="list-group list-group-flush border rounded">
+                                    <li class="list-group-item d-flex justify-content-between"><span>Shop & Operational Expenses</span><span class="font-weight-bold">₹ <?= number_format($expenses['shop_expenses'], 2) ?></span></li>
+                                    <li class="list-group-item d-flex justify-content-between"><span>Staff Salaries / Advances</span><span class="font-weight-bold">₹ <?= number_format($expenses['staff_advances'], 2) ?></span></li>
+                                    <li class="list-group-item d-flex justify-content-between"><span>Loan EMI / Debt Repayments</span><span class="font-weight-bold">₹ <?= number_format($expenses['loan_emis'], 2) ?></span></li>
+                                    <li class="list-group-item d-flex justify-content-between bg-light"><span class="font-weight-bold">Total Cash Outflow</span><span class="font-weight-bold text-danger">₹ <?= number_format($total_op_expenses, 2) ?></span></li>
+                                </ul>
+                            </div>
+                            <div class="col-12 mt-4">
+                                <div class="p-3 bg-gradient-navy text-white rounded-lg text-center">
+                                    <h5 class="mb-1">Net Period Liquidity</h5>
+                                    <h2 class="mb-0">₹ <?= number_format($collections['total_collected'] - $total_op_expenses, 2) ?></h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assets & Liabilities Tab -->
+                    <div class="tab-pane fade" id="pills-assets">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold text-navy mb-3">Current Assets</h5>
+                                <div class="card border-info mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2"><span>Cash & Bank Balance (Est.)</span><span class="font-weight-bold">₹ <?= number_format($assets['cash_on_hand'], 2) ?></span></div>
+                                        <div class="d-flex justify-content-between mb-2"><span>Accounts Receivable (Customer Dues)</span><span class="font-weight-bold">₹ <?= number_format($assets['accounts_receivable'], 2) ?></span></div>
+                                        <div class="d-flex justify-content-between mb-2"><span>Inventory/Stock Value</span><span class="font-weight-bold">₹ <?= number_format($assets['inventory_value'], 2) ?></span></div>
+                                        <hr><div class="d-flex justify-content-between text-navy font-weight-bold"><span>TOTAL ASSETS</span><span>₹ <?= number_format($assets['cash_on_hand'] + $assets['accounts_receivable'] + $assets['inventory_value'], 2) ?></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5 class="font-weight-bold text-navy mb-3">Current Liabilities</h5>
+                                <div class="card border-danger">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2"><span>Lender Loans Payable</span><span class="font-weight-bold">₹ <?= number_format($liabilities['loans_payable'], 2) ?></span></div>
+                                        <hr><div class="d-flex justify-content-between text-danger font-weight-bold"><span>TOTAL LIABILITIES</span><span>₹ <?= number_format($liabilities['loans_payable'], 2) ?></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Health Tab -->
+                    <div class="tab-pane fade" id="pills-inventory">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5 class="font-weight-bold mb-3">Top Inventory Assets</h5>
+                                <table class="table table-hover border">
+                                    <thead class="bg-light"><tr><th>Product Name</th><th class="text-center">Current Qty</th><th class="text-right">Unit Price</th><th class="text-right">Total Value</th></tr></thead>
+                                    <tbody>
+                                        <?php while($row = $stock_movements->fetch_assoc()): ?>
+                                        <tr><td><?= htmlspecialchars($row['name']) ?></td><td class="text-center"><span class="badge badge-pill badge-<?= $row['current_stock'] < 5 ? 'danger' : 'primary' ?>"><?= $row['current_stock'] ?></span></td><td class="text-right">₹ <?= number_format($row['price'], 2) ?></td><td class="text-right font-weight-bold">₹ <?= number_format($row['current_stock'] * $row['price'], 2) ?></td></tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                    <tfoot><tr class="bg-light font-weight-bold"><td colspan="3" class="text-right">Estimated Total Stock Value:</td><td class="text-right text-primary">₹ <?= number_format($assets['inventory_value'], 2) ?></td></tr></tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 text-center text-muted small no-print"><p>© <?= date('Y') ?> <?= $_settings->info('name') ?> - Internal Financial Management System</p></div>
     </div>
 </div>
